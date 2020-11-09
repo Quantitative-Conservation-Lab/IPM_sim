@@ -3,10 +3,7 @@
 
 # jotting some stuff down for data sim
 
-# TODO
-# multiyear??
-# does true fec parameter make sense
-# also do we want female only model? what does fec measure
+# TODO 
 # interp 1s inbetween consecutive visits where nest was active
 # make sure that a basic nest survival model can resolve these parameters
 # come up with inits
@@ -35,8 +32,9 @@ mean.clutch.size <- 5
 # daily nest survival
 phi <- 0.975
 
-# true fecundity (chicks produced per nest)
-true.fec <- mean.clutch.size * phi^max.nest.age
+# true fecundity (female chicks produced per nest)
+# assuming 50/50 sex ratio at hatching
+true.fec <- 1/2 * mean.clutch.size * phi^max.nest.age
 
 # observation params
 visit.interval <- 3
