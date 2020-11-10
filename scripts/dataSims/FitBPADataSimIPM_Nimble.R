@@ -1,5 +1,5 @@
 #IPM model for sim data
-source("Data Sim.r")
+source("BPA_IPMsimData.r")
 # 11.3. Example of a simple IPM (counts, capture-recapture, reproduction)
 # 11.3.1. Load data
 # Population counts (from years 1 to 10)
