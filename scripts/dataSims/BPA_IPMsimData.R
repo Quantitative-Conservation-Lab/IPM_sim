@@ -164,6 +164,9 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   #################################
   
   # 1. Construct capture histories
+  #year 1 - go out and band all chicks 
+  #year 2+ go out and band chick, resight others that are banded
+  
   CR <- matrix(data = rep(0, nd[1]*(ti+3)), ncol = ti+3, nrow = nd[1])
   for ( i in 1:nd[1]){
     for (r in 1:ti){
@@ -195,7 +198,8 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   
   
   # 2. Create m-array for the capture-histories
-  
+  ####NOT M-ARRAY, change****
+  ####
   # 2.1. Two functions for data manipulation:
   # 2.1.1. Function to remove individuals without histories
   clean <- function(crma){
