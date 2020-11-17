@@ -25,6 +25,12 @@ season.length <- last.fledge.date - first.initiation.date + 1 + 2
 N.nests.total <- 100
 prop.nests.found <- 0.8
 
+# TODO
+
+# change data story to something like
+# at the end of the season we mistnet chicks
+# so we get a random number every year
+
 # mean clutch size
 mean.clutch.size <- 5
 # AEB note - additional assumption that all eggs hatch and all nestlings fledge
@@ -126,6 +132,8 @@ last[which.successful] <- apply(observed.nest.status[which.successful, ], 1, fun
 last[-which.successful] <- apply(observed.nest.status[-which.successful, ], 1, function(x) min(which(!is.na(x) & x == 0)))
 
 # clutch size
+# TODO
+# there should not be zeroes in here
 clutch.sizes <- rpois(N.nests.successful, mean.clutch.size)
 
 

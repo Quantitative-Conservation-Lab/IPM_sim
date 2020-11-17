@@ -28,12 +28,11 @@ code1 <- nimbleCode({
     } # d
   } # n
   
-  # END likelihood
-  
-  # could be a site effect here - some sites have predator controls
   for (c in 1:n.succ.nests) {
     Fledged[c] ~ dpois(lambdaf) 
   } # c
+  
+  # END likelihood
   
   # Derived quantities #####
 
