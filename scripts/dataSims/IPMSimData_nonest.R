@@ -12,8 +12,11 @@ n.years=10; n.data=c(50,50,50);init.age = c(100,100);
 phi.1=0.7; phi.ad=0.76;p.1=0.98; p.ad=0.65;
 f.1=0.8;f.ad=0.8; p.sur=0.8; p.prod=0.77
 
+
 # TODO
 # abby put nest params
+#Hannah to add in number of count surveys
+n.sam<-3
 simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
  f.1, f.ad, p.sur, p.prod){
   ti<-n.years
@@ -299,27 +302,35 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   ######################################################
   # Create population survey data
   ######################################################
+  #n.sam is the number of times that the population was sampled in a year
+  # I rewrote this, it just needs to be rbinom(n.sam, TrueCount,p_sur)
   #HAS - should output the true count data for comparison
   TRUE_Count<-matrix(nrow=2, ncol=ti) #first row, number of YOY; second row is adults
-  SUR <- rep(0,ti)
-  for (i in 1:nd[2]){
-    for (u in 1:ti){
-      TRUE_Count[1,u]<-sum(IND_Count[1,u,], na.rm = T)
-      TRUE_Count[2,u]<-sum(IND_Count[2,u,], na.rm = T)
-      if(!is.na(IND_Count[1,u,i])){
-        y3 <- rbinom(1, 1, PSUR[u])
-        if(y3==1){
-          SUR[u] <- SUR[u]+1
-        }
-      }
-      if(!is.na(IND_Count[2,u,i])){
-        y3 <- rbinom(1, 1, PSUR[u])
-        if(y3==1){
-          SUR[u] <- SUR[u]+1
-        }
-      }
-    }
+  SUR<-matrix(nrow=n.sam, ncol=ti)#matrix for surveys by survey and year
+  #SUR <- rep(0,ti)
+  for(u in 1:ti){
+    TRUE_Count[1,u]<-sum(IND_Count[1,u,], na.rm = T)
+    TRUE_Count[2,u]<-sum(IND_Count[2,u,], na.rm = T)
+    SUR[,u]<-rbinom(n.sam, sum(TRUE_Count[,u]), PSUR[u])
   }
+  # for (i in 1:nd[2]){
+  #   for (u in 1:ti){
+  #     TRUE_Count[1,u]<-sum(IND_Count[1,u,], na.rm = T)
+  #     TRUE_Count[2,u]<-sum(IND_Count[2,u,], na.rm = T)
+  #     if(!is.na(IND_Count[1,u,i])){
+  #       y3 <- rbinom(1, 1, PSUR[u])
+  #       if(y3==1){
+  #         SUR[u] <- SUR[u]+1
+  #       }
+  #     }
+  #     if(!is.na(IND_Count[2,u,i])){
+  #       y3 <- rbinom(1, 1, PSUR[u])
+  #       if(y3==1){
+  #         SUR[u] <- SUR[u]+1
+  #       }
+  #     }
+  #   }
+  # }
   
   
   ###########################
