@@ -223,7 +223,7 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   #using the individual population array for MR data
   mr_classes<-dim(IND_MR)[1] - 3 #since we wont see Dead and the reproduction doesnt matter
   #so we have 3 classes, chicks, 1year olds, and adults
-  ind_mr<-IND_MR[c(5,1,2),,]
+  ind_mr<-IND_MR[c(5,1,2),1:ti,]
   rm<-numeric(dim(ind_mr)[3])
   for(i in 1:dim(ind_mr)[3]){
     if(!is.na(ind_mr[2,1,i])){
@@ -261,6 +261,7 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   in.mark<-ch<-matrix(0,nrow=mr_ind, ncol=mr_t)
   for(i in 1:mr_ind){
     in.mark[i,first[i]]<-rbinom(1,1,p.juv*ch.true[i,first[i]])
+    if(first[i]==mr_t) next
     for(t in (first[i]+1):last[i]){
       in.mark[i,t]<-rbinom(1,1,p.ad*ch.true[i,t])
     }
@@ -287,9 +288,10 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   if(sum(rm_2)>0){
   ch<-ch[-(which(rm_2==1)),]
   age_ch<-age_ch[-(which(rm_2==1)),]
+  add_age_chtrue[-(which(rm_2==1)),]
   } else {}
   first<-last<-numeric(length(ch[,1]))
-  for(i in 1:mr_ind){
+  for(i in 1:length(ch[,1])){
     first[i]<-min(which(ch[i,]==1))
     last[i]<-max(which(ch[i,]==1))
   }
