@@ -32,15 +32,8 @@ IPMmod<-nimbleCode({
   #  - All vital rates assumed to be constant
   #-------------------------------------------------
   
-  #-------------------------------------------------
-  # 1. Define the priors for the parameters
-  #-------------------------------------------------
-  
+  #population projection part
   # Initial population sizes
-  # Note that this part is different than in BUGS:
-  # 1. JAGS seems to be very sensitive to the choice of the prior distribution for the initial population sizes and of the choice of the observation model (priors)
-  # 2. Since the initial population sizes are used in binomial distributions, the numbers must be integers, otherwise JAGS does not run.
-  # The following specification seems to work very well and produces similar results as BUGS:
   N1[1]<-n1.start
   Nad[1]<-nad.start
   # Population growth rate
@@ -49,6 +42,12 @@ IPMmod<-nimbleCode({
   }
   #prior for survey detectin probability
   p.surv~dunif(0,1)
+  #  productivity
+  for (t in 1:(nyears-1)){
+    f[t] <- mean.fec
+  }
+  mean.fec ~ dunif(0, 20)
+  
   # 3.1. Likelihood for population population count data (state-space model)
   # 3.1.1 System process
   for (t in 2:nyears){
@@ -57,44 +56,34 @@ IPMmod<-nimbleCode({
     Nad[t] ~ dbin(mean.phi[2], Ntot[t-1])
   }
   for (t in 1:nyears){
-    Ntot[t] <- Nad[t] + N1[t]
+    Ntot[t] <- Nad[t] + N1[t] 
   }
   
   # 3.1.2 Observation process
-  for (t in 1:nyears){
-    for(n in 1:n.sam){
-      y[t,n] ~ dbin(p.surv,Ntot[t])
+  for(n in 1:n.sam){
+    for (t in 1:nyears){
+      y[n,t] ~ dbin(p.surv,Ntot[t])
     }
   }
-  #  productivity
-  for (t in 1:(nyears-1)){
-    f[t] <- mean.fec
-  }
-  
-  
-  mean.fec ~ dunif(0, 20)
-  
-  
-  #-------------------------------------------------
-  # 3. The likelihoods of the single data sets
-  #-------------------------------------------------
-  
   
   # 3.2 Likelihood for capture-recapture data: CJS model (2 age classes)
   for(i in 1:n.ind){
     z[i,first[i]]<-1
     for(t in (first[i]+1):(nyears)){
-      z[i,t]~dbern(z[i,t-1]*mean.phi[age[i,t-1]]) #is this right?
+      z[i,t]~dbern(z[i,t-1]*mean.phi[age[i,t]]) #is this right? Because they survived as YOY
       ch.y[i,t]~dbern(z[i,t]*mean.p)
     }
   }
-  
+  #priors for resight and adult or yoy survival
   mean.phi[1]~dunif(0,1) #surv 1 year olds
   mean.phi[2]~dunif(0,1) #surv adults
   mean.p~dunif(0,1) #resight prob
+  
+  
   ##################################
   #################################
   #nest success model goes here
+  
   # 3.3. Likelihood for productivity data: Poisson regression
   for (t in 1:(nyears-1)){
     J[t] ~ dpois(rho[t])
@@ -112,7 +101,6 @@ state.data <- function(EH){
     first <- min(which(EH[i,]==1))
     last <- max(which(EH[i,]==1))
     state[i,first:last] <- 1
-    #   state[i,first] <- NA
   }
   state[state==0] <- NA
   return(state)
@@ -144,24 +132,22 @@ age<-ageunknown(age_ch)
 z.state <- state.data(m)
 
 # data
-
+#HAS- can probably clean all of this up when the data sim is ready to go, 
+#so it automatically inputs the right data and constants 
 datipm <- list(ch.y = m, y = y, J = J, R = R)
-constants<-list(nyears = length(y), 
-                n.ind=nrow(m), first=first,age=age,  n.sam=n.sam)
+constants<-list(nyears = ncol(m), 
+                n.ind=nrow(m), first=first, age=age, n.sam=n.sam)
 # Initial values
 inits <- list(mean.phi=runif(2,0,1),
               mean.p = runif(1, 0, 1), 
               mean.fec = runif(1, 0, 10), 
-              sigma.y = runif(1, 0, 1), 
-              n1 = rpois(1, 100), 
-              nad = rpois(1, 100),
               z=z.state,
               p.surv=runif(1,0,1),
-              n1.start=sample(1:30,1),
+              n1.start=sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
               nad.start=sample(1:30,1))
 parameters <- c("mean.phi", 
                 "mean.p", "mean.fec", "N1", "Nad", 
-                "Ntot", "sigma2.y", "lambda", "p.suv")
+                "Ntot", "lambda", "p.surv")
 mod<-nimbleModel(IPMmod, constants=constants, data=datipm, inits=inits)
 conf<-configureMCMC(mod)
 conf$addMonitors(parameters)
@@ -170,12 +156,4 @@ Cmodel<-compileNimble(mod)
 Cmcmc<-compileNimble(Rmcmc, project=Cmodel)
 Cmcmc$run(thin=10, reset=T, niter=10000, nburnin=5000)
 out<-as.data.frame(as.matrix(Cmcmc$mvSamples))
-# 
-# samp <- nimbleMCMC(
-#   code = IPMmod,
-#   constants = constants,#list(nyears = dim(m)[2], r = rowSums(m)),
-#   data =  datipm,#list(m = m, y = y, J = J, R = R), 
-#   summary=TRUE,
-#   inits = inits,
-#   monitors = parameters,
-#   niter = 1000, nburnin = 500, thin = 1)
+
