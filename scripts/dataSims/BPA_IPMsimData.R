@@ -10,7 +10,9 @@
 #for example, does this work for our Mark-Resight model, do we not want to do m-array
 
 #Abby to add in how she simulates Nest Success data
-
+n.years=10; n.data=c(50,50,50);init.age = c(100,100); 
+phi.1=0.7; phi.ad=0.76;p.1=0.98; p.ad=0.65;
+f.1=0.8;f.ad=0.8; p.sur=0.8; p.prod=0.77
 
 simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
                      f.1, f.ad, p.sur, p.prod){
