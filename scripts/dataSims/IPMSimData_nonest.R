@@ -6,10 +6,14 @@
 #code adapted from WinBugsBPA Appendix 2, code to simulate IPM
 # link to code is here: https://www.vogelwarte.ch/assets/files/publications/BPA/Web%20appendix%202.txt
 
+library(nimble)
+
 n.years=10; n.data=c(50,50,50);init.age = c(100,100); 
 phi.1=0.7; phi.ad=0.76;p.1=0.98; p.ad=0.65;
 f.1=0.8;f.ad=0.8; p.sur=0.8; p.prod=0.77
 
+# TODO
+# abby put nest params
 simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
  f.1, f.ad, p.sur, p.prod){
   ti<-n.years
@@ -18,12 +22,35 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   Ni<-init.age
   phi1<-phi.1
   phi2<-phi.ad
-  fl1<-f.1
-  fl2<-f.ad
+  #fl1<-f.1
+  #fl2<-f.ad
   pjuv<-p.1
   padults<-p.ad
   psur<-p.sur
-  pprod<-p.prod
+  #pprod<-p.prod
+  
+  # Prod parameters
+  
+  n.initiation.dates <- 120
+  max.nest.age <- 30
+  first.initiation.date <- 1
+  last.fledge.date <- n.initiation.dates + max.nest.age
+  season.length <- last.fledge.date - first.initiation.date + 1 + 2
+  
+  # nests for population
+  N.nests.total <- 100
+  prop.nests.found <- 0.8
+  
+  # mean clutch size
+  mean.clutch.size <- 5
+  
+  # daily nest survival
+  phi.nest <- 0.975
+  
+  true.fec <- 1/2 * mean.clutch.size * phi.nest^max.nest.age
+  
+  # observation params
+  visit.interval <- 3
   
   # Combine the values to vectors
   PHI1 <- rep(phi1, ti)
@@ -31,9 +58,9 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   PJUV <- rep(pjuv, ti)
   PADULTS <- rep(padults, ti)
   PSUR <- rep(psur, ti)
-  PPROD <- rep(pprod, ti)
-  FL1 <- rep(fl1, ti+1)
-  FL2 <- rep(fl2, ti+1)
+  #PPROD <- rep(pprod, ti)
+  FL1 <- rep(true.fec, ti+1)
+  FL2 <- rep(true.fec, ti+1)
   
   ###########################
   # Population simulation
@@ -48,7 +75,8 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
     N[,(i+1)]<-les%*%N[,i]
   }
   no.anim <- sum(N)
-  no.ani <- round(no.anim*5)
+  no.ani <- round(no.anim)
+  #no.ani <- round(no.anim*5)
   
   # 2. Define array for each individual
   ind <- array(data = NA, dim = c(5, ti+1, no.ani))   # infn about [1ye, adu, dead, rep, juv]
@@ -126,13 +154,45 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
     }
   }
   
-  
   # 5. Total number of animals
   Ntotal <- sum(Ni)+sum(ind[4,1:ti,], na.rm = T)
   
   # Reshape the array, remove empty cells
   IND <- ind[,,1:Ntotal]
   rownames(IND) <- c("1-Year", "Adu", "Dead", "Rep", "Chicks")
+  
+  # LINK YOY AND ADULTS TO DAILY NEST SUCCESS
+  nests <- array(data = NA, dim = c(2, ti+1, no.ani, season.length))
+  for (age in 1:2) { # age classes
+    for (year in 1:(ti+1)) { # year
+      for (i in 1:sum(IND[age, year, ], na.rm = TRUE)) {
+        
+        # assume everybody attempts a nest
+        N.nests.total <- sum(IND[age, year, ], na.rm = TRUE)
+        
+        total.nests.age <- matrix(NA, nrow = N.nests.total, ncol = season.length)
+        total.nests.status <- matrix(NA, nrow = N.nests.total, ncol = season.length)
+        
+        # initiation date
+        # uniform across season length
+        # sort by initiation date
+        init.dates <- sort(rcat(N.nests.total, rep(1/n.initiation.dates, length.out = n.initiation.dates)))
+        
+        for (i in 1:N.nests.total) {
+          # true age of nest 
+          total.nests.age[i, init.dates[i]:(init.dates[i] + max.nest.age - 1)] <- 1:max.nest.age
+          
+          # true status of nest
+          total.nests.status[i, init.dates[i]] <- 1 
+          for (a in 1:(max.nest.age-1)) {
+            total.nests.status[i, init.dates[i] + a] <- rbinom(1, 1, total.nests.status[i, init.dates[i] + a - 1] * phi.nest)
+          }
+        }
+      }
+      
+      nests[age, year, 1:N.nests.total, ] <- total.nests.status
+    }
+  }
   
   ###################################################
   #  Create completely independent samples
@@ -255,24 +315,72 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   ##########################
   #ABBY NEST MODEL could go here
   
-  #The individuals that are separated from the other data can be found in:
-  #IND_Nest
+  # TODO
+  # observation process
+  # IND_Nest is the pop of birds we are drawing from
   
-  #I am using this just as a placeholder to make sure everything works
-  R <- rep(0, ti) # number of pairs whose productivity was observed 
-  nestlings <- rep(0, ti)  # total number of nestlings recoded in a year
-  for (i in 1:nd[3]){
-    for (v in 1:ti){
-      if(!is.na(IND_Nest[4,v,i])){
-        y <- rbinom(1, 1, PPROD[v])
-        if(y==1){
-          R[v] <- R[v]+1
-          nestlings[v] <- nestlings[v]+IND_Nest[4,v,i]
-        }
-      }
-    }
+  # which of these nests were found - this is also latent
+  which.found <- sort(sample(1:N.nests.total, prop.nests.found * N.nests.total))
+  init.dates.found <- init.dates[which.found]
+  N.nests.found <- length(which.found)
+  
+  found.nests.age <- total.nests.age[which.found, ]
+  found.nests.status <- total.nests.status[which.found, ]
+  
+  # detection process
+  
+  # age at first detection
+  # nests are checked every 3 days after that
+  # AEB note - currently equally likely to be observed at any age
+  age.when.found <- rcat(N.nests.found, rep(1/max.nest.age, length.out = max.nest.age))
+  ages.visited <- list(NULL)
+  for (i in 1:N.nests.found) {
+    ages.visited[[i]] <- unique(c(seq(age.when.found[i], max.nest.age, by = visit.interval), max.nest.age))
   }
   
+  # create observation matrix
+  observed.nest.age <- matrix(NA, nrow = N.nests.found, ncol = season.length)
+  observed.nest.status <- matrix(NA, nrow = N.nests.found, ncol = season.length)
+  
+  for (i in 1:N.nests.found) {
+    # age of nest
+    observed.nest.age[i, init.dates.found[i]+ages.visited[[i]]-1] <- ages.visited[[i]]
+    
+    # status of nest
+    observed.nest.status[i, init.dates.found[i]+ages.visited[[i]]-1] <- found.nests.status[i, init.dates.found[i]+ages.visited[[i]]-1]
+    
+    # AEB note - we assume we can age the nest
+    # and that our observations are perfect
+    # so if it fledged we know the date it fledged or *should* have fledged
+  }
+  
+  # HAVE TO REMOVE NESTS THAT FAILED BEFORE FOUND
+  
+  is.nest <- apply(observed.nest.status, 1, function(x) x[min(which(!is.na(x)))] == 1)
+  
+  observed.nest.age <- observed.nest.age[is.nest, ]
+  observed.nest.status <- observed.nest.status[is.nest, ]
+  
+  N.nests.found <- dim(observed.nest.age)[1]
+  
+  # how many were successful
+  # is last status a 1 or a 0
+  last.status <- apply(observed.nest.status, 1, function(x) x[max(which(!is.na(x)))])
+  
+  which.successful <- which(last.status == 1)
+  
+  N.nests.successful <- length(which.successful)
+  
+  first <- apply(observed.nest.status, 1, function(x) min(which(!is.na(x))))
+  
+  # if nest fledged, last is fledge day
+  # if nest failed, last is first zero
+  last <- rep(NA, length.out = N.nests.found)
+  last[which.successful] <- apply(observed.nest.status[which.successful, ], 1, function(x) max(which(!is.na(x))))
+  last[-which.successful] <- apply(observed.nest.status[-which.successful, ], 1, function(x) min(which(!is.na(x) & x == 0)))
+  
+  # TODO
+  # abby put stuff to return
   
   #Get all the data together, just MR and Survey Counts until nest in here
   return(list(ch=ch, SUR=SUR, age_ch=age_ch, first=first, last=last,

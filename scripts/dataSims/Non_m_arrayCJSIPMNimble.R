@@ -1,3 +1,6 @@
+# TODO
+# abby put nest stuff in here
+
 #IPM model for sim data
 library(here)
 #source(here("scripts", "dataSims","BPA_IPMsimData.R")) #full on BPA WinBUGS code
