@@ -9,17 +9,17 @@ source(here("scripts", "dataSims","IPMsimData_nonest.R")) #changed the MR data
 # 11.3. Example of a simple IPM (counts, capture-recapture, reproduction)
 # 11.3.1. Load data
 # Population counts (from years 1 to n.years)
-y <- df$SUR
+y <- SUR#df$SUR
 
 # Capture-recapture data (in m-array format, from years 1 to n.years)
-m <- df$ch
+m <- ch#df$ch
 
 
 #Productivity/nest success not in the data sim right now
 #these will need to be changed once we have the nest success data
 # Productivity data (from years 1 to n.years-1)
-J<-df$nestlings
-R<-df$R
+J<-nestlings#df$nestlings
+R<-R#df$R
 
 
 #Use the IPM from WinBugs, but put in nimble
@@ -57,15 +57,10 @@ IPMmod<-nimbleCode({
   
   # Survival and recapture probabilities, as well as productivity
   for (t in 1:(nyears-1)){
-    sjuv[t] <- mean.sjuv
-    sad[t] <- mean.sad
-    p[t] <- mean.p
     f[t] <- mean.fec
   }
   
-  mean.sjuv ~ dunif(0, 1)
-  mean.sad ~ dunif(0, 1)
-  mean.p ~ dunif(0, 1)
+
   mean.fec ~ dunif(0, 20)
   
   #-------------------------------------------------
@@ -97,18 +92,18 @@ IPMmod<-nimbleCode({
   
   # 3.2 Likelihood for capture-recapture data: CJS model (2 age classes)
   for(i in 1:n.ind){
-    for(t in (first+1):(nyears-1)){
-      z[i,j]~dbern(z[i,t-1]*phi[i,t-1])
-      ch.y[i,j]~dbern(z[i,t]*p[i,t-1])
+    for(t in (first[i]+1):(nyears)){
+      z[i,t]~dbern(z[i,t-1]*mean.phi)
+      ch.y[i,t]~dbern(z[i,t]*mean.p)
     }
   }
   #priors for CJS
-  for(i in 1:n.ind){
-    for(t in 1:(nyears-1)){
-      phi[i,t]<-mean.phi[i,t]
-      p[i,t]<-mean.p
-    }
-  }
+  # for(i in 1:n.ind){
+  #   for(t in 1:(nyears-1)){
+  #     phi[i,t]<-mean.phi[i,t]
+  #     p[i,t]<-mean.p
+  #   }
+  # }
   mean.phi~dunif(0,1)
  #mean.phi[1]~dunif(0,1) #surv 1 year olds
 # mean.phi[2]~dunif(0,1) #surv adults
@@ -127,10 +122,9 @@ IPMmod<-nimbleCode({
 # data
 
 datipm <- list(ch.y = m, y = y, J = J, R = R)
-#age[which(age==1)]<-0
-constants<-list(nyears = dim(m)[2], r = rowSums(m),
-                n.ind=nrow(m), first=df$first, last=df$last)
-                #age=age)
+constants<-list(nyears = length(y), 
+                n.ind=nrow(m), first=first)
+                
 #Provide known state as data  
 state.data <- function(EH){
   state <- EH
