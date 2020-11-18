@@ -299,9 +299,13 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   ######################################################
   # Create population survey data
   ######################################################
+  #HAS - should output the true count data for comparison
+  TRUE_Count<-matrix(nrow=2, ncol=ti) #first row, number of YOY; second row is adults
   SUR <- rep(0,ti)
   for (i in 1:nd[2]){
     for (u in 1:ti){
+      TRUE_Count[1,u]<-sum(IND_Count[1,u,], na.rm = T)
+      TRUE_Count[2,u]<-sum(IND_Count[2,u,], na.rm = T)
       if(!is.na(IND_Count[1,u,i])){
         y3 <- rbinom(1, 1, PSUR[u])
         if(y3==1){
