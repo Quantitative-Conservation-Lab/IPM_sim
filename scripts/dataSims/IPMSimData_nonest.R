@@ -288,6 +288,11 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   ch<-ch[-(which(rm_2==1)),]
   age_ch<-age_ch[-(which(rm_2==1)),]
   } else {}
+  first<-last<-numeric(length(ch[,1]))
+  for(i in 1:mr_ind){
+    first[i]<-min(which(ch[i,]==1))
+    last[i]<-max(which(ch[i,]==1))
+  }
   #############################
   ######################################################
   # Create population survey data
