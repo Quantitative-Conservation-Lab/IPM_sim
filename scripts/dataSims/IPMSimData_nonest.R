@@ -27,6 +27,8 @@ phi.nest <- 0.975
 
 prop.nests.found <- 0.8
 
+n.sam<-3
+
 simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
  f.1, f.ad, p.sur, p.prod){
   
@@ -220,7 +222,7 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   #using the individual population array for MR data
   mr_classes<-dim(IND_MR)[1] - 3 #since we wont see Dead and the reproduction doesnt matter
   #so we have 3 classes, chicks, 1year olds, and adults
-  ind_mr<-IND_MR[c(5,1,2),,]
+  ind_mr<-IND_MR[c(5,1,2),1:ti,]
   rm<-numeric(dim(ind_mr)[3])
   for(i in 1:dim(ind_mr)[3]){
     if(!is.na(ind_mr[2,1,i])){
@@ -258,6 +260,7 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   in.mark<-ch<-matrix(0,nrow=mr_ind, ncol=mr_t)
   for(i in 1:mr_ind){
     in.mark[i,first[i]]<-rbinom(1,1,p.juv*ch.true[i,first[i]])
+    if(first[i]==mr_t) next
     for(t in (first[i]+1):last[i]){
       in.mark[i,t]<-rbinom(1,1,p.ad*ch.true[i,t])
     }
@@ -284,28 +287,46 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   if(sum(rm_2)>0){
   ch<-ch[-(which(rm_2==1)),]
   age_ch<-age_ch[-(which(rm_2==1)),]
+  add_age_chtrue[-(which(rm_2==1)),]
   } else {}
+  first<-last<-numeric(length(ch[,1]))
+  for(i in 1:length(ch[,1])){
+    first[i]<-min(which(ch[i,]==1))
+    last[i]<-max(which(ch[i,]==1))
+  }
   #############################
   ######################################################
   # Create population survey data
   ######################################################
-  SUR <- rep(0,ti)
-  for (i in 1:nd[2]){
-    for (u in 1:ti){
-      if(!is.na(IND_Count[1,u,i])){
-        y3 <- rbinom(1, 1, PSUR[u])
-        if(y3==1){
-          SUR[u] <- SUR[u]+1
-        }
-      }
-      if(!is.na(IND_Count[2,u,i])){
-        y3 <- rbinom(1, 1, PSUR[u])
-        if(y3==1){
-          SUR[u] <- SUR[u]+1
-        }
-      }
-    }
+  #n.sam is the number of times that the population was sampled in a year
+  # I rewrote this, it just needs to be rbinom(n.sam, TrueCount,p_sur)
+  #HAS - should output the true count data for comparison
+  TRUE_Count<-matrix(nrow=2, ncol=ti) #first row, number of YOY; second row is adults
+  SUR<-matrix(nrow=n.sam, ncol=ti)#matrix for surveys by survey and year
+  #SUR <- rep(0,ti)
+  for(u in 1:ti){
+    TRUE_Count[1,u]<-sum(IND_Count[1,u,], na.rm = T)
+    TRUE_Count[2,u]<-sum(IND_Count[2,u,], na.rm = T)
+    SUR[,u]<-rbinom(n.sam, sum(TRUE_Count[,u]), PSUR[u])
   }
+  # for (i in 1:nd[2]){
+  #   for (u in 1:ti){
+  #     TRUE_Count[1,u]<-sum(IND_Count[1,u,], na.rm = T)
+  #     TRUE_Count[2,u]<-sum(IND_Count[2,u,], na.rm = T)
+  #     if(!is.na(IND_Count[1,u,i])){
+  #       y3 <- rbinom(1, 1, PSUR[u])
+  #       if(y3==1){
+  #         SUR[u] <- SUR[u]+1
+  #       }
+  #     }
+  #     if(!is.na(IND_Count[2,u,i])){
+  #       y3 <- rbinom(1, 1, PSUR[u])
+  #       if(y3==1){
+  #         SUR[u] <- SUR[u]+1
+  #       }
+  #     }
+  #   }
+  # }
   
   
   ###########################
