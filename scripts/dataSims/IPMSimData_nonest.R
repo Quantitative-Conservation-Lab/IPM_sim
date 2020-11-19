@@ -8,49 +8,48 @@
 
 library(nimble)
 
-n.years=10; n.data=c(50,50,50);init.age = c(100,100); 
-phi.1=0.7; phi.ad=0.76;p.1=0.98; p.ad=0.65;
+n.years=10; n.data=c(50,50,50);init.age = c(10,10); 
+phi.1=0.5; phi.ad=0.76;p.1=0.98; p.ad=0.65;
 f.1=0.8;f.ad=0.8; p.sur=0.8; p.prod=0.77
 
-# TODO
-# abby put nest params
+n.initiation.dates <- 31
+
+max.nest.age <- 30
+first.initiation.date <- 1
+last.fledge.date <- n.initiation.dates + max.nest.age
+season.length <- last.fledge.date - first.initiation.date + 1 + 2
+
+# mean clutch size
+mean.clutch.size <- 3
+
+# daily nest survival
+phi.nest <- 0.975
+
+prop.nests.found <- 0.8
+
 simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
  f.1, f.ad, p.sur, p.prod){
+  
   ti<-n.years
   ni<-n.years-1
   nd<-n.data
   Ni<-init.age
   phi1<-phi.1
   phi2<-phi.ad
-  #fl1<-f.1
-  #fl2<-f.ad
   pjuv<-p.1
   padults<-p.ad
   psur<-p.sur
-  #pprod<-p.prod
-  
-  # Prod parameters
-  
-  n.initiation.dates <- 120
-  max.nest.age <- 30
-  first.initiation.date <- 1
+  n.initiation.dates <- n.initiation.dates
+  max.nest.age <- max.nest.age
+  first.initiation.date <- first.initiation.date
   last.fledge.date <- n.initiation.dates + max.nest.age
   season.length <- last.fledge.date - first.initiation.date + 1 + 2
+  mean.clutch.size <- mean.clutch.size
+  phi.nest <- phi.nest
+  prop.nests.found <- prop.nests.found
   
-  # nests for population
-  N.nests.total <- 100
-  prop.nests.found <- 0.8
-  
-  # mean clutch size
-  mean.clutch.size <- 5
-  
-  # daily nest survival
-  phi.nest <- 0.975
-  
+  # DERIVE TRUE FECUNDITY
   true.fec <- 1/2 * mean.clutch.size * phi.nest^max.nest.age
-  
-  # observation params
-  visit.interval <- 3
   
   # Combine the values to vectors
   PHI1 <- rep(phi1, ti)
@@ -58,7 +57,6 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   PJUV <- rep(pjuv, ti)
   PADULTS <- rep(padults, ti)
   PSUR <- rep(psur, ti)
-  #PPROD <- rep(pprod, ti)
   FL1 <- rep(true.fec, ti+1)
   FL2 <- rep(true.fec, ti+1)
   
@@ -75,8 +73,7 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
     N[,(i+1)]<-les%*%N[,i]
   }
   no.anim <- sum(N)
-  no.ani <- round(no.anim)
-  #no.ani <- round(no.anim*5)
+  no.ani <- round(no.anim*2.5)
   
   # 2. Define array for each individual
   ind <- array(data = NA, dim = c(5, ti+1, no.ani))   # infn about [1ye, adu, dead, rep, juv]
@@ -162,10 +159,10 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   rownames(IND) <- c("1-Year", "Adu", "Dead", "Rep", "Chicks")
   
   # LINK YOY AND ADULTS TO DAILY NEST SUCCESS
-  nests <- array(data = NA, dim = c(2, ti+1, no.ani, season.length))
+  nests <- array(data = NA, dim = c(2, ti+1, Ntotal, season.length))
   for (age in 1:2) { # age classes
     for (year in 1:(ti+1)) { # year
-      for (i in 1:sum(IND[age, year, ], na.rm = TRUE)) {
+      for (i in 1:sum(IND[age, year, ], na.rm = TRUE)) { # every alive individual
         
         # assume everybody attempts a nest
         N.nests.total <- sum(IND[age, year, ], na.rm = TRUE)
@@ -315,13 +312,34 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   ##########################
   #ABBY NEST MODEL could go here
   
-  # TODO
-  # observation process
-  # IND_Nest is the pop of birds we are drawing from
+  inds.nests.available <- resamp3
+  visit.interval <- 3
   
-  # which of these nests were found - this is also latent
-  which.found <- sort(sample(1:N.nests.total, prop.nests.found * N.nests.total))
-  init.dates.found <- init.dates[which.found]
+  n.found <- length(inds.nests.available) * prop.nests.found
+  
+  N.nests.total <- sum(IND[age, year, ], na.rm = TRUE)
+  
+  H <- array(data = NA, dim = c(ti+1, n.found, season.length))
+  Hlatent <- array(data = NA, dim = c(ti+1, n.found, season.length))
+  which.found <- matrix(data = NA, nrow = ti+1, ncol = n.found)  
+  for (year in 1:(ti+1)) { # year
+    # which of these nests were found - this is also latent
+    which.found[year, ] <- sort(sample(resamp3, n.found))
+    #print()
+    for (i in 1:n.found) {
+      if (IND[2, year, which.found[year, ][i]] > 0) {
+        Hlatent[year, i, ] <- nests[sample(1:2, 1), year, which.found[year, ][i], ]
+        for (d in 1:season.length) {
+          
+        }  
+      }
+    }
+  }
+  
+  # TODO
+  # ack
+  
+  dinit.dates.found <- init.dates[which.found]
   N.nests.found <- length(which.found)
   
   found.nests.age <- total.nests.age[which.found, ]
@@ -379,12 +397,17 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   last[which.successful] <- apply(observed.nest.status[which.successful, ], 1, function(x) max(which(!is.na(x))))
   last[-which.successful] <- apply(observed.nest.status[-which.successful, ], 1, function(x) min(which(!is.na(x) & x == 0)))
   
+  clutch.sizes <- rpois(N.nests.successful, mean.clutch.size)
+  
   # TODO
-  # abby put stuff to return
+  # fledged
   
   #Get all the data together, just MR and Survey Counts until nest in here
   return(list(ch=ch, SUR=SUR, age_ch=age_ch, first=first, last=last,
-              R=R, nestlings=nestlings*2))
+              H=H, Fledged=Fledged, 
+              first.nest = first.nest, last.nest = last.nest, 
+              max.nest.age = max.nest.age, 
+              n.nests = n.nests, n.succ.nests = n.succ.nests))
 }
 df<-simIPMdata(n.years=10, n.data=c(50,50,50), init.age = c(100,100), 
                phi.1=0.7, phi.ad=0.76,p.1=0.98, p.ad=0.65,
