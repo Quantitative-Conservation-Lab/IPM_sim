@@ -59,8 +59,13 @@ scenarios <- scenarios %>%
 
 for (s in 1:n.scenarios) {
   for (i in 1:sims.per) {
-    # run model with appropriate simulation
-    
+    if (scenarios[s, `MR Included`] == 1 & scenarios[s, `Nests Includedd`] == 1) {
+      # run full model
+    } else if (scenarios[s, `MR Included`] == 1 & scenarios[s, `Nests Includedd`] == 0) {
+      # run no nest model
+    } else if (scenarios[s, `MR Included`] == 0 & scenarios[s, `Nests Includedd`] == 1) {
+      # run no resight model
+    }
     
     # save results to file and to environment
     outcopy <- out
