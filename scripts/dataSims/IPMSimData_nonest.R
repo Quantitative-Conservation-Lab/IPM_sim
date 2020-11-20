@@ -34,7 +34,7 @@ visit.interval <- 3
 simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
  f.1, f.ad, p.sur, 
  n.initiation.dates, max.nest.age, first.initiation.date, last.fledge.date, 
- season.length, mean.clutch.size, phi.nest, prop.nests.found, visit.interval){
+ season.length, mean.clutch.size, phi.nest, prop.nests.found, visit.interval, n.sam){
   
   ti<-n.years
   ni<-n.years-1
@@ -54,6 +54,7 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   phi.nest <- phi.nest
   prop.nests.found <- prop.nests.found
   visit.interval <- visit.interval
+  n.sam <- n.sam
   
   # DERIVE TRUE FECUNDITY
   true.fec <- 1/2 * mean.clutch.size * phi.nest^max.nest.age
@@ -441,9 +442,10 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
               H=Htidy, Fledged=Fledgedtidy, 
               first.nest = first.nesttidy, last.nest = last.nesttidy, 
               max.nest.age = max.nest.age, 
-              n.nests = N.nests.found, n.succ.nests = N.nests.successful))
+              n.nests = N.nests.found, n.succ.nests = N.nests.successful, 
+              n.sam = n.sam))
 }
 df<-simIPMdata(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
                f.1, f.ad, p.sur, 
                n.initiation.dates, max.nest.age, first.initiation.date, last.fledge.date, 
-               season.length, mean.clutch.size, phi.nest, prop.nests.found, visit.interval)  
+               season.length, mean.clutch.size, phi.nest, prop.nests.found, visit.interval, n.sam)  

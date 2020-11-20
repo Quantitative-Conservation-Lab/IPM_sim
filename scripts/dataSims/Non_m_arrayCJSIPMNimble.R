@@ -9,17 +9,27 @@ source(here("scripts", "dataSims","IPMsimData_nonest.R")) #changed the MR data
 # 11.3. Example of a simple IPM (counts, capture-recapture, reproduction)
 # 11.3.1. Load data
 # Population counts (from years 1 to n.years)
-y <- SUR#df$SUR
+y <- df$SUR
+n.sam <- df$n.sam
 
 # Capture-recapture data (in m-array format, from years 1 to n.years)
-m <- ch#df$ch
-
+m <- df$ch
+first <- df$first
+age_ch <- df$age_ch
 
 #Productivity/nest success not in the data sim right now
 #these will need to be changed once we have the nest success data
 # Productivity data (from years 1 to n.years-1)
-J<-nestlings#df$nestlings
-R<-R#df$R
+#J<-nestlings#df$nestlings
+#R<-R#df$R
+ 
+H <- df$H
+Fledged <- df$Fledged
+first.nest <- df$first.nest
+last.nest <- df$last.nest
+max.nest.age <- df$max.nest.age
+n.nests <- df$n.nests
+n.succ.nests <- df$n.succ.nests
 
 library("nimble")
 IPMmod<-nimbleCode({
@@ -44,14 +54,14 @@ IPMmod<-nimbleCode({
   p.surv~dunif(0,1)
   #  productivity
   for (t in 1:(nyears-1)){
-    f[t] <- mean.fec
+    f[t] <- fec
   }
-  mean.fec ~ dunif(0, 20)
+  #mean.fec ~ dunif(0, 20)
   
   # 3.1. Likelihood for population population count data (state-space model)
   # 3.1.1 System process
   for (t in 2:nyears){
-    mean1[t] <- f[t-1] / 2 * mean.phi[1] * Ntot[t-1]
+    mean1[t] <- f[t-1] * mean.phi[1] * Ntot[t-1]
     N1[t] ~ dpois(mean1[t])
     Nad[t] ~ dbin(mean.phi[2], Ntot[t-1])
   }
@@ -84,11 +94,29 @@ IPMmod<-nimbleCode({
   #################################
   #nest success model goes here
   
-  # 3.3. Likelihood for productivity data: Poisson regression
-  for (t in 1:(nyears-1)){
-    J[t] ~ dpois(rho[t])
-    rho[t] <- R[t]*f[t]
+  # Priors and constraints #####
+  lambdaf ~ dunif(0, 10)
+  
+  phi.nest ~ dunif(0, 1)
+   
+  for (t in 1:nyears) {
+    for (n in 1:n.nests[t]) {
+      for(d in (first.nest[t, n] + 1):last.nest[t, n]) {
+        H[t, n, d] ~ dbern(phi.nest * H[t, n, d - 1])
+      } # d
+    } # n
+    
+    for (c in 1:n.succ.nests[t]) {
+      Fledged[t, c] ~ dpois(lambdaf) 
+    } # c
   }
+
+  # Derived quantities #####
+  
+  fec <- 1/2 * lambdaf * phi.nest^max.nest.age
+  
+  # END derived quantities
+  
 })
 
 
@@ -111,7 +139,7 @@ ageunknown<-function(age_ch){
   f1<-l1<-numeric(dim(allages)[1])
   t<-dim(age_ch)[2]
   for(i in 1:dim(allages)[1]){
-    f1[i]<-min(which(allages[i,]==1))
+    f1[i]<-min(which(allages[i,]>=1))
     l1[i]<-max(which(allages[i,]>0))
     if((f1[i]+1)<=t){
       allages[i,(f1[i]+1)]<-2
@@ -134,20 +162,39 @@ z.state <- state.data(m)
 # data
 #HAS- can probably clean all of this up when the data sim is ready to go, 
 #so it automatically inputs the right data and constants 
-datipm <- list(ch.y = m, y = y, J = J, R = R)
+datipm <- list(ch.y = m, y = y, #J = J, R = R, 
+               H = H, 
+               Fledged = Fledged)
 constants<-list(nyears = ncol(m), 
-                n.ind=nrow(m), first=first, age=age, n.sam=n.sam)
+                n.ind=nrow(m), first=first, age=age, n.sam=n.sam,
+                n.nests = n.nests, 
+                n.succ.nests = n.succ.nests, 
+                first.nest = first.nest, 
+                last.nest = last.nest, 
+                max.nest.age = max.nest.age)
 # Initial values
+
+# function for H inits - set every NA to 1
+# ugly but whatever
+Hinits <- H
+Hinits[!is.na(H)] <- NA
+Hinits[is.na(H)] <- 1
+
 inits <- list(mean.phi=runif(2,0,1),
               mean.p = runif(1, 0, 1), 
-              mean.fec = runif(1, 0, 10), 
+              #mean.fec = runif(1, 0, 10), 
               z=z.state,
               p.surv=runif(1,0,1),
               n1.start=sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
-              nad.start=sample(1:30,1))
+              nad.start=sample(1:30,1),
+              phi.nest = runif(1, 0, 1), 
+              lambdaf = runif(1, 0, 10),
+              H = Hinits
+              )
 parameters <- c("mean.phi", 
-                "mean.p", "mean.fec", "N1", "Nad", 
-                "Ntot", "lambda", "p.surv")
+                "mean.p", "fec", "N1", "Nad", 
+                "Ntot", "lambda", "p.surv", 
+                "phi.nest", "lambdaf")
 mod<-nimbleModel(IPMmod, constants=constants, data=datipm, inits=inits)
 conf<-configureMCMC(mod)
 conf$addMonitors(parameters)
@@ -156,4 +203,11 @@ Cmodel<-compileNimble(mod)
 Cmcmc<-compileNimble(Rmcmc, project=Cmodel)
 Cmcmc$run(thin=10, reset=T, niter=10000, nburnin=5000)
 out<-as.data.frame(as.matrix(Cmcmc$mvSamples))
+
+# TODO
+# slice sampler reached maximum number of contractions for Ns :(
+
+# choke points
+# data sim takes some time
+# compile nimble takes some time
 
