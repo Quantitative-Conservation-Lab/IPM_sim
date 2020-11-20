@@ -9,7 +9,7 @@
 library(nimble)
 
 n.years=10; n.data=c(50,50,50);init.age = c(10,10); 
-phi.1=0.5; phi.ad=0.76;p.1=0.98; p.ad=0.65;
+phi.1=0.85; phi.ad=0.76;p.1=0.98; p.ad=0.65;
 f.1=0.8;f.ad=0.8; p.sur=0.8; p.prod=0.77
 
 n.initiation.dates <- 31
@@ -29,8 +29,12 @@ prop.nests.found <- 0.8
 
 n.sam<-3
 
+visit.interval <- 3
+
 simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
- f.1, f.ad, p.sur, p.prod){
+ f.1, f.ad, p.sur, 
+ n.initiation.dates, max.nest.age, first.initiation.date, last.fledge.date, 
+ season.length, mean.clutch.size, phi.nest, prop.nests.found, visit.interval){
   
   ti<-n.years
   ni<-n.years-1
@@ -49,6 +53,7 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   mean.clutch.size <- mean.clutch.size
   phi.nest <- phi.nest
   prop.nests.found <- prop.nests.found
+  visit.interval <- visit.interval
   
   # DERIVE TRUE FECUNDITY
   true.fec <- 1/2 * mean.clutch.size * phi.nest^max.nest.age
@@ -169,8 +174,10 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
         # assume everybody attempts a nest
         N.nests.total <- sum(IND[age, year, ], na.rm = TRUE)
         
-        total.nests.age <- matrix(NA, nrow = N.nests.total, ncol = season.length)
-        total.nests.status <- matrix(NA, nrow = N.nests.total, ncol = season.length)
+        inds.nesting <- which(!is.na(IND[age, year, ]))
+        
+        total.nests.age <- matrix(NA, nrow = Ntotal, ncol = season.length)
+        total.nests.status <- matrix(NA, nrow = Ntotal, ncol = season.length)
         
         # initiation date
         # uniform across season length
@@ -179,17 +186,17 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
         
         for (i in 1:N.nests.total) {
           # true age of nest 
-          total.nests.age[i, init.dates[i]:(init.dates[i] + max.nest.age - 1)] <- 1:max.nest.age
+          total.nests.age[inds.nesting[i], init.dates[i]:(init.dates[i] + max.nest.age - 1)] <- 1:max.nest.age
           
           # true status of nest
-          total.nests.status[i, init.dates[i]] <- 1 
+          total.nests.status[inds.nesting[i], init.dates[i]] <- 1 
           for (a in 1:(max.nest.age-1)) {
-            total.nests.status[i, init.dates[i] + a] <- rbinom(1, 1, total.nests.status[i, init.dates[i] + a - 1] * phi.nest)
+            total.nests.status[inds.nesting[i], init.dates[i] + a] <- rbinom(1, 1, total.nests.status[inds.nesting[i], init.dates[i] + a - 1] * phi.nest)
           }
         }
       }
       
-      nests[age, year, 1:N.nests.total, ] <- total.nests.status
+      nests[age, year, inds.nesting, ] <- total.nests.status[inds.nesting, ]
     }
   }
   
@@ -334,102 +341,109 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   #ABBY NEST MODEL could go here
   
   inds.nests.available <- resamp3
-  visit.interval <- 3
   
-  n.found <- length(inds.nests.available) * prop.nests.found
-  
-  N.nests.total <- sum(IND[age, year, ], na.rm = TRUE)
+  n.found <- length(inds.nests.available) #* prop.nests.found
   
   H <- array(data = NA, dim = c(ti+1, n.found, season.length))
   Hlatent <- array(data = NA, dim = c(ti+1, n.found, season.length))
   which.found <- matrix(data = NA, nrow = ti+1, ncol = n.found)  
+  
+  Fledged <- matrix(data = NA, nrow = ti+1, ncol = n.found)  
+  
+  is.nest <- matrix(data = NA, nrow = ti+1, ncol = n.found)
+  last.status <- matrix(data = NA, nrow = ti+1, ncol = n.found)
+  first.nest <- matrix(data = NA, nrow = ti+1, ncol = n.found)
+  last.nest <- matrix(data = NA, nrow = ti+1, ncol = n.found)
   for (year in 1:(ti+1)) { # year
     # which of these nests were found - this is also latent
     which.found[year, ] <- sort(sample(resamp3, n.found))
-    #print()
+    init.dates <- numeric(n.found)
+    age.when.found <- numeric(n.found)
+    ages.visited <- list(NULL)
     for (i in 1:n.found) {
-      if (IND[2, year, which.found[year, ][i]] > 0) {
-        Hlatent[year, i, ] <- nests[sample(1:2, 1), year, which.found[year, ][i], ]
-        for (d in 1:season.length) {
+      if (!is.na(IND[1, year, which.found[year, ][i]])) {
+        if (IND[1, year, which.found[year, ][i]] > 0) {
+          Hlatent[year, i, ] <- nests[1, year, which.found[year, ][i], ]
+          init.dates[i] <- min(which(!is.na(Hlatent[year, i, ])))
+          age.when.found[i] <- rcat(1, rep(1/max.nest.age, length.out = max.nest.age))
+          ages.visited[[i]] <- unique(c(seq(age.when.found[i], max.nest.age, by = visit.interval), max.nest.age))
           
-        }  
-      }
+          H[year, i, init.dates[i]+ages.visited[[i]]-1] <- Hlatent[year, i, init.dates[i]+ages.visited[[i]]-1]
+          
+          is.nest[year, i] <- H[year, i, min(which(!is.na(H[year, i, ])))] == 1
+          last.status[year, i] <- H[year, i, max(which(!is.na(H[year, i, ])))]
+          
+          if (last.status[year, i]) {
+            Fledged[year, i] <- IND[4, year, which.found[year, ][i]]
+          }
+          
+          first.nest[year, i] <- min(which(!is.na(H[year, i, ])))
+          if (is.nest[year, i]) {
+            last.nest[year, i] <- max(which(!is.na(H[year, i, ])))
+          } else {
+            last.nest[year, i] <- first.nest[year, i]
+          }
+            
+        } else if (IND[2, year, which.found[year, ][i]] > 0) {
+          Hlatent[year, i, ] <- nests[2, year, which.found[year, ][i], ]
+          init.dates[i] <- min(which(!is.na(Hlatent[year, i, ])))
+          age.when.found[i] <- rcat(1, rep(1/max.nest.age, length.out = max.nest.age))
+          ages.visited[[i]] <- unique(c(seq(age.when.found[i], max.nest.age, by = visit.interval), max.nest.age))
+          
+          H[year, i, init.dates[i]+ages.visited[[i]]-1] <- Hlatent[year, i, init.dates[i]+ages.visited[[i]]-1]
+          
+          is.nest[year, i] <- H[year, i, min(which(!is.na(H[year, i, ])))] == 1
+          last.status[year, i] <- H[year, i, max(which(!is.na(H[year, i, ])))]
+          
+          if (last.status[year, i]) {
+            Fledged[year, i] <- IND[4, year, which.found[year, ][i]]
+          }
+          
+          first.nest[year, i] <- min(which(!is.na(H[year, i, ])))
+          if (is.nest[year, i]) {
+            last.nest[year, i] <- max(which(!is.na(H[year, i, ])))
+          } else {
+            last.nest[year, i] <- first.nest[year, i]
+          }
+          
+        } # else if
+      } # if not NA
+    } # found
+  } # years
+  
+  N.nests.found <- rowSums(is.nest, na.rm = TRUE)
+  N.nests.successful <- rowSums(last.status, na.rm = TRUE)
+  
+  first.nesttidy <- matrix(data = NA, nrow = ti+1, max(N.nests.found)) 
+  last.nesttidy <- matrix(data = NA, nrow = ti+1, max(N.nests.found)) 
+  
+  Htidy <- array(data = NA, dim = c(ti+1, max(N.nests.found), season.length))
+  Fledgedtidy <- matrix(data = NA, nrow = ti+1, max(N.nests.successful)) 
+  for (year in 1:(ti+1)) { # year
+    
+    is.nest.this.year <- which(is.nest[year, ])
+    
+    if (N.nests.found[year] > 0) {
+      for (n in 1:N.nests.found[year]) {
+        Htidy[year, n, ] <- H[year, is.nest.this.year[n], ]
+        first.nesttidy[year, n] <- first.nest[year, is.nest.this.year[n]]
+        last.nesttidy[year, n] <- last.nest[year, is.nest.this.year[n]]
+      }  
+    }
+    
+    if (!all(is.na(Fledged[year, ]))) {
+      Fledgedtidy[year, 1:N.nests.successful[year]] <- na.omit(Fledged[year, ])  
     }
   }
   
-  # TODO
-  # ack
-  
-  dinit.dates.found <- init.dates[which.found]
-  N.nests.found <- length(which.found)
-  
-  found.nests.age <- total.nests.age[which.found, ]
-  found.nests.status <- total.nests.status[which.found, ]
-  
-  # detection process
-  
-  # age at first detection
-  # nests are checked every 3 days after that
-  # AEB note - currently equally likely to be observed at any age
-  age.when.found <- rcat(N.nests.found, rep(1/max.nest.age, length.out = max.nest.age))
-  ages.visited <- list(NULL)
-  for (i in 1:N.nests.found) {
-    ages.visited[[i]] <- unique(c(seq(age.when.found[i], max.nest.age, by = visit.interval), max.nest.age))
-  }
-  
-  # create observation matrix
-  observed.nest.age <- matrix(NA, nrow = N.nests.found, ncol = season.length)
-  observed.nest.status <- matrix(NA, nrow = N.nests.found, ncol = season.length)
-  
-  for (i in 1:N.nests.found) {
-    # age of nest
-    observed.nest.age[i, init.dates.found[i]+ages.visited[[i]]-1] <- ages.visited[[i]]
-    
-    # status of nest
-    observed.nest.status[i, init.dates.found[i]+ages.visited[[i]]-1] <- found.nests.status[i, init.dates.found[i]+ages.visited[[i]]-1]
-    
-    # AEB note - we assume we can age the nest
-    # and that our observations are perfect
-    # so if it fledged we know the date it fledged or *should* have fledged
-  }
-  
-  # HAVE TO REMOVE NESTS THAT FAILED BEFORE FOUND
-  
-  is.nest <- apply(observed.nest.status, 1, function(x) x[min(which(!is.na(x)))] == 1)
-  
-  observed.nest.age <- observed.nest.age[is.nest, ]
-  observed.nest.status <- observed.nest.status[is.nest, ]
-  
-  N.nests.found <- dim(observed.nest.age)[1]
-  
-  # how many were successful
-  # is last status a 1 or a 0
-  last.status <- apply(observed.nest.status, 1, function(x) x[max(which(!is.na(x)))])
-  
-  which.successful <- which(last.status == 1)
-  
-  N.nests.successful <- length(which.successful)
-  
-  first <- apply(observed.nest.status, 1, function(x) min(which(!is.na(x))))
-  
-  # if nest fledged, last is fledge day
-  # if nest failed, last is first zero
-  last <- rep(NA, length.out = N.nests.found)
-  last[which.successful] <- apply(observed.nest.status[which.successful, ], 1, function(x) max(which(!is.na(x))))
-  last[-which.successful] <- apply(observed.nest.status[-which.successful, ], 1, function(x) min(which(!is.na(x) & x == 0)))
-  
-  clutch.sizes <- rpois(N.nests.successful, mean.clutch.size)
-  
-  # TODO
-  # fledged
-  
   #Get all the data together, just MR and Survey Counts until nest in here
   return(list(ch=ch, SUR=SUR, age_ch=age_ch, first=first, last=last,
-              H=H, Fledged=Fledged, 
-              first.nest = first.nest, last.nest = last.nest, 
+              H=Htidy, Fledged=Fledgedtidy, 
+              first.nest = first.nesttidy, last.nest = last.nesttidy, 
               max.nest.age = max.nest.age, 
-              n.nests = n.nests, n.succ.nests = n.succ.nests))
+              n.nests = N.nests.found, n.succ.nests = N.nests.successful))
 }
-df<-simIPMdata(n.years=10, n.data=c(50,50,50), init.age = c(100,100), 
-               phi.1=0.7, phi.ad=0.76,p.1=0.98, p.ad=0.65,
-               f.1=0.8,f.ad=0.8, p.sur=0.8, p.prod=0.77)  
+df<-simIPMdata(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
+               f.1, f.ad, p.sur, 
+               n.initiation.dates, max.nest.age, first.initiation.date, last.fledge.date, 
+               season.length, mean.clutch.size, phi.nest, prop.nests.found, visit.interval)  
