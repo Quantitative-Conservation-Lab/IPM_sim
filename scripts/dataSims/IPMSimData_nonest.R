@@ -8,9 +8,9 @@
 
 library(nimble)
 
-n.years=10; n.data=c(50,50,50);init.age = c(10,10); 
-phi.1=0.85; phi.ad=0.76;p.1=0.98; p.ad=0.65;
-f.1=0.8;f.ad=0.8; p.sur=0.8; p.prod=0.77
+n.years=10; n.data=c(50,50,50);init.age = c(100,100); 
+phi.1=0.4; phi.ad=0.76;p.1=0.98; p.ad=0.65;
+p.sur=0.8; p.prod=0.77
 
 n.initiation.dates <- 31
 
@@ -79,6 +79,8 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   for (i in 1:ti){
     les <- matrix(data = c(PHI1[i]*FL1[i], PHI1[i]*FL2[i], PHI2[i], PHI2[i]), byrow=T, nrow = length(Ni), ncol = length(Ni))
     N[,(i+1)]<-les%*%N[,i]
+    les
+    eigen(les)
   }
   no.anim <- sum(N)
   no.ani <- round(no.anim*2.5)
