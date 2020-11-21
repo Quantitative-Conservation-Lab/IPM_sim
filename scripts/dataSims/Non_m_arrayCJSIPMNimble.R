@@ -64,12 +64,13 @@ IPMmod<-nimbleCode({
     #I think this was causing the problem, it was a little mis-specified
     #Double check that this is right, but it doesnt cause an error in 
     #Slice samplers this way
-    mean1[t]<-((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1]
+    #mean1[t]<-((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1]
     #for reference, this is how it was:
     #mean1[t] <- f[t-1] * mean.phi[1] * Ntot[t-1]
-    N1[t] ~ dpois(mean1[t])
+    N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
+    #N1[t] ~ dpois(mean1[t])
     #Also changed that the total is the sum of N1 and Nad, it was just Ntot before
-    Nad[t] ~ dbin(mean.phi[2], (N1[t-1]+Nad[t-1]))
+    Nad[t] ~ dbin(mean.phi[2],(Ntot[t-1]))
   }
   for (t in 1:nyears){
     Ntot[t] <- Nad[t] + N1[t] 
@@ -103,7 +104,9 @@ IPMmod<-nimbleCode({
   # Priors and constraints #####
   lambdaf ~ dunif(0, 10)
   
-  phi.nest ~ dunif(0, 1)
+  #changed this prior, since if it is too low the population goes negative
+  #and I gather from looking that this may be reasonable?
+  phi.nest ~ dunif(0.925, 1)
    
   for (t in 1:nyears) {
     for (n in 1:n.nests[t]) {
@@ -118,8 +121,7 @@ IPMmod<-nimbleCode({
   }
 
   # Derived quantities #####
-  
-  fec <- 1/2 * lambdaf * phi.nest^max.nest.age
+  fec <- 1/2 * lambdaf * (phi.nest^max.nest.age)
   
   # END derived quantities
   
@@ -168,7 +170,7 @@ z.state <- state.data(m)
 # data
 #HAS- can probably clean all of this up when the data sim is ready to go, 
 #so it automatically inputs the right data and constants 
-datipm <- list(ch.y = m, y = y, #J = J, R = R, 
+datipm <- list(ch.y = m, y = y, 
                H = H, 
                Fledged = Fledged)
 constants<-list(nyears = ncol(m), 
@@ -189,12 +191,13 @@ Hinits[is.na(H)] <- 1
 inits <- list(mean.phi=runif(2,0,1),
               mean.p = runif(1, 0, 1), 
               #mean.fec = runif(1, 0, 10), 
+              p.surv=runif(1,0,1),
               z=z.state,
               p.surv=runif(1,0,1),
-              n1.start=100,#sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
-              nad.start=100,#sample(1:30,1),
-              phi.nest = runif(1, 0, 1), 
-              lambdaf = runif(1, 0, 10),
+              n1.start=10,#sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
+              nad.start=10,#sample(1:30,1),
+              phi.nest = runif(1, 0.925, 1), 
+              lambdaf = runif(1, 1, 10),
               H = Hinits
               )
 parameters <- c("mean.phi", 
@@ -207,7 +210,7 @@ conf$addMonitors(parameters)
 Rmcmc<-buildMCMC(conf)
 Cmodel<-compileNimble(mod)
 #for 
-#Cmodel$setInits(inits)
+Cmodel$setInits(inits)
 #Cmodel$setData(newdata)
 Cmcmc<-compileNimble(Rmcmc, project=Cmodel)
 Cmcmc$run(thin=10, reset=T, niter=100000, nburnin=50000)
