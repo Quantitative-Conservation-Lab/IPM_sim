@@ -61,9 +61,15 @@ IPMmod<-nimbleCode({
   # 3.1. Likelihood for population population count data (state-space model)
   # 3.1.1 System process
   for (t in 2:nyears){
-    mean1[t] <- f[t-1] * mean.phi[1] * Ntot[t-1]
+    #I think this was causing the problem, it was a little mis-specified
+    #Double check that this is right, but it doesnt cause an error in 
+    #Slice samplers this way
+    mean1[t]<-((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1]
+    #for reference, this is how it was:
+    #mean1[t] <- f[t-1] * mean.phi[1] * Ntot[t-1]
     N1[t] ~ dpois(mean1[t])
-    Nad[t] ~ dbin(mean.phi[2], Ntot[t-1])
+    #Also changed that the total is the sum of N1 and Nad, it was just Ntot before
+    Nad[t] ~ dbin(mean.phi[2], (N1[t-1]+Nad[t-1]))
   }
   for (t in 1:nyears){
     Ntot[t] <- Nad[t] + N1[t] 
@@ -185,8 +191,8 @@ inits <- list(mean.phi=runif(2,0,1),
               #mean.fec = runif(1, 0, 10), 
               z=z.state,
               p.surv=runif(1,0,1),
-              n1.start=sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
-              nad.start=sample(1:30,1),
+              n1.start=100,#sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
+              nad.start=100,#sample(1:30,1),
               phi.nest = runif(1, 0, 1), 
               lambdaf = runif(1, 0, 10),
               H = Hinits
@@ -200,8 +206,11 @@ conf<-configureMCMC(mod)
 conf$addMonitors(parameters)
 Rmcmc<-buildMCMC(conf)
 Cmodel<-compileNimble(mod)
+#for 
+#Cmodel$setInits(inits)
+#Cmodel$setData(newdata)
 Cmcmc<-compileNimble(Rmcmc, project=Cmodel)
-Cmcmc$run(thin=10, reset=T, niter=10000, nburnin=5000)
+Cmcmc$run(thin=10, reset=T, niter=100000, nburnin=50000)
 out<-as.data.frame(as.matrix(Cmcmc$mvSamples))
 
 # TODO
