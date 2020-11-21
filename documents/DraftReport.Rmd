@@ -1,0 +1,190 @@
+---
+title: 'Title'
+output:
+  word_document:
+    reference_docx: mytemplate.docx
+  pdf_document: default
+---
+
+```{r include = FALSE}
+
+#set default performance for chunks and then modify individually if necessary
+#for reference: https://rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf
+# echo == show code
+# warning/message == show warnings/messages
+# results == type of output
+# eval == whether to evaluate code or not, defaults to TRUE
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, results = 'asis', fig.width = 4, fig.height = 3.5)
+```
+
+```{r load packages, results = 'hide', message = FALSE}
+
+library(tidyr)
+library(dplyr)
+library(cowplot)
+library(ggplot2)
+library(captioner)
+library(knitr)
+library(reshape2)
+library(here)
+
+#functions to use for calling figures/tables
+figs <- captioner(prefix = "Figure")
+tbls <- captioner(prefix = "Table")
+
+#source a plot theme for figures
+source(here::here('scripts', 'PlotTheme.R'))
+
+```
+
+
+```{r load data or model output, echo = FALSE}
+
+# #load data
+# rain <- data.frame(rain_std = rnorm(100, 10, 10), 
+#                        site = factor(rep(1:5, each = 20)))
+# 
+# #handy objects for summary stats?
+# avg_rain <- rain %>%
+#   group_by(site) %>%
+#   dplyr::summarize(avg_rain = mean(rain_std))
+
+
+```
+
+```{r create all figures and tables, echo = FALSE, results = 'hide'}
+
+# #Figures - there might be a more eloquent way, but in the past I've found you have to create objects above (figures and tables) so you can reference them in-text and then call them below where you actually want them to appear in the document
+# 
+# plotA <- ggplot(rain, aes(x = site, y = rain_std, col = site, group = site)) +
+#   geom_point() +
+#   xlab('') + ylab('') +
+#   plot_theme()
+# 
+# plotB <- ggplot(rain, aes(x = site, y = rain_std, group = site)) +
+#   geom_boxplot() +
+#   xlab('') + ylab('') +
+#   plot_theme()
+# 
+# plots <- plot_grid(plotA, plotB, labels = "auto", align = 'v', ncol = 1, hjust = 0, label_size = 10)
+# 
+# #use the 'figs' function created above
+# figs("plots", caption = "Scatter and boxplots of rain per site.")
+# 
+# 
+# #create table
+# rain_table <- avg_rain
+
+
+```
+
+
+
+**Title**
+
+Authors
+
+*Affiliations*
+Text
+
+**Abstract**  
+
+Don't forget that it's easy to call summaries from the data. For example, the sample size for this project is `r dim(rain)[1]`, and the average rainfall at site `r unique(as.numeric(rain[rain$site == 1,'site']))` over the study period is `r round(mean(rain[rain$site == 1,'rain_std']),1)`.
+<!-- AJW: make comments like this -->
+
+
+**Introduction**  
+
+
+
+**Methods**   
+
+*Data simulation and life history*  
+We will simulate data for a hypothetical passerine (or seabird) species that is best described with two age-classes: young-of-year (YOY) and adults. We will assume an even sex ratio between males and females, but we will use a female-only model because we assume that the population dynamics of our population are driven by female abundance and demography. We assume that the population is surveyed annually just prior to chicks hatching. Young and adult survival could be assumed to be the same. Adults produce new chicks at rate f, and those chicks survive to be YOY at rate $\phi_1$. Current YOY will also breed the following year, and also produce surviving chicks at rate f*phi1$. A life cycle diagram for this population is given below:
+
+
+
+Our hypothetical bird species nests once per year and we assume all adult females are breeders. The population is quite small, so we are able to monitor it over its entire range. Therefore we assume no immigration or emigration. 
+
+*Model framework and assumptions*  
+Productivity: Nests are monitored according to the procedures described in Martin and Geupel (1993). In summary, adults are carefully monitored for behavioral clues that indicate nesting behavior, and followed until a nest is found. We assume that the nests found are independent and representative of the population. After locating a nest, we revisit the nest every 2-3 days to check its status, until it either fledges or fails. We assume our observations of the nests are perfect. It takes 30 days from nest initiation for chicks to fledge, regardless of clutch size. We assume that nests can be correctly aged when first found. We also assume the daily survival probability is the same regardless of nest stage (i.e. laying, incubating, nestlings). We use a daily nest survival model to obtain unbiased estimates for the probability of nest success (i.e. at least 1 chick fledges), and a Poisson model to estimate the average number of chicks fledged conditional on a nest being successful.
+
+Equations
+
+MR: Chicks are marked in the nest just prior to fledging with a unique combination of colored leg bands such that they can be individually identified over the course of their life. Every chick in every nest that fledges is banded. We perform 1 exhaustive mark-resight survey per breeding season. We will use a Cormack-Jolly-Seber (CJS) model to estimate juvenile and adult survival based on the resulting individual encounter histories. In accordance with the CJS model, we assume that each marked individual is independent with the same probability of detection and same probability of survival in and between sampling occasions. We also assume that marks are not lost and they are perfectly observed.
+
+Equations
+
+Counts: Count surveys are conducted 3 times per year just prior to breeding. Since we assume no immigration and emigration, and these surveys are done in quick succession, we assume the population is closed during this period of time. We assume no individual is double counted on a survey, and that individual detections are independent and occur with equal probability. Therefore we will use an N-mixture model to estimate annual population abundance from this repeated count data.
+
+Equations
+
+Integration: leslie matrix/pop model; joint likelihood equations
+
+*Simulation scenarios* 
+
+Scenarios - see sheet
+
+Metrics to monitor
+CV (precision)
+RMSE (accuracy)
+Relative bias
+
+Vary data quantity/combinations and demographic rates
+Low MR detection vs high
+Low daily nest survival vs high
+Low abund detection vs high
+
+Best scenario, using all three datasets
+Potential add-on: vary life history traits:
+Survival: 0.3 vs. 0.8
+Fecundity: 0.3 vs. 0.5
+Remove nest monitoring entirely - use other two datasets (MR and counts)
+Model adjustments: informed priors? 
+Sensitivity to priors?
+Remove MR data entirely - use other two datasets (nest monitoring and counts)
+Model adjustments: informed priors?
+Sensitivity to priors?
+Poorer quality MR
+Quantity: decrease N (20 individuals vs. 100 resights per year)
+Quality: decrease p (0.1, 0.5, 0.8) or annual surveys (5 vs. 10)
+
+*Estimation and diagnostics*  
+Nimble; iterations, burn-in, etc
+Examined relative bias, RMSE, etc
+
+
+
+**Results**  
+
+**Discussion**  
+
+
+\newpage
+
+
+**Literature cited**  
+
+ 
+\newpage
+
+**Figures and Tables**  
+
+```{r, fig.height = 8.5, fig.width = 7, fig.align = 'center'}
+
+plots
+
+```
+
+`r figs("plots", caption = "Scatter and boxplots of rain per site.")`
+
+
+\newpage
+
+`r tbls("rain_table", caption = "Table of rain by site.")`
+```{r}
+
+kable(rain_table, align = 'c', format.args = list(big.mark = ","))
+
+```
+
