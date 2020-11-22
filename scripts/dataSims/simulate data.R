@@ -53,17 +53,32 @@ scenarios <- scenarios %>%
   mutate(`MR Included` = ifelse(`MR Included` == "Y",1,0)) %>% 
   mutate(`Abund Included` = ifelse(`Abund Included` == "Y",1,0)) %>% 
   mutate(`Nests Included` = ifelse(`Nests Included` == "Y",1,0)) %>%
-  select(-`Sims per`)
+  select(-`Sims per`) %>%
+  mutate(`Fec` = 1/2 * `Mean Clutch Size` * `Daily nest survival`^30)
+
+lams <- apply(scenarios, 1, function(x) {eigen(matrix(data = c(x[8] * x[11], x[8] * x[11], x[7], x[7]), 
+                                              byrow = TRUE, nrow = 2, ncol = 2))$values[1]})
+
+scenarios <- cbind(scenarios, lams)
+View(scenarios)
+
+# AEB note
+# parameter values picked such that
+# parameter with most uncertainty - juv survival (one we observe most indirectly)
+  # how good at we are recovering that 
 
 # run simulations ######
 
 for (s in 1:n.scenarios) {
   for (i in 1:sims.per) {
     if (scenarios[s, `MR Included`] == 1 & scenarios[s, `Nests Includedd`] == 1) {
+      # simulate datasets
       # run full model
     } else if (scenarios[s, `MR Included`] == 1 & scenarios[s, `Nests Includedd`] == 0) {
+      # simulate datasets
       # run no nest model
     } else if (scenarios[s, `MR Included`] == 0 & scenarios[s, `Nests Includedd`] == 1) {
+      # simulate datasets
       # run no resight model
     }
     
