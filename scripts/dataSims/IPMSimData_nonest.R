@@ -8,9 +8,9 @@
 
 library(nimble)
 
-n.years=10; n.data=c(50,50,50);init.age = c(100,100); 
+n.years=10; n.data=c(50,50,100);init.age = c(100,100); 
 phi.1=0.4; phi.ad=0.76;p.1=0.98; p.ad=0.65;
-p.sur=0.8; p.prod=0.77
+p.prod=0.77; p.sur=0.8
 
 n.initiation.dates <- 31
 
@@ -31,8 +31,7 @@ n.sam<-3
 
 visit.interval <- 3
 
-simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
- f.1, f.ad, p.sur, 
+simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,p.sur,
  n.initiation.dates, max.nest.age, first.initiation.date, last.fledge.date, 
  season.length, mean.clutch.size, phi.nest, prop.nests.found, visit.interval, n.sam){
   
@@ -43,8 +42,8 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   phi1<-phi.1
   phi2<-phi.ad
   pjuv<-p.1
-  padults<-p.ad
   psur<-p.sur
+  padults<-p.ad
   n.initiation.dates <- n.initiation.dates
   max.nest.age <- max.nest.age
   first.initiation.date <- first.initiation.date
@@ -381,9 +380,11 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
           }
           
           first.nest[year, i] <- min(which(!is.na(H[year, i, ])))
-          if (is.nest[year, i]) {
+          if (is.nest[year, i] & last.status[year, i]) { # found active and succeeded
             last.nest[year, i] <- max(which(!is.na(H[year, i, ])))
-          } else {
+          } else if (is.nest[year, i] & !last.status[year, i]) { # found active but then failed
+            last.nest[year, i] <- min(which(!is.na(H[year, i, ]) & H[year, i, ] == 0))
+          } else { # found inactive
             last.nest[year, i] <- first.nest[year, i]
           }
             
@@ -403,9 +404,11 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
           }
           
           first.nest[year, i] <- min(which(!is.na(H[year, i, ])))
-          if (is.nest[year, i]) {
+          if (is.nest[year, i] & last.status[year, i]) { # found active and succeeded
             last.nest[year, i] <- max(which(!is.na(H[year, i, ])))
-          } else {
+          } else if (is.nest[year, i] & !last.status[year, i]) { # found active but then failed
+            last.nest[year, i] <- min(which(!is.na(H[year, i, ]) & H[year, i, ] == 0))
+          } else { # found inactive
             last.nest[year, i] <- first.nest[year, i]
           }
           
@@ -418,6 +421,7 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
   N.nests.successful <- rowSums(last.status, na.rm = TRUE)
   
   first.nesttidy <- matrix(data = NA, nrow = ti+1, max(N.nests.found)) 
+  
   last.nesttidy <- matrix(data = NA, nrow = ti+1, max(N.nests.found)) 
   
   Htidy <- array(data = NA, dim = c(ti+1, max(N.nests.found), season.length))
@@ -447,7 +451,6 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
               n.nests = N.nests.found, n.succ.nests = N.nests.successful, 
               n.sam = n.sam))
 }
-df<-simIPMdata(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,
-               f.1, f.ad, p.sur, 
+df<-simIPMdata(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,p.sur,
                n.initiation.dates, max.nest.age, first.initiation.date, last.fledge.date, 
                season.length, mean.clutch.size, phi.nest, prop.nests.found, visit.interval, n.sam)  

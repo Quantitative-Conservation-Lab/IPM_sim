@@ -102,7 +102,7 @@ IPMmod<-nimbleCode({
   #nest success model goes here
   
   # Priors and constraints #####
-  lambdaf ~ dunif(0, 10)
+  lambdaf ~ dunif(1, 5)
   
   #changed this prior, since if it is too low the population goes negative
   #and I gather from looking that this may be reasonable?
@@ -185,8 +185,8 @@ constants<-list(nyears = ncol(m),
 # function for H inits - set every NA to 1
 # ugly but whatever
 Hinits <- H
-Hinits[!is.na(H)] <- NA
-Hinits[is.na(H)] <- 1
+Hinits[which(!is.na(H))] <- NA
+Hinits[which(is.na(H))] <- 1
 
 inits <- list(mean.phi=runif(2,0,1),
               mean.p = runif(1, 0, 1), 
@@ -197,8 +197,8 @@ inits <- list(mean.phi=runif(2,0,1),
               n1.start=10,#sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
               nad.start=10,#sample(1:30,1),
               phi.nest = runif(1, 0.925, 1), 
-              lambdaf = runif(1, 1, 10),
-              H = Hinits
+              lambdaf = runif(1, 1, 10) #,
+              #H = Hinits
               )
 parameters <- c("mean.phi", 
                 "mean.p", "fec", "N1", "Nad", 
@@ -208,7 +208,7 @@ mod<-nimbleModel(IPMmod, constants=constants, data=datipm, inits=inits)
 conf<-configureMCMC(mod)
 conf$addMonitors(parameters)
 Rmcmc<-buildMCMC(conf)
-Cmodel<-compileNimble(mod)
+Cmodel<-compileNimble(mod, maxContractions = 1000)
 #for 
 Cmodel$setInits(inits)
 #Cmodel$setData(newdata)
