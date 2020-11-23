@@ -110,6 +110,15 @@ Our hypothetical bird species nests once per year and we assume all adult female
 Productivity: Nests are monitored according to the procedures described in Martin and Geupel (1993). In summary, adults are carefully monitored for behavioral clues that indicate nesting behavior, and followed until a nest is found. We assume that the nests found are independent and representative of the population. After locating a nest, we revisit the nest every 2-3 days to check its status, until it either fledges or fails. We assume our observations of the nests are perfect. It takes 30 days from nest initiation for chicks to fledge, regardless of clutch size. We assume that nests can be correctly aged when first found. We also assume the daily survival probability is the same regardless of nest stage (i.e. laying, incubating, nestlings). We use a daily nest survival model to obtain unbiased estimates for the probability of nest success (i.e. at least 1 chick fledges), and a Poisson model to estimate the average number of chicks fledged conditional on a nest being successful.
 
 Equations
+$J_t \sim Poisson(\rho_t) $
+$\rho_t = R_tf_t $
+
+$f_t \sim Uniform(0, 20) $
+priors for rho or R?
+
+likelihood
+$L_P(\text{J}, \text{R}|\text{f})$
+
 
 MR: Chicks are marked in the nest just prior to fledging with a unique combination of colored leg bands such that they can be individually identified over the course of their life. Every chick in every nest that fledges is banded. We perform 1 exhaustive mark-resight survey per breeding season. We will use a Cormack-Jolly-Seber (CJS) model to estimate juvenile and adult survival based on the resulting individual encounter histories. In accordance with the CJS model, we assume that each marked individual is independent with the same probability of detection and same probability of survival in and between sampling occasions. We also assume that marks are not lost and they are perfectly observed.
 
@@ -117,7 +126,17 @@ Equations
 
 Counts: Count surveys are conducted 3 times per year just prior to breeding. Since we assume no immigration and emigration, and these surveys are done in quick succession, we assume the population is closed during this period of time. We assume no individual is double counted on a survey, and that individual detections are independent and occur with equal probability. Therefore we will use an N-mixture model to estimate annual population abundance from this repeated count data.
 
-Equations
+state process
+$N_{1, t+1} \sim Poisson(N_{1,t}, S_{juv,t}, \frac{f_t}{2} + N_{ad,t}S_{ad,t},\frac{f_t}{2})$
+
+$N_{ad,t+1} \sim Binomial(N_{1,t} + N_{ad,t}, S_{ad,t})$
+
+observation process
+$y_t = (N_{tot, t}) + \epsilon$
+$\epsilon \sim Normal(0, \sigma^2_y)$
+
+likelihood
+$L_{SS}(\text{y}|\text{N}, \text{S_juv}, \text{S_ad}, \text{f}, \sigma^2_y) = L_O(\text{y}|\text{N},\sigma^2_y) \times L_S(\text{N}|\text{S_juv}, \text{S_ad}, \text{f})$
 
 Integration: leslie matrix/pop model; joint likelihood equations
 
