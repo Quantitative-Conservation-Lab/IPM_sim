@@ -124,6 +124,21 @@ MR: Chicks are marked in the nest just prior to fledging with a unique combinati
 
 Equations
 
+  $ z_{i,t}|z_{i,t-1} \sim bernoulli(z_{i,t-1} S_{1,ad}) $
+  $ y_{i,t}|z_{i,t} \sim  bernoulli(z_{i,t} p)$
+  
+  $ S_{1,ad} \sim uniform(0,1)$
+  $ p \sim uniform(0,1)$
+  
+  likelihood
+
+  $L_{SS}(\text{y}|\text{z}, \text{S_juv}, \text{S_ad}, \text{p}) = L_O(\text{y}|\text{z},\text{p})     \times L_S(\text{z}|\text{S_juv}, \text{S_ad})$
+
+  
+  
+  
+  
+
 Counts: Count surveys are conducted 3 times per year just prior to breeding. Since we assume no immigration and emigration, and these surveys are done in quick succession, we assume the population is closed during this period of time. We assume no individual is double counted on a survey, and that individual detections are independent and occur with equal probability. Therefore we will use an N-mixture model to estimate annual population abundance from this repeated count data.
 
 state process
