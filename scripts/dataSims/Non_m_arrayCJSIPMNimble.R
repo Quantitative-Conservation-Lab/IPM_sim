@@ -102,7 +102,7 @@ IPMmod<-nimbleCode({
   #nest success model goes here
   
   # Priors and constraints #####
-  lambdaf ~ dunif(1, 5)
+  lambdaf ~ dunif(0, 5)
   
   #changed this prior, since if it is too low the population goes negative
   #and I gather from looking that this may be reasonable?
@@ -194,26 +194,26 @@ inits <- list(mean.phi=runif(2,0,1),
               p.surv=runif(1,0,1),
               z=z.state,
               p.surv=runif(1,0,1),
-              n1.start=10,#sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
-              nad.start=10,#sample(1:30,1),
+              n1.start=100,#sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
+              nad.start=100,#sample(1:30,1),
               phi.nest = runif(1, 0.925, 1), 
-              lambdaf = runif(1, 1, 10) #,
+              lambdaf = runif(1, 0, 5) #,
               #H = Hinits
               )
 parameters <- c("mean.phi", 
-                "mean.p", "fec", "N1", "Nad", 
-                "Ntot", "lambda", "p.surv", 
+                "mean.p", "fec", 
+                "p.surv", 
                 "phi.nest", "lambdaf")
 mod<-nimbleModel(IPMmod, constants=constants, data=datipm, inits=inits)
 conf<-configureMCMC(mod)
 conf$addMonitors(parameters)
 Rmcmc<-buildMCMC(conf)
-Cmodel<-compileNimble(mod, maxContractions = 1000)
-#for 
+Cmodel<-compileNimble(mod)#, maxContractions = 1000)
+#for re-running without compiling all the above
 Cmodel$setInits(inits)
 #Cmodel$setData(newdata)
 Cmcmc<-compileNimble(Rmcmc, project=Cmodel)
-Cmcmc$run(thin=10, reset=T, niter=100000, nburnin=50000)
+Cmcmc$run(thin=10, reset=T, niter=10000, nburnin=5000)
 out<-as.data.frame(as.matrix(Cmcmc$mvSamples))
 
 # TODO

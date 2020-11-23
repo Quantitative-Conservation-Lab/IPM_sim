@@ -9,8 +9,8 @@
 library(nimble)
 
 n.years=10; n.data=c(50,50,100);init.age = c(100,100); 
-phi.1=0.4; phi.ad=0.76;p.1=0.98; p.ad=0.65;
-p.prod=0.77; p.sur=0.8
+phi.1=0.3; phi.ad=0.77;p.1=0.98; p.ad=0.3;
+p.sur=0.3
 
 n.initiation.dates <- 31
 
@@ -20,7 +20,7 @@ last.fledge.date <- n.initiation.dates + max.nest.age
 season.length <- last.fledge.date - first.initiation.date + 1 + 2
 
 # mean clutch size
-mean.clutch.size <- 3
+mean.clutch.size <- 2.5
 
 # daily nest survival
 phi.nest <- 0.975
@@ -222,6 +222,7 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,p.sur,
   IND_MR <- IND[,,resamp1]
   IND_Count <- IND[,,resamp2]
   IND_Nest <- IND[,,resamp3]
+  #only use the yoy and adults that are alive
   
   #######Mark resight data
   #pretend marking and resighting:
@@ -344,6 +345,7 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,p.sur,
   
   inds.nests.available <- resamp3
   
+  
   n.found <- length(inds.nests.available) #* prop.nests.found
   
   H <- array(data = NA, dim = c(ti+1, n.found, season.length))
@@ -449,7 +451,7 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,p.sur,
               first.nest = first.nesttidy, last.nest = last.nesttidy, 
               max.nest.age = max.nest.age, 
               n.nests = N.nests.found, n.succ.nests = N.nests.successful, 
-              n.sam = n.sam))
+              n.sam = n.sam, true.fec=true.fec))
 }
 df<-simIPMdata(n.years, n.data, init.age, phi.1, phi.ad, p.1,p.ad,p.sur,
                n.initiation.dates, max.nest.age, first.initiation.date, last.fledge.date, 
