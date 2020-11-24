@@ -1,5 +1,5 @@
 ---
-title: 'Title'
+title: ''
 output:
   word_document:
     reference_docx: mytemplate.docx
@@ -7,14 +7,10 @@ output:
 ---
 
 ```{r include = FALSE}
-
-#set default performance for chunks and then modify individually if necessary
-#for reference: https://rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf
-# echo == show code
-# warning/message == show warnings/messages
-# results == type of output
-# eval == whether to evaluate code or not, defaults to TRUE
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, results = 'asis', fig.width = 4, fig.height = 3.5)
+#for reference: https://rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf
+
+
 ```
 
 ```{r load packages, results = 'hide', message = FALSE}
@@ -33,127 +29,133 @@ figs <- captioner(prefix = "Figure")
 tbls <- captioner(prefix = "Table")
 
 #source a plot theme for figures
-source(here::here('scripts', 'PlotTheme.R'))
+# source(here::here('scripts', 'PlotTheme.R'))
 
 ```
 
 
-```{r load data or model output, echo = FALSE}
+**Title**  
 
-# #load data
-# rain <- data.frame(rain_std = rnorm(100, 10, 10), 
-#                        site = factor(rep(1:5, each = 20)))
-# 
-# #handy objects for summary stats?
-# avg_rain <- rain %>%
-#   group_by(site) %>%
-#   dplyr::summarize(avg_rain = mean(rain_std))
+Ideas: 
+- Performance of integrated population models across varying data landscapes  
+- When and how far can we push the integrated population model framework? Estimating demographic parameters under variable data landscapes  
+- Pushing the limits: examining minimal data requirements for estimating demographic parameters in an integrated population model framework  
 
-
-```
-
-```{r create all figures and tables, echo = FALSE, results = 'hide'}
-
-# #Figures - there might be a more eloquent way, but in the past I've found you have to create objects above (figures and tables) so you can reference them in-text and then call them below where you actually want them to appear in the document
-# 
-# plotA <- ggplot(rain, aes(x = site, y = rain_std, col = site, group = site)) +
-#   geom_point() +
-#   xlab('') + ylab('') +
-#   plot_theme()
-# 
-# plotB <- ggplot(rain, aes(x = site, y = rain_std, group = site)) +
-#   geom_boxplot() +
-#   xlab('') + ylab('') +
-#   plot_theme()
-# 
-# plots <- plot_grid(plotA, plotB, labels = "auto", align = 'v', ncol = 1, hjust = 0, label_size = 10)
-# 
-# #use the 'figs' function created above
-# figs("plots", caption = "Scatter and boxplots of rain per site.")
-# 
-# 
-# #create table
-# rain_table <- avg_rain
-
-
-```
-
-
-
-**Title**
-
-Authors
-
-*Affiliations*
-Text
-
-**Abstract**  
-
-Don't forget that it's easy to call summaries from the data. For example, the sample size for this project is `r dim(rain)[1]`, and the average rainfall at site `r unique(as.numeric(rain[rain$site == 1,'site']))` over the study period is `r round(mean(rain[rain$site == 1,'rain_std']),1)`.
-<!-- AJW: make comments like this -->
+Abby Bratt, Caroline Cappello, Amelia DuVall, Hannah Sipe, Amanda Warlick
 
 
 **Introduction**  
 
+1. Briefly describe the issue, conclude with teaser sentence about what this project does
+IPMs as an increasingly popular tool that can provide tangible benefits
+Non-ID parameters, improved precision
+Expanded spatio-temporal inference
+These benefits have motivated interesting expansions and applications of this technique
+Examples
+First (?) joint analysis of mark-recovery and census data (Besbeas et al. 2002)
+Application to species (bats) w/ demographic data deficiencies (Schaub et al. 2007)
+Estimating hidden demographic processes (e.g., proportion of female lambs on the island and temporal variation) (Tavecchia et al. 2009)
+“We experimentally evaluated the flexibility and limitations of the integrated approach by omitting portions of the data and comparing the results from these “incomplete” data sets with those obtained from the entire data set and from the analysis of the mark-resighting-recovery data only”
+Inclusion of multivariate observations w/ estimation of transition probabilities within multi-state systems (McCrea et al. 2012)
+Inclusion of environmental stochasticity (Oppel et al. 2014)
+However, this growth in usage has occurred with relatively poor understanding of how to assess goodness of fit, and therefore less is also known about the bounds/limits of the IPM framework to estimate demographic parameters in situations where available data might be sparse. 
+Study summary: In this study, we use simulated data to examine IPM performance across a range of scenarios where data informing key demographic parameters may be either sparse or missing. 
+
+2. With the expansion of the use of IPMs, few studies have robustly examined IPM performance through data simulation. 
+In those that have used data simulation, the focus has been on:
+Proof of concept (improved precision and reduced bias)
+McCrea et al 2010, Chandler & Clark 2014, Schaub & Fletcher 2015, Bled et al. 2017, Ahrestani et al. 2017, Bowler et al. 2019
+Model assumptions
+Independence assumption (Abadi et al. 2010, Schaub & Fletcher 2015, Weegman et al. 2020)
+MR assumptions (survival heterogeneity, marker-induced bias; Riecke et al. 2019)
+None/few to date have looked at ability to return parameter values or power to detect trends when survival not informed by data or when a given data source is sparse, biased, or highly uncertain, but this is an interesting, complicated, and important topic
+IPM performance is often context-specific: depends on life history, sample size, effect sizes, likelihood structures, study/inference goals, so what can we learn
+Contributions of different datasets to the likelihood - helps us understand the underlying connections/mechanisms of the IPM, and to use this knowledge to think about IPM performance across life histories, survey designs, etc.
+
+3. The “typical” IPM has gotten a lot of mileage, but can we push the limits?
+The typical (survival and counts) has taught a lot, and been extended
+Examples of a few cool extensions: spatially explicit IPMs, source-sink dynamics, environmental stochasticity
+But wouldn’t it also be cool and open doors if we could apply this approach in situations where this “typical” data wasn’t available or was sparse? 
+Situations where only know fecundity and counts
+Situations where some of our data streams are biased and/or uncertain?
+Best to worst: unbiased/low variance, unbiased/high variance, biased/low variance, biased/high variance
+Sun et al. 2019 (adding sites vs. changing detection)
+Simmonds et al. 2020; Farr et al. 2020 (similar to our goals but for SDMs)
+We can’t confidently go in these directions without refining our understanding of the mechanisms underlying IPMs in these situations and where and when IPMs may not lead to improved precision or where they actually can’t estimate that unidentifiable parameter
+This study fills that knowledge gap by X (restate purpose/approach) with the aim of improving our understanding of this important statistical approach, particularly for passerine bird life history
+
+4. Why this study is useful for practitioners
+Study design: minimizing cost/effort and maximizing usefulness
+Surveys per week, hours per survey, number of sites, etc
+Intentional survey design vs opportunistic/community science program data  
+Sanderlin et al. 2014
+Helping ecologists understand what is possible with available data, particularly given the tendency to maximize what you have 
+Importance of unbiased estimates for conservation and management
 
 
 **Methods**   
 
-*Data simulation and life history*  
-We will simulate data for a hypothetical passerine (or seabird) species that is best described with two age-classes: young-of-year (YOY) and adults. We will assume an even sex ratio between males and females, but we will use a female-only model because we assume that the population dynamics of our population are driven by female abundance and demography. We assume that the population is surveyed annually just prior to chicks hatching. Young and adult survival could be assumed to be the same. Adults produce new chicks at rate f, and those chicks survive to be YOY at rate $\phi_1$. Current YOY will also breed the following year, and also produce surviving chicks at rate f*phi1$. A life cycle diagram for this population is given below:
+*Data simulation: life history*  
+We simulated data for an avian species assuming life history stages and traits of a typical passerine. Our simulated hypothetical species has two age-classes: young-of-year (YOY) and adults. Each age class has a unique survival rate ($S_1$, $S_{ad}$) and adults produce new chicks at rate *f*, and those chicks survive to be YOY at rate $S_1$. Current YOY will also breed the following year to produce surviving chicks at rate $f \times S_1$. (Fig 1). We assume an annual breeding cycle, with females nesting once per year. The period from nest initiation to fledging is 30 days regardless of clutch size. 
 
-
-
-Our hypothetical bird species nests once per year and we assume all adult females are breeders. The population is quite small, so we are able to monitor it over its entire range. Therefore we assume no immigration or emigration. 
+As is often the convention, we use a female-only model because we assume that the population dynamics of our species are driven largely by female abundance and demography. All demographic rates are assumed constant over a 15-year study period. The population is quite small and the survey extends across the entire range, therefore we assume no immigration or emigration.
 
 *Model framework and assumptions*  
-Productivity: Nests are monitored according to the procedures described in Martin and Geupel (1993). In summary, adults are carefully monitored for behavioral clues that indicate nesting behavior, and followed until a nest is found. We assume that the nests found are independent and representative of the population. After locating a nest, we revisit the nest every 2-3 days to check its status, until it either fledges or fails. We assume our observations of the nests are perfect. It takes 30 days from nest initiation for chicks to fledge, regardless of clutch size. We assume that nests can be correctly aged when first found. We also assume the daily survival probability is the same regardless of nest stage (i.e. laying, incubating, nestlings). We use a daily nest survival model to obtain unbiased estimates for the probability of nest success (i.e. at least 1 chick fledges), and a Poisson model to estimate the average number of chicks fledged conditional on a nest being successful.
 
-Equations
-$J_t \sim Poisson(\rho_t) $
-$\rho_t = R_tf_t $
+*Count model*  
+We simulated data such that the population is surveyed annually in a 15-year pre-breeding census. Count surveys are conducted three times per year in quick succession such that we assume the population is closed between secondary sampling periods. We use an N-mixture model to estimate annual abundance from these repeated counts, where we assume no individual is double counted and that individual detections are independent and occur with equal probability. The underlying state process represents the latent variables of stage-specific abundance at each occasion: 
 
-$f_t \sim Uniform(0, 20) $
-priors for rho or R?
+$$N_{1, t+1} \sim Poisson(N_{1,t}, S_{juv,t}, \frac{f_t}{2} + N_{ad,t}S_{ad,t},\frac{f_t}{2})$$  
+$$N_{ad,t+1} \sim Binomial(N_{1,t} + N_{ad,t}, S_{ad,t})$$  
 
-likelihood
-$L_P(\text{J}, \text{R}|\text{f})$
+where the number of juveniles ($N_1$) is estimated using a Poisson distribution with probability based on the sum of stage-specific individuals that survive and reproduce. A binomial distribution is used to estimate the number of adults based on the stage-specific survival and abundance in the previous occasion. 
 
+The observation process model, 
 
-MR: Chicks are marked in the nest just prior to fledging with a unique combination of colored leg bands such that they can be individually identified over the course of their life. Every chick in every nest that fledges is banded. We perform 1 exhaustive mark-resight survey per breeding season. We will use a Cormack-Jolly-Seber (CJS) model to estimate juvenile and adult survival based on the resulting individual encounter histories. In accordance with the CJS model, we assume that each marked individual is independent with the same probability of detection and same probability of survival in and between sampling occasions. We also assume that marks are not lost and they are perfectly observed.
+$$y_t = (N_{tot, t}) + \epsilon$$
+$$\epsilon \sim Normal(0, \sigma^2_y)$$
 
-Equations
+describes counts *y* at time *t* given given stage-specific abundance as binomially distributed with sample size $N_t$ and detection probability $p$, with normally distributed observation error $\epsilon$ estimated with mean = 0 with the prior for $sigma_y$ being U(0,10). 
+<!-- from amanda: help - prior for observation error?  -->
 
-  $ z_{i,t}|z_{i,t-1} \sim bernoulli(z_{i,t-1} S_{1,ad}) $
-  $ y_{i,t}|z_{i,t} \sim  bernoulli(z_{i,t} p)$
+The overall likelihood for this hierarchical state-space model can be described as the product of the state and observation processe models:
+$$L_{SS}(\text{y}|\text{N}, \text{S_juv}, \text{S_ad}, \text{f}, \sigma^2_y) = L_O(\text{y}|\text{N},\sigma^2_y) \times L_S(\text{N}|\text{S_juv}, \text{S_ad}, \text{f})$$
+ 
+*Nest success productivity model*   
+
+In this simulation, nests are monitored according to the procedures described in Martin and Geupel (1993), where adults are observed for behavioral clues that indicate nesting behavior and followed until a nest is found. After locating a nest, it is revisited every 2-3 days to check its status until it either fledges or fails. We assume no state uncertainty in our nest observations, that nests can be correctly aged when first found, and that monitored nests are independent and representative of the population. We assume the daily survival probability is uniform across nest stages (*i.e.*, laying, incubating, nestlings). We estimate daily nest survival to obtain unbiased estimates for the probability of nest success (*i.e.*, at least 1 chick fledges): We use a Poisson model to estimate the average number of chicks fledged conditional on a nest being successful.
+
+$$J_t \sim Poisson(\rho_t) $$
+$$\rho_t = R_tf_t $$
+
+where the number of nestlings counted $J$ in year *t* is modeled using a Poisson distribution with the product of the number of surveyed broods $R_t$ and fecundity $f_t$ at each time *t*. Fecundity is estimated using a uniform prior (0,20) and the likelihood of this daily nest survival model can be described as $L_P(\text{J}, \text{R}|\text{f})$. 
+
+*Mark-resight model*  
+In this simulation study, YOY chicks are marked in the nest just prior to fledging with a unique combination of colored leg bands such that they can be individually identified over the course of their lives. Every chick in every nest that fledges is banded from a single annual comprehensive mark-resight survey per breeding season. To estimate stage-specific survival based on the individual encounter histories, we use a Cormack-Jolly-Seber (citation) model where we assume that marks are not lost or misread and that each marked individual has independent and identical survival and detection probabilities across occasions. The ecological state process *z* describes the probability that individual *i* at time *t* is alive or dead, namely:  
+
+$$ z_{i,t}|z_{i,t-1} \sim bernoulli(z_{i,t-1} S_{1,ad}) $$
+
+where the state at time *t* is modeled with a Bernouli distribution based on the state at the previous occasion and state-specific survival probabilities $S_1$ and $S_{ad}$. Similarly, the observation process model
+
+$$ y_{i,t}|z_{i,t} \sim  bernoulli(z_{i,t} p)$$
   
-  $ S_{1,ad} \sim uniform(0,1)$
-  $ p \sim uniform(0,1)$
-  
-  likelihood
+describes observations *y* using a Bernouli distribution based on the state of the individual in the current occasion and detection probability *p*. Mean survival and detection probabilities are modeled on the probability scale using uniform priors, $ S_{1,ad} \sim uniform(0,1)$, $ p \sim uniform(0,1)$, respectively. The overall likelihood of the mark-resight model estimating survival probabilities is the product of the state and observation process models: $L_{SS}(\text{y}|\text{z}, \text{S_juv}, \text{S_ad}, \text{p}) = L_O(\text{y}|\text{z},\text{p})     \times L_S(\text{z}|\text{S_juv}, \text{S_ad})$.
 
-  $L_{SS}(\text{y}|\text{z}, \text{S_juv}, \text{S_ad}, \text{p}) = L_O(\text{y}|\text{z},\text{p})     \times L_S(\text{z}|\text{S_juv}, \text{S_ad})$
+*Integrated population model*  
 
-  
-  
-  
-  
+To estimate abundance of the overall population $N_{tot}$ at each time *t*, the parameter estimates from the productivity and mark-resight models are combined with the stage-specific abundane estimated using the N-mixture model in a stochastic leslie population matrix model.
 
-Counts: Count surveys are conducted 3 times per year just prior to breeding. Since we assume no immigration and emigration, and these surveys are done in quick succession, we assume the population is closed during this period of time. We assume no individual is double counted on a survey, and that individual detections are independent and occur with equal probability. Therefore we will use an N-mixture model to estimate annual population abundance from this repeated count data.
+$$ \left[\begin{array}
+{l}
+N_{1,t+1} \sim Binomial(N_{1,t}S_{1,t}) \\
+N_{ad,t+1} \sim Binomial(N_{ad,t}S_{ad,t}) \\
+N_{Tot, t+1} = N_{1,t} + N_{ad,t}
+\end{array}\right] 
+$$ 
 
-state process
-$N_{1, t+1} \sim Poisson(N_{1,t}, S_{juv,t}, \frac{f_t}{2} + N_{ad,t}S_{ad,t},\frac{f_t}{2})$
-
-$N_{ad,t+1} \sim Binomial(N_{1,t} + N_{ad,t}, S_{ad,t})$
-
-observation process
-$y_t = (N_{tot, t}) + \epsilon$
-$\epsilon \sim Normal(0, \sigma^2_y)$
-
-likelihood
-$L_{SS}(\text{y}|\text{N}, \text{S_juv}, \text{S_ad}, \text{f}, \sigma^2_y) = L_O(\text{y}|\text{N},\sigma^2_y) \times L_S(\text{N}|\text{S_juv}, \text{S_ad}, \text{f})$
-
+The joint likelihood for the integrated population model is the product of the likelihoods for the three subcomponent models. In instances when one dataset is removed, informative priors are used in place of the data to inform each of the relevant parameters (Table 1). 
 Integration: leslie matrix/pop model; joint likelihood equations
+
 
 *Simulation scenarios* 
 
@@ -206,7 +208,7 @@ Examined relative bias, RMSE, etc
 
 ```{r, fig.height = 8.5, fig.width = 7, fig.align = 'center'}
 
-plots
+# plots
 
 ```
 
@@ -218,7 +220,7 @@ plots
 `r tbls("rain_table", caption = "Table of rain by site.")`
 ```{r}
 
-kable(rain_table, align = 'c', format.args = list(big.mark = ","))
+# kable(rain_table, align = 'c', format.args = list(big.mark = ","))
 
 ```
 
