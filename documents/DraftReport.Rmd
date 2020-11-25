@@ -6,6 +6,7 @@ output:
   pdf_document: default
 ---
 
+
 ```{r include = FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, results = 'asis', fig.width = 4, fig.height = 3.5)
 #for reference: https://rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf
@@ -46,160 +47,203 @@ Abby Bratt, Caroline Cappello, Amelia DuVall, Hannah Sipe, Amanda Warlick
 
 **Introduction**  
 
-1. Briefly describe the issue, conclude with teaser sentence about what this project does
-IPMs as an increasingly popular tool that can provide tangible benefits
-Non-ID parameters, improved precision
-Expanded spatio-temporal inference
-These benefits have motivated interesting expansions and applications of this technique
-Examples
-First (?) joint analysis of mark-recovery and census data (Besbeas et al. 2002)
-Application to species (bats) w/ demographic data deficiencies (Schaub et al. 2007)
-Estimating hidden demographic processes (e.g., proportion of female lambs on the island and temporal variation) (Tavecchia et al. 2009)
-“We experimentally evaluated the flexibility and limitations of the integrated approach by omitting portions of the data and comparing the results from these “incomplete” data sets with those obtained from the entire data set and from the analysis of the mark-resighting-recovery data only”
-Inclusion of multivariate observations w/ estimation of transition probabilities within multi-state systems (McCrea et al. 2012)
-Inclusion of environmental stochasticity (Oppel et al. 2014)
-However, this growth in usage has occurred with relatively poor understanding of how to assess goodness of fit, and therefore less is also known about the bounds/limits of the IPM framework to estimate demographic parameters in situations where available data might be sparse. 
-Study summary: In this study, we use simulated data to examine IPM performance across a range of scenarios where data informing key demographic parameters may be either sparse or missing. 
+1. Briefly describe the issue, conclude with teaser sentence about what this project does  
+
+- IPMs as an increasingly popular tool that can provide tangible benefits  
+-- Non-ID parameters, improved precision  
+-- Expanded spatio-temporal inference  
+-- These benefits have motivated interesting expansions and applications of this technique  
+--- Examples   
+- Brief history of IPM development  
+-- First (?) joint analysis of mark-recovery and census data (Besbeas et al. 2002)  
+-- Application to species (bats) w/ demographic data deficiencies (Schaub et al. 2007)  
+-- Estimating hidden demographic processes (e.g., proportion of female lambs on the island and temporal variation) (Tavecchia et al. 2009)  
+*“We experimentally evaluated the flexibility and limitations of the integrated approach by omitting portions of the data and comparing the results from these “incomplete” data sets with those obtained from the entire data set and from the analysis of the mark-resighting-recovery data only”*  
+-- Inclusion of multivariate observations w/ estimation of transition probabilities within multi-state systems (McCrea et al. 2012)  
+-- Inclusion of environmental stochasticity (Oppel et al. 2014)  
+- However, this growth in usage has occurred with relatively poor understanding of how to assess goodness of fit, and therefore less is also known about the bounds/limits of the IPM framework to estimate demographic parameters in situations where available data might be sparse. 
+- Study summary: In this study, we use simulated data to examine IPM performance across a range of scenarios where data informing key demographic parameters may be either sparse or missing.  
+
 
 2. With the expansion of the use of IPMs, few studies have robustly examined IPM performance through data simulation. 
-In those that have used data simulation, the focus has been on:
-Proof of concept (improved precision and reduced bias)
-McCrea et al 2010, Chandler & Clark 2014, Schaub & Fletcher 2015, Bled et al. 2017, Ahrestani et al. 2017, Bowler et al. 2019
-Model assumptions
-Independence assumption (Abadi et al. 2010, Schaub & Fletcher 2015, Weegman et al. 2020)
-MR assumptions (survival heterogeneity, marker-induced bias; Riecke et al. 2019)
-None/few to date have looked at ability to return parameter values or power to detect trends when survival not informed by data or when a given data source is sparse, biased, or highly uncertain, but this is an interesting, complicated, and important topic
-IPM performance is often context-specific: depends on life history, sample size, effect sizes, likelihood structures, study/inference goals, so what can we learn
-Contributions of different datasets to the likelihood - helps us understand the underlying connections/mechanisms of the IPM, and to use this knowledge to think about IPM performance across life histories, survey designs, etc.
+- In those that have used data simulation, the focus has been on:
+-- Proof of concept (improved precision and reduced bias): McCrea et al 2010, Chandler & Clark 2014, Schaub & Fletcher 2015, Bled et al. 2017, Ahrestani et al. 2017, Bowler et al. 2019  
+- Model assumptions  
+-- Independence assumption (Abadi et al. 2010, Schaub & Fletcher 2015, Weegman et al. 2020)  
+-- MR assumptions (survival heterogeneity, marker-induced bias; Riecke et al. 2019)  
+- None/few to date have looked at ability to return parameter values or power to detect trends when survival not informed by data or when a given data source is sparse, biased, or highly uncertain, but this is an interesting, complicated, and important topic  
+- IPM performance is often context-specific: depends on life history, sample size, effect sizes, likelihood structures, study/inference goals, so what can we learn  
+- Contributions of different datasets to the likelihood - helps us understand the underlying connections/mechanisms of the IPM, and to use this knowledge to think about IPM performance across life histories, survey designs, etc.    
 
-3. The “typical” IPM has gotten a lot of mileage, but can we push the limits?
-The typical (survival and counts) has taught a lot, and been extended
-Examples of a few cool extensions: spatially explicit IPMs, source-sink dynamics, environmental stochasticity
-But wouldn’t it also be cool and open doors if we could apply this approach in situations where this “typical” data wasn’t available or was sparse? 
-Situations where only know fecundity and counts
-Situations where some of our data streams are biased and/or uncertain?
-Best to worst: unbiased/low variance, unbiased/high variance, biased/low variance, biased/high variance
-Sun et al. 2019 (adding sites vs. changing detection)
-Simmonds et al. 2020; Farr et al. 2020 (similar to our goals but for SDMs)
-We can’t confidently go in these directions without refining our understanding of the mechanisms underlying IPMs in these situations and where and when IPMs may not lead to improved precision or where they actually can’t estimate that unidentifiable parameter
-This study fills that knowledge gap by X (restate purpose/approach) with the aim of improving our understanding of this important statistical approach, particularly for passerine bird life history
 
-4. Why this study is useful for practitioners
-Study design: minimizing cost/effort and maximizing usefulness
-Surveys per week, hours per survey, number of sites, etc
-Intentional survey design vs opportunistic/community science program data  
-Sanderlin et al. 2014
-Helping ecologists understand what is possible with available data, particularly given the tendency to maximize what you have 
-Importance of unbiased estimates for conservation and management
+3. The “typical” IPM has gotten a lot of mileage, but can we push the limits?  
+- The typical (survival and counts) has taught a lot, and been extended  
+- Examples of a few cool extensions: spatially explicit IPMs, source-sink dynamics, environmental stochasticity
+- But wouldn’t it also be cool and open doors if we could apply this approach in situations where this “typical” data wasn’t available or was sparse?  
+-- Situations where only know fecundity and counts  
+-- Situations where some of our data streams are biased and/or uncertain?  
+-- Best to worst: unbiased/low variance, unbiased/high variance, biased/low variance, biased/high variance
+--- Sun et al. 2019 (adding sites vs. changing detection)  
+--- Simmonds et al. 2020; Farr et al. 2020 (similar to our goals but for SDMs)  
+- We can’t confidently go in these directions without refining our understanding of the mechanisms underlying IPMs in these situations and where and when IPMs may not lead to improved precision or where they actually can’t estimate that unidentifiable parameter. This study fills that knowledge gap by X (restate purpose/approach) with the aim of improving our understanding of this important statistical approach, particularly for passerine bird life history. 
+
+
+4. Why this study is useful for practitioners    
+- Study design: minimizing cost/effort and maximizing usefulness
+- Surveys per week, hours per survey, number of sites, etc  
+- Intentional survey design vs opportunistic/community science program data: Sanderlin et al. 2014
+- Helping ecologists understand what is possible with available data, particularly given the tendency to maximize what you have 
+- Importance of unbiased estimates for conservation and management
 
 
 **Methods**   
 
 *Data simulation: life history*  
-We simulated data for an avian species assuming life history stages and traits of a typical passerine. Our simulated hypothetical species has two age-classes: young-of-year (YOY) and adults. Each age class has a unique survival rate ($S_1$, $S_{ad}$) and adults produce new chicks at rate *f*, and those chicks survive to be YOY at rate $S_1$. Current YOY will also breed the following year to produce surviving chicks at rate $f \times S_1$. (Fig 1). We assume an annual breeding cycle, with females nesting once per year. The period from nest initiation to fledging is 30 days regardless of clutch size. 
+We simulated data for an avian species assuming life history stages and traits of a typical passerine. Our simulated hypothetical species has two age-classes: young-of-year (YOY) and adults. Each age class has a unique survival rate ($S_1$, $S_{ad}$) and adults produce new chicks at rate *f*, and those chicks survive to be YOY at rate $S_1$. Current YOY will also breed the following year to produce surviving chicks at rate $f \times S_1$ (Fig 1). We assume an annual breeding cycle, with females nesting once per year. The period from nest initiation to fledging is 30 days regardless of clutch size. 
 
 As is often the convention, we use a female-only model because we assume that the population dynamics of our species are driven largely by female abundance and demography. All demographic rates are assumed constant over a 15-year study period. The population is quite small and the survey extends across the entire range, therefore we assume no immigration or emigration.
 
 *Model framework and assumptions*  
 
 *Count model*  
-We simulated data such that the population is surveyed annually in a 15-year pre-breeding census. Count surveys are conducted three times per year in quick succession such that we assume the population is closed between secondary sampling periods. We use an N-mixture model to estimate annual abundance from these repeated counts, where we assume no individual is double counted and that individual detections are independent and occur with equal probability. The underlying state process represents the latent variables of stage-specific abundance at each occasion: 
+We simulated data such that the population is surveyed annually in a 15-year pre-breeding census. Count surveys are conducted three times per year in quick succession such that we assume the population is closed between secondary sampling periods. We use an N-mixture model (citations) to estimate annual abundance from these repeated counts, where we assume no individual is double counted and that individual detections are independent and occur with equal probability. The underlying state process represents the latent variables of stage-specific abundance at each occasion: 
 
-$$N_{1, t+1} \sim Poisson(N_{1,t}, S_{juv,t}, \frac{f_t}{2} + N_{ad,t}S_{ad,t},\frac{f_t}{2})$$  
-$$N_{ad,t+1} \sim Binomial(N_{1,t} + N_{ad,t}, S_{ad,t})$$  
+$$N_{1, t+1} \sim \text{Poisson}(N_{1,t}, S_{1,t}, \frac{f_t}{2} + N_{ad,t}S_{ad,t},\frac{f_t}{2})$$  
 
-where the number of juveniles ($N_1$) is estimated using a Poisson distribution with probability based on the sum of stage-specific individuals that survive and reproduce. A binomial distribution is used to estimate the number of adults based on the stage-specific survival and abundance in the previous occasion. 
+$$N_{ad,t+1} \sim \text{Binomial}(N_{1,t} + N_{ad,t}, S_{ad,t})$$  
+
+where the number of juveniles ($N_1$) is estimated using a Poisson distribution with probability based on the sum of stage-specific individuals that survive ($S_{1,ad}$) and reproduce ($f_t$). A binomial distribution is used to estimate the number of adults based on the stage-specific survival and abundance in the previous occasion. 
 
 The observation process model, 
 
-$$y_t = (N_{tot, t}) + \epsilon$$
-$$\epsilon \sim Normal(0, \sigma^2_y)$$
+$$y_t = N_{tot, t} + \epsilon$$
+$$\epsilon \sim \text{Normal}(0, \sigma^2_y)$$
 
-describes counts *y* at time *t* given given stage-specific abundance as binomially distributed with sample size $N_t$ and detection probability $p$, with normally distributed observation error $\epsilon$ estimated with mean = 0 with the prior for $sigma_y$ being U(0,10). 
+describes counts *y* at time *t* given given stage-specific abundance as binomially distributed with sample size $N_t$ and detection probability $p$, with normally distributed observation error $\epsilon$ estimated with mean = 0 with the prior for $\sigma_y$ being U(0,10). 
 <!-- from amanda: help - prior for observation error?  -->
 
-The overall likelihood for this hierarchical state-space model can be described as the product of the state and observation processe models:
-$$L_{SS}(\text{y}|\text{N}, \text{S_juv}, \text{S_ad}, \text{f}, \sigma^2_y) = L_O(\text{y}|\text{N},\sigma^2_y) \times L_S(\text{N}|\text{S_juv}, \text{S_ad}, \text{f})$$
+The overall likelihood for this hierarchical state-space model can be described as the product of the state and observation process models:
+$$L_{SS}(\text{y}|\text{N}, S_1, S_{ad}, f, \sigma^2_y) = L_O(\text{y}|\text{N},\sigma^2_y) \times L_S(\text{N}|S_1, S_{ad}, f)$$
  
 *Nest success productivity model*   
 
 In this simulation, nests are monitored according to the procedures described in Martin and Geupel (1993), where adults are observed for behavioral clues that indicate nesting behavior and followed until a nest is found. After locating a nest, it is revisited every 2-3 days to check its status until it either fledges or fails. We assume no state uncertainty in our nest observations, that nests can be correctly aged when first found, and that monitored nests are independent and representative of the population. We assume the daily survival probability is uniform across nest stages (*i.e.*, laying, incubating, nestlings). We estimate daily nest survival to obtain unbiased estimates for the probability of nest success (*i.e.*, at least 1 chick fledges): We use a Poisson model to estimate the average number of chicks fledged conditional on a nest being successful.
 
-$$J_t \sim Poisson(\rho_t) $$
+$$J_t \sim \text{Poisson}(\rho_t) $$
 $$\rho_t = R_tf_t $$
 
-where the number of nestlings counted $J$ in year *t* is modeled using a Poisson distribution with the product of the number of surveyed broods $R_t$ and fecundity $f_t$ at each time *t*. Fecundity is estimated using a uniform prior (0,20) and the likelihood of this daily nest survival model can be described as $L_P(\text{J}, \text{R}|\text{f})$. 
+where the number of nestlings counted $J$ in year *t* is modeled using a Poisson distribution with the product of the number of surveyed broods $R_t$ and fecundity $f_t$ at each occasion. Fecundity is estimated using a uniform prior (0, 20) and the likelihood of this daily nest survival model can be described as $L_P(\text{J}, \text{R}|\text{f})$. 
 
 *Mark-resight model*  
 In this simulation study, YOY chicks are marked in the nest just prior to fledging with a unique combination of colored leg bands such that they can be individually identified over the course of their lives. Every chick in every nest that fledges is banded from a single annual comprehensive mark-resight survey per breeding season. To estimate stage-specific survival based on the individual encounter histories, we use a Cormack-Jolly-Seber (citation) model where we assume that marks are not lost or misread and that each marked individual has independent and identical survival and detection probabilities across occasions. The ecological state process *z* describes the probability that individual *i* at time *t* is alive or dead, namely:  
 
-$$ z_{i,t}|z_{i,t-1} \sim bernoulli(z_{i,t-1} S_{1,ad}) $$
+$$ z_{i,t}|z_{i,t-1} \sim \text{Bernoulli}(z_{i,t-1} S_{1,ad}) $$
 
 where the state at time *t* is modeled with a Bernouli distribution based on the state at the previous occasion and state-specific survival probabilities $S_1$ and $S_{ad}$. Similarly, the observation process model
 
-$$ y_{i,t}|z_{i,t} \sim  bernoulli(z_{i,t} p)$$
+$$ y_{i,t}|z_{i,t} \sim  \text{Bernoulli}(z_{i,t} p)$$
   
-describes observations *y* using a Bernouli distribution based on the state of the individual in the current occasion and detection probability *p*. Mean survival and detection probabilities are modeled on the probability scale using uniform priors, $ S_{1,ad} \sim uniform(0,1)$, $ p \sim uniform(0,1)$, respectively. The overall likelihood of the mark-resight model estimating survival probabilities is the product of the state and observation process models: $L_{SS}(\text{y}|\text{z}, \text{S_juv}, \text{S_ad}, \text{p}) = L_O(\text{y}|\text{z},\text{p})     \times L_S(\text{z}|\text{S_juv}, \text{S_ad})$.
+describes observations *y* using a Bernouli distribution based on the state of the individual in the current occasion and detection probability *p*. Mean survival and detection probabilities are modeled on the probability scale using uniform priors, $S_{1,ad} \sim \text{Uniform}(0,1)$ and $p \sim \text{Uniform}(0,1)$, respectively. The overall likelihood of the mark-resight model estimating survival probabilities is the product of the state and observation process models: $L_{SS}(\text{y}|\text{z}, ~S_1, ~S_{ad}, ~\text{p}) = L_O(\text{y}|\text{z},~\text{p})     \times L_S(\text{z}|S_1,~S_{ad})$.
 
 *Integrated population model*  
 
 To estimate abundance of the overall population $N_{tot}$ at each time *t*, the parameter estimates from the productivity and mark-resight models are combined with the stage-specific abundane estimated using the N-mixture model in a stochastic leslie population matrix model.
 
-$$ \left[\begin{array}
-{l}
-N_{1,t+1} \sim Binomial(N_{1,t}S_{1,t}) \\
-N_{ad,t+1} \sim Binomial(N_{ad,t}S_{ad,t}) \\
-N_{Tot, t+1} = N_{1,t} + N_{ad,t}
-\end{array}\right] 
-$$ 
+<!-- From amanda: help: not sure if we need something like this since we have the equations above? -->
+<!-- $$ \left[\begin{array} -->
+<!-- {l} -->
+<!-- N_{1,t+1} \sim \text{Binomial}(N_{1,t},~S_{1,t}) \\ -->
+<!-- N_{ad,t+1} \sim \text{Binomial}(N_{ad,t},~S_{ad,t}) \\ -->
+<!-- N_{Tot, t+1} = N_{1,t} + N_{ad,t} -->
+<!-- \end{array}\right]  -->
+<!-- $$  -->
 
 The joint likelihood for the integrated population model is the product of the likelihoods for the three subcomponent models. In instances when one dataset is removed, informative priors are used in place of the data to inform each of the relevant parameters (Table 1). 
-Integration: leslie matrix/pop model; joint likelihood equations
 
+[IPM joint likelihood equation]
 
 *Simulation scenarios* 
 
-Scenarios - see sheet
+Scenarios - see sheet  
 
-Metrics to monitor
-CV (precision)
-RMSE (accuracy)
-Relative bias
+Metrics to monitor  
+CV (precision)  
+RMSE (accuracy)  
+Relative bias  
 
-Vary data quantity/combinations and demographic rates
-Low MR detection vs high
-Low daily nest survival vs high
-Low abund detection vs high
+Vary data quantity/combinations and demographic rates  
+Low MR detection vs high  
+Low daily nest survival vs high  
+Low abund detection vs high  
 
-Best scenario, using all three datasets
-Potential add-on: vary life history traits:
-Survival: 0.3 vs. 0.8
-Fecundity: 0.3 vs. 0.5
-Remove nest monitoring entirely - use other two datasets (MR and counts)
-Model adjustments: informed priors? 
-Sensitivity to priors?
-Remove MR data entirely - use other two datasets (nest monitoring and counts)
-Model adjustments: informed priors?
-Sensitivity to priors?
-Poorer quality MR
-Quantity: decrease N (20 individuals vs. 100 resights per year)
-Quality: decrease p (0.1, 0.5, 0.8) or annual surveys (5 vs. 10)
+Best scenario, using all three datasets  
+Potential add-on: vary life history traits:  
+Survival: 0.3 vs. 0.8  
+Fecundity: 0.3 vs. 0.5  
+Remove nest monitoring entirely - use other two datasets (MR and counts)  
+Model adjustments: informed priors?   
+Sensitivity to priors?  
+Remove MR data entirely - use other two datasets (nest monitoring and counts)  
+Model adjustments: informed priors?  
+Sensitivity to priors?   
+Poorer quality MR  
+Quantity: decrease N (20 individuals vs. 100 resights per year)  
+Quality: decrease p (0.1, 0.5, 0.8) or annual surveys (5 vs. 10)  
 
-*Estimation and diagnostics*  
-Nimble; iterations, burn-in, etc
-Examined relative bias, RMSE, etc
-
-
+*Estimation and diagnostics*   
+Nimble; iterations, burn-in, etc  
+Examined relative bias, RMSE, etc  
 
 **Results**  
 
 **Discussion**  
+
+Review project aim and main findings  
+
+Elaborate on interesting finding 1  
+- Implications of not exploring this in an application?  
+- Future areas of work?  
+- Extension to more complex life history? Data scenarios?  
+
+Elaborate on interesting finding 2
+- Implications of not exploring this in an application?  
+- Future areas of work?  
+- Extension to more complex life history? Data scenarios?  
+
+Broaden to implications of work, study design, existing IPMs
 
 
 \newpage
 
 
 **Literature cited**  
+
+Abadi, F., Gimenez, O., Arlettaz, R., Schaub, M., 2010. An assessment of integrated population models: bias, accuracy, and violation of the assumption of independence. Ecology 91, 7–14. https://doi.org/10.1890/08-2235.1
+
+Ahrestani, F.S., Saracco, J.F., Sauer, J.R., Pardieck, K.L., Royle, J.A., 2017. An integrated population model for bird monitoring in North America. Ecol Appl 27, 916–924. https://doi.org/10.1002/eap.1493
+
+Bled, F., Belant, J.L., Daele, L.J.V., Svoboda, N., Gustine, D., Hilderbrand, G., Barnes, V.G., n.d. Using multiple data types and integrated population models to improve our knowledge of apex predator population dynamics. Ecology and Evolution 7, 9531–9543. https://doi.org/10.1002/ece3.3469
+
+Bowler, D.E., Nilsen, E.B., Bischof, R., O’Hara, R.B., Yu, T.T., Oo, T., Aung, M., Linnell, J.D.C., 2019. Integrating data from different survey types for population monitoring of an endangered species: the case of the Eld’s deer. Scientific Reports 9, 7766. https://doi.org/10.1038/s41598-019-44075-9
+
+Chandler, R.B., Clark, J.D., 2014. Spatially explicit integrated population models. Methods in Ecology and Evolution 5, 1351–1360. https://doi.org/10.1111/2041-210X.12153
+
+Farr, M.T., Green, D.S., Holekamp, K.E., Zipkin, E.F., n.d. Integrating distance sampling and presence-only data to estimate species abundance. Ecology n/a, e03204. https://doi.org/10.1002/ecy.3204
+
+McCrea, R.S., Morgan, B.J.T., Gimenez, O., Besbeas, P., Lebreton, J.-D., Bregnballe, T., 2010. Multi-Site Integrated Population Modelling. Journal of Agricultural, Biological and Environmental Statistics 15, 539–561. https://doi.org/10.1007/s13253-010-0027-5 
+
+Riecke, T.V., Williams, P.J., Behnke, T.L., Gibson, D., Leach, A.G., Sedinger, B.S., Street, P.A., Sedinger, J.S., 2019. Integrated population models: model assumptions and inference. Methods Ecol Evol 2041–210X.13195. https://doi.org/10.1111/2041-210X.13195
+
+Schaub, M., Fletcher, D., 2015. Estimating immigration using a Bayesian integrated population model: choice of 
+parametrization and priors. Environ Ecol Stat 22, 535–549. https://doi.org/10.1007/s10651-015-0309-8
+
+Simmonds, E.G., Jarvis, S.G., Henrys, P.A., Isaac, N.J.B., O’Hara, R.B., 2020. Is more data always better? A simulation study of benefits and limitations of integrated distribution models. Ecography 43, 1413–1422. https://doi.org/10.1111/ecog.05146
+
+Sun, C.C., Royle, J.A., Fuller, A.K., 2019. Incorporating citizen science data in spatially explicit integrated population models. Ecology 100, e02777. https://doi.org/10.1002/ecy.2777
+
+Tavecchia, G., Besbeas, P., Coulson, T., Morgan, B.J.T., Clutton‐Brock, T.H., 2009. Estimating Population Size and Hidden Demographic Parameters with State‐Space Modeling. The American Naturalist 173, 722–733. https://doi.org/10.1086/598499
+
+Weegman, M.D., Arnold, T.W., Clark, R.G., Schaub, M., 2020. Partial and complete dependency among data sets has minimal consequence on estimates from integrated population models. Ecological Applications. https://doi.org/10.1002/eap.2258
 
  
 \newpage
@@ -212,15 +256,15 @@ Examined relative bias, RMSE, etc
 
 ```
 
-`r figs("plots", caption = "Scatter and boxplots of rain per site.")`
+`r figs("plots", caption = "Plots.")`
 
 
 \newpage
 
-`r tbls("rain_table", caption = "Table of rain by site.")`
+`r tbls("rain_table", caption = "Table of X, Y, Z.")`
 ```{r}
 
-# kable(rain_table, align = 'c', format.args = list(big.mark = ","))
+# kable(table, align = 'c', format.args = list(big.mark = ","))
 
 ```
 
