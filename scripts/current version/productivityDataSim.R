@@ -13,8 +13,14 @@ library(nimble)
 
 # parameters ######
 
+# TODO
+# add structure for multiple years!!!!!
+
+getNestDat <- function(nyears = 10, phi = 0.975, mean.clutch.size = 2.5) {
+  
+
 # set season length and stuff
-n.initiation.dates <- 120
+n.initiation.dates <- 31
 max.nest.age <- 30
 first.initiation.date <- 1
 last.fledge.date <- n.initiation.dates + max.nest.age
@@ -22,7 +28,8 @@ last.fledge.date <- n.initiation.dates + max.nest.age
 season.length <- last.fledge.date - first.initiation.date + 1 + 2
 
 # nests for population
-N.nests.total <- 100
+# AEB note - this is currently a crude way to do this
+N.nests.total <- 100 * nyears # year does not matter because there is no year effect
 prop.nests.found <- 0.8
 
 # TODO
@@ -32,11 +39,11 @@ prop.nests.found <- 0.8
 # so we get a random number every year
 
 # mean clutch size
-mean.clutch.size <- 5
+#mean.clutch.size <- 5
 # AEB note - additional assumption that all eggs hatch and all nestlings fledge
 
 # daily nest survival
-phi <- 0.975
+#phi <- 0.975
 
 # true fecundity (female chicks produced per nest)
 # assuming 50/50 sex ratio at hatching
@@ -46,6 +53,9 @@ true.fec <- 1/2 * mean.clutch.size * phi^max.nest.age
 visit.interval <- 3
 
 # start data sim ####
+
+# TODO 
+# change to arrays
 
 # all nests - this is latent
 total.nests.age <- matrix(NA, nrow = N.nests.total, ncol = season.length)
@@ -136,4 +146,12 @@ last[-which.successful] <- apply(observed.nest.status[-which.successful, ], 1, f
 # there should not be zeroes in here
 clutch.sizes <- rpois(N.nests.successful, mean.clutch.size)
 
-
+return(list(observed.nest.status = observed.nest.status, 
+            N.nests.found = N.nests.found,
+            clutch.sizes = clutch.sizes,
+            N.nests.successful = N.nests.successful, 
+            first.nest = first, 
+            last.nest = last, 
+            max.nest.age = max.nest.age))
+}
+prod <- getNestDat()

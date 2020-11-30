@@ -4,11 +4,14 @@
 #IPM model for sim data
 library(here)
 #source(here("scripts", "dataSims","BPA_IPMsimData.R")) #full on BPA WinBUGS code
-source(here("scripts", "dataSims","IPMsimData_nonest.R")) #changed the MR data
+source(here("scripts", "current version","IPMsimData_markasYoYandAd.R")) #changed the MR data
+source(here("scripts", "current version","productivityDataSim.R"))
 
 # 11.3. Example of a simple IPM (counts, capture-recapture, reproduction)
 # 11.3.1. Load data
 # Population counts (from years 1 to n.years)
+
+# AEB NOTE - if 1000 individuals, why are the counts so low?
 y <- df$SUR
 n.sam <- df$n.sam
 
@@ -23,13 +26,13 @@ age_ch <- df$age_ch
 #J<-nestlings#df$nestlings
 #R<-R#df$R
  
-H <- df$H
-Fledged <- df$Fledged
-first.nest <- df$first.nest
-last.nest <- df$last.nest
-max.nest.age <- df$max.nest.age
-n.nests <- df$n.nests
-n.succ.nests <- df$n.succ.nests
+H <- prod$observed.nest.status
+Fledged <- prod$clutch.sizes
+first.nest <- prod$first.nest
+last.nest <- prod$last.nest
+max.nest.age <- prod$max.nest.age
+n.nests <- prod$N.nests.found
+n.succ.nests <- prod$N.nests.successful
 
 library("nimble")
 IPMmod<-nimbleCode({
@@ -57,12 +60,12 @@ IPMmod<-nimbleCode({
     f[t] <- fec
   }
   #mean.fec ~ dunif(0, 20)
-  
+
   # 3.1. Likelihood for population population count data (state-space model)
   # 3.1.1 System process
   for (t in 2:nyears){
     #I think this was causing the problem, it was a little mis-specified
-    #Double check that this is right, but it doesnt cause an error in 
+    #Double check that this is right, but it doesnt cause an error in
     #Slice samplers this way
     #mean1[t]<-((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1]
     #for reference, this is how it was:
@@ -73,16 +76,16 @@ IPMmod<-nimbleCode({
     Nad[t] ~ dbin(mean.phi[2],(Ntot[t-1]))
   }
   for (t in 1:nyears){
-    Ntot[t] <- Nad[t] + N1[t] 
+    Ntot[t] <- Nad[t] + N1[t]
   }
-  
+
   # 3.1.2 Observation process
   for(n in 1:n.sam){
     for (t in 1:nyears){
       y[n,t] ~ dbin(p.surv,Ntot[t])
     }
   }
-  
+
   # 3.2 Likelihood for capture-recapture data: CJS model (2 age classes)
   for(i in 1:n.ind){
     z[i,first[i]]<-1
@@ -108,17 +111,15 @@ IPMmod<-nimbleCode({
   #and I gather from looking that this may be reasonable?
   phi.nest ~ dunif(0.925, 1)
    
-  for (t in 1:nyears) {
-    for (n in 1:n.nests[t]) {
-      for(d in (first.nest[t, n] + 1):last.nest[t, n]) {
-        H[t, n, d] ~ dbern(phi.nest * H[t, n, d - 1])
-      } # d
-    } # n
-    
-    for (c in 1:n.succ.nests[t]) {
-      Fledged[t, c] ~ dpois(lambdaf) 
-    } # c
-  }
+  for (n in 1:n.nests) {
+    for(d in (first.nest[n] + 1):last.nest[n]) {
+      H[n, d] ~ dbern(phi.nest * H[n, d - 1])
+    } # d
+  } # n
+  
+  for (c in 1:n.succ.nests) {
+    Fledged[c] ~ dpois(lambdaf) 
+  } # c
 
   # Derived quantities #####
   fec <- 1/2 * lambdaf * (phi.nest^max.nest.age)
@@ -186,8 +187,8 @@ constants<-list(nyears = ncol(m),
 # function for H inits - set every NA to 1
 # ugly but whatever
 Hinits <- H
-Hinits[which(!is.na(H))] <- NA
-Hinits[which(is.na(H))] <- 1
+Hinits[!is.na(H)] <- NA
+Hinits[is.na(H)] <- 1
 
 inits <- list(mean.phi=runif(2,0,1),
               mean.p = runif(1, 0, 1), 
@@ -198,8 +199,8 @@ inits <- list(mean.phi=runif(2,0,1),
               n1.start=10,#sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
               nad.start=10,#sample(1:30,1),
               phi.nest = runif(1, 0.925, 1), 
-              lambdaf = runif(1, 0, 5) #,
-              #H = Hinits
+              lambdaf = runif(1, 0, 5) ,
+              H = Hinits
               )
 parameters <- c("mean.phi", 
                 "mean.p", "fec", 
@@ -223,4 +224,3 @@ out<-as.data.frame(as.matrix(Cmcmc$mvSamples))
 # choke points
 # data sim takes some time
 # compile nimble takes some time
-
