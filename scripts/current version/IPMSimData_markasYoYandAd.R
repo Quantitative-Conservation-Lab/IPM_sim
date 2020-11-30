@@ -8,21 +8,6 @@
 
 library(nimble)
 
-n.years=10; n.data=c(1000,200);init.age = c(1000,1000); 
-phi.1=0.4; phi.ad=0.77; p.ad=0.75;p.1=0.98;
-p.sur=0.5
-
-
-max.nest.age <- 30
-
-# mean clutch size
-mean.clutch.size <- 2.5
-
-# daily nest survival
-phi.nest <- 0.975
-
-n.sam <- 3
-
 simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1, p.ad, p.sur,
  max.nest.age, mean.clutch.size, phi.nest, n.sam){
   
@@ -282,5 +267,3 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1, p.ad, p.sur,
               n.sam = n.sam, true.fec=true.fec, 
               N = N))
 }
-df<-simIPMdata(n.years, n.data, init.age, phi.1, phi.ad, p.1, p.ad, p.sur,
-               max.nest.age, mean.clutch.size, phi.nest, n.sam)  

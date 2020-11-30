@@ -7,19 +7,25 @@ library(lubridate)
 library(hms)
 library(stringr)
 library(tidyr)
+library(nimble)
 
 # source files ######
 
-# source data simulation function
-# source model function
+# source data simulation functions
+source(here("scripts", "current version","IPMsimData_markasYoYandAd.R")) #changed the MR data
+source(here("scripts", "current version","productivityDataSim.R"))
+# source model functions
+source(here("scripts", "current version","IPMNimble_markedasYoYandAD.R")) #changed the MR data
+# source initial value functions
+source(here("scripts", "current version","IPMinitvalues.R")) #changed the MR data
 
 # load scenarios ####
 
 # site
-paramlevels <- read_excel(here("scripts", "dataSims", "IPM sim spreadsheet.xlsx"), range = "E1:K4")
+paramlevels <- read_excel(here("data", "IPM sim spreadsheet.xlsx"), range = "E1:K4")
 paramlevels[, 1] <- c("L", "M", "H")
 colnames(paramlevels)[1] <- "Level"
-scenarios <- read_excel(here("scripts", "dataSims", "IPM sim spreadsheet.xlsx"), range = "A5:K22")
+scenarios <- read_excel(here("data", "IPM sim spreadsheet.xlsx"), range = "A5:K22")
 scenarios <- scenarios[-c(6, 12), ]
 
 n.scenarios <- max(scenarios$`Scenario Number`)
@@ -69,30 +75,223 @@ View(scenarios)
 
 # run simulations ######
 
+# THINGS THAT NEVER CHANGE
+phi.nest <- 0.975
+mean.clutch.size <- 2.5
+n.sam <- 3
+max.nest.age <- 30
+n.years=10
+n.data=c(1000,200)
+init.age = c(1000,1000)
+phi.ad = 0.77
+p.1 = 0.98
+
+# THIS IS FOR COMPLETE IPM
+
 for (s in 1:n.scenarios) {
+  # THINGS THAT DO CHANGE
+  phi.1 = scenarios[s, "Juv Surv"]
+  p.ad = scenarios[s, "MR detection"]
+  p.sur = scenarios[s, "Abund detection"]
   for (i in 1:sims.per) {
     if (scenarios[s, `MR Included`] == 1 & scenarios[s, `Nests Includedd`] == 1) {
       # simulate datasets
+      df<-simIPMdata(n.years, n.data, init.age, phi.1, phi.ad, p.1, p.ad, p.sur,
+                     max.nest.age, mean.clutch.size, phi.nest, n.sam) 
+      prod <- getNestDat()
+      # abund data
+      y <- df$SUR
+      n.sam <- df$n.sam
+      # Capture-recapture data (in m-array format, from years 1 to n.years)
+      m <- df$ch
+      first <- df$first
+      age_ch <- df$age_ch
+      # Nest data
+      H <- prod$observed.nest.status
+      Fledged <- prod$clutch.sizes
+      first.nest <- prod$first.nest
+      last.nest <- prod$last.nest
+      max.nest.age <- prod$max.nest.age
+      n.nests <- prod$N.nests.found
+      n.succ.nests <- prod$N.nests.successful
+      # initial values
+      age<-ageunknown(age_ch)
+      z.state <- state.data(m)
+      Hinits <- getHinits(H)
+      
+      datipm <- list(ch.y = m, y = y, 
+                     H = H, 
+                     Fledged = Fledged)
+      constants<-list(nyears = ncol(m), 
+                      n.ind=nrow(m), first=first, age=age, n.sam=n.sam,
+                      n.nests = n.nests, 
+                      n.succ.nests = n.succ.nests, 
+                      first.nest = first.nest, 
+                      last.nest = last.nest, 
+                      max.nest.age = max.nest.age)
+      inits <- list(mean.phi=c(0.4, 0.77),
+                    mean.p = 0.5, 
+                    #mean.fec = runif(1, 0, 10), 
+                    p.surv=0.5,
+                    z=z.state,
+                    n1.start=1000,#sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
+                    nad.start=1000,#sample(1:30,1),
+                    phi.nest = 0.975, 
+                    lambdaf = 2.5 ,
+                    H = Hinits
+      )
       # run full model
+      # IPM
+      parameters <- c("mean.phi", "mean.p", "fec", "p.surv", "phi.nest", "lambdaf", "N1", "Nad")
+      modIPM<-nimbleModel(IPMmod, constants=constants, data=datipm, inits=inits)
+      confIPM<-configureMCMC(modIPM) 
+      confIPM$addMonitors(parameters)
+      RmcmcIPM<-buildMCMC(confIPM) 
+      CmodelIPM<-compileNimble(modIPM)
+      CmcmcIPM<-compileNimble(RmcmcIPM, project=CmodelIPM)
+      CmcmcIPM$run(thin=10, reset=T, niter=10000, nburnin=5000)
+      out<-as.data.frame(as.matrix(CmcmcIPM$mvSamples))
+      
     } else if (scenarios[s, `MR Included`] == 1 & scenarios[s, `Nests Includedd`] == 0) {
       # simulate datasets
+      df<-simIPMdata(n.years, n.data, init.age, phi.1, phi.ad, p.1, p.ad, p.sur,
+                     max.nest.age, mean.clutch.size, phi.nest, n.sam) 
+      prod <- getNestDat()
+      # abund data
+      y <- df$SUR
+      n.sam <- df$n.sam
+      # Capture-recapture data (in m-array format, from years 1 to n.years)
+      m <- df$ch
+      first <- df$first
+      age_ch <- df$age_ch
+      # Nest data
+      H <- prod$observed.nest.status
+      Fledged <- prod$clutch.sizes
+      first.nest <- prod$first.nest
+      last.nest <- prod$last.nest
+      max.nest.age <- prod$max.nest.age
+      n.nests <- prod$N.nests.found
+      n.succ.nests <- prod$N.nests.successful
+      # initial values
+      age<-ageunknown(age_ch)
+      z.state <- state.data(m)
+      Hinits <- getHinits(H)
+      
+      datipm <- list(ch.y = m, y = y, 
+                     H = H, 
+                     Fledged = Fledged)
+      constants<-list(nyears = ncol(m), 
+                      n.ind=nrow(m), first=first, age=age, n.sam=n.sam,
+                      n.nests = n.nests, 
+                      n.succ.nests = n.succ.nests, 
+                      first.nest = first.nest, 
+                      last.nest = last.nest, 
+                      max.nest.age = max.nest.age)
+      inits <- list(mean.phi=c(0.4, 0.77),
+                    mean.p = 0.5, 
+                    #mean.fec = runif(1, 0, 10), 
+                    p.surv=0.5,
+                    z=z.state,
+                    n1.start=1000,#sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
+                    nad.start=1000,#sample(1:30,1),
+                    phi.nest = 0.975, 
+                    lambdaf = 2.5 ,
+                    H = Hinits
+      )
       # run no nest model
+      # NO NEST
+      parameters <- c("mean.phi", "mean.p", "fec", "p.surv", "phi.nest", "lambdaf", "N1", "Nad")
+      modnonest<-nimbleModel(noNests, constants=constants, data=datipm, inits=inits)
+      confnonest<-configureMCMC(modnonest) 
+      confnonest$addMonitors(parameters)
+      Rmcmcnonest<-buildMCMC(confnonest) 
+      Cmodelnonest<-compileNimble(modnonest)
+      Cmcmcnonest<-compileNimble(Rmcmcnonest, project=Cmodelnonest)
+      Cmcmcnonest$run(thin=10, reset=T, niter=10000, nburnin=5000)
+      out<-as.data.frame(as.matrix(Cmcmcnonest$mvSamples))
+      
+      
     } else if (scenarios[s, `MR Included`] == 0 & scenarios[s, `Nests Includedd`] == 1) {
       # simulate datasets
-      # run no resight model
+      df<-simIPMdata(n.years, n.data, init.age, phi.1, phi.ad, p.1, p.ad, p.sur,
+                     max.nest.age, mean.clutch.size, phi.nest, n.sam) 
+      prod <- getNestDat()
+      # abund data
+      y <- df$SUR
+      n.sam <- df$n.sam
+      # Capture-recapture data (in m-array format, from years 1 to n.years)
+      m <- df$ch
+      first <- df$first
+      age_ch <- df$age_ch
+      # Nest data
+      H <- prod$observed.nest.status
+      Fledged <- prod$clutch.sizes
+      first.nest <- prod$first.nest
+      last.nest <- prod$last.nest
+      max.nest.age <- prod$max.nest.age
+      n.nests <- prod$N.nests.found
+      n.succ.nests <- prod$N.nests.successful
+      # initial values
+      age<-ageunknown(age_ch)
+      z.state <- state.data(m)
+      Hinits <- getHinits(H)
+      
+      datipm <- list(ch.y = m, y = y, 
+                     H = H, 
+                     Fledged = Fledged)
+      constants<-list(nyears = ncol(m), 
+                      n.ind=nrow(m), first=first, age=age, n.sam=n.sam,
+                      n.nests = n.nests, 
+                      n.succ.nests = n.succ.nests, 
+                      first.nest = first.nest, 
+                      last.nest = last.nest, 
+                      max.nest.age = max.nest.age)
+      inits <- list(mean.phi=c(0.4, 0.77),
+                    mean.p = 0.5, 
+                    #mean.fec = runif(1, 0, 10), 
+                    p.surv=0.5,
+                    z=z.state,
+                    n1.start=1000,#sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
+                    nad.start=1000,#sample(1:30,1),
+                    phi.nest = 0.975, 
+                    lambdaf = 2.5 ,
+                    H = Hinits
+      )
+      # NO MR
+      parameters <- c("mean.phi", "fec", "p.surv", "phi.nest", "lambdaf", "N1", "Nad")
+      modnoMR<-nimbleModel(noMR, constants=constants, data=datipm, inits=inits)
+      confnoMR<-configureMCMC(modnoMR) 
+      confnoMR$addMonitors(parameters)
+      RmcmcnoMR<-buildMCMC(confnoMR) 
+      CmodelnoMR<-compileNimble(modnoMR)
+      CmcmcnoMR<-compileNimble(RmcmcnoMR, project=CmodelnoMR)
+      CmcmcnoMR$run(thin=10, reset=T, niter=10000, nburnin=5000)
+      out<-as.data.frame(as.matrix(CmcmcnoMR$mvSamples))
     }
     
     # save results to file and to environment
     outcopy <- out
     assign(paste("out", s, "_",  i, sep = ""), outcopy)
-    saveRDS(out, paste("out", s, "_",  i, ".Rdata", sep = ""))
+    saveRDS(out, here("data", paste("out", s, "_",  i, ".Rdata", sep = "")))
     rm(out, outcopy)
   }
 }
 
-# visualize results #####
+# s <- 1 # for full test
+# s <- 11 # for no nests test
+# s <- 6 # for no nests test
 
+# TODO
+# try one of each
+# put up on loon...
+# could start many instances of r
+# 15 instances of R - 1 for each simulation scenario
+
+# visualize results #####
+# TODO
+# fill this in
 
 # create tables #####
-
+# TODO
+# fill this in
 
