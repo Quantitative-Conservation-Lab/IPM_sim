@@ -154,4 +154,3 @@ return(list(observed.nest.status = observed.nest.status,
             last.nest = last, 
             max.nest.age = max.nest.age))
 }
-prod <- getNestDat()
