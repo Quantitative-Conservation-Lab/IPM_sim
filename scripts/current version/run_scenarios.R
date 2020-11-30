@@ -94,7 +94,7 @@ for (s in 1:n.scenarios) {
   p.ad = scenarios[s, "MR detection"]
   p.sur = scenarios[s, "Abund detection"]
   for (i in 1:sims.per) {
-    if (scenarios[s, `MR Included`] == 1 & scenarios[s, `Nests Included`] == 1) {
+    if (scenarios[s, `MR Included`] == 1 & scenarios[s, `Nests Includedd`] == 1) {
       # simulate datasets
       df<-simIPMdata(n.years, n.data, init.age, phi.1, phi.ad, p.1, p.ad, p.sur,
                      max.nest.age, mean.clutch.size, phi.nest, n.sam) 
@@ -152,7 +152,7 @@ for (s in 1:n.scenarios) {
       CmcmcIPM$run(thin=10, reset=T, niter=10000, nburnin=5000)
       out<-as.data.frame(as.matrix(CmcmcIPM$mvSamples))
       
-    } else if (scenarios[s, `MR Included`] == 1 & scenarios[s, `Nests Included`] == 0) {
+    } else if (scenarios[s, `MR Included`] == 1 & scenarios[s, `Nests Includedd`] == 0) {
       # simulate datasets
       df<-simIPMdata(n.years, n.data, init.age, phi.1, phi.ad, p.1, p.ad, p.sur,
                      max.nest.age, mean.clutch.size, phi.nest, n.sam) 
@@ -211,7 +211,7 @@ for (s in 1:n.scenarios) {
       out<-as.data.frame(as.matrix(Cmcmcnonest$mvSamples))
       
       
-    } else if (scenarios[s, `MR Included`] == 0 & scenarios[s, `Nests Included`] == 1) {
+    } else if (scenarios[s, `MR Included`] == 0 & scenarios[s, `Nests Includedd`] == 1) {
       # simulate datasets
       df<-simIPMdata(n.years, n.data, init.age, phi.1, phi.ad, p.1, p.ad, p.sur,
                      max.nest.age, mean.clutch.size, phi.nest, n.sam) 
