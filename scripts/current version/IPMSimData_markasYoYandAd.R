@@ -279,7 +279,8 @@ simIPMdata<-function(n.years, n.data, init.age, phi.1, phi.ad, p.1, p.ad, p.sur,
   
   #Get all the data together, just MR and Survey Counts until nest in here
   return(list(ch=ch, SUR=SUR, age_ch=age_ch, first=first, last=last,
-              n.sam = n.sam, true.fec=true.fec))
+              n.sam = n.sam, true.fec=true.fec, 
+              N = N))
 }
 df<-simIPMdata(n.years, n.data, init.age, phi.1, phi.ad, p.1, p.ad, p.sur,
                max.nest.age, mean.clutch.size, phi.nest, n.sam)  

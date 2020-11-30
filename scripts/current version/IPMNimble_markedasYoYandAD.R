@@ -76,7 +76,7 @@ IPMmod<-nimbleCode({
     Nad[t] ~ dbin(mean.phi[2],(Ntot[t-1]))
   }
   for (t in 1:nyears){
-    Ntot[t] <- Nad[t] + N1[t]
+    Ntot[t] <- round(Nad[t] + N1[t])
   }
 
   # 3.1.2 Observation process
@@ -190,22 +190,22 @@ Hinits <- H
 Hinits[!is.na(H)] <- NA
 Hinits[is.na(H)] <- 1
 
-inits <- list(mean.phi=runif(2,0,1),
-              mean.p = runif(1, 0, 1), 
+inits <- list(mean.phi=c(0.4, 0.77),
+              mean.p = 0.5, 
               #mean.fec = runif(1, 0, 10), 
-              p.surv=runif(1,0,1),
+              p.surv=0.5,
               z=z.state,
-              p.surv=runif(1,0,1),
-              n1.start=10,#sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
-              nad.start=10,#sample(1:30,1),
-              phi.nest = runif(1, 0.925, 1), 
-              lambdaf = runif(1, 0, 5) ,
+              n1.start=1000,#sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
+              nad.start=1000,#sample(1:30,1),
+              phi.nest = 0.975, 
+              lambdaf = 2.5 ,
               H = Hinits
               )
 parameters <- c("mean.phi", 
                 "mean.p", "fec", 
                 "p.surv", 
-                "phi.nest", "lambdaf")
+                "phi.nest", "lambdaf", 
+                "N1", "Nad")
 mod<-nimbleModel(IPMmod, constants=constants, data=datipm, inits=inits)
 conf<-configureMCMC(mod)
 conf$addMonitors(parameters)
@@ -221,6 +221,3 @@ out<-as.data.frame(as.matrix(Cmcmc$mvSamples))
 # TODO
 # slice sampler reached maximum number of contractions for Ns :(
 
-# choke points
-# data sim takes some time
-# compile nimble takes some time
