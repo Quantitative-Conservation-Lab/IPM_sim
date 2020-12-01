@@ -2,10 +2,10 @@
 
 library(here)
 library(dplyr)
-library(readxl)
-library(lubridate)
-library(hms)
-library(stringr)
+#library(readxl)
+#library(lubridate)
+#library(hms)
+#library(stringr)
 library(tidyr)
 library(nimble)
 
@@ -28,8 +28,6 @@ source(here("scripts", "current version","IPMinitvalues.R")) #changed the MR dat
 # scenarios <- read_excel(here("data", "IPM sim spreadsheet.xlsx"), range = "A5:K22")
 # scenarios <- scenarios[-c(6, 12), ]
 # 
-# n.scenarios <- max(scenarios$`Scenario Number`)
-# sims.per <- max(scenarios$`Sims per`)
 # 
 # scenarios <- scenarios %>% 
 #   mutate(`MR detection` = case_when(`MR detection` == "L" ~ as.numeric(paramlevels[paramlevels$Level == "L", "MR detection"]),
@@ -56,9 +54,9 @@ source(here("scripts", "current version","IPMinitvalues.R")) #changed the MR dat
 #                                     `Daily nest survival` == "M" ~ as.numeric(paramlevels[paramlevels$Level == "M", "Daily nest survival"]),
 #                                     `Daily nest survival` == "H" ~ as.numeric(paramlevels[paramlevels$Level == "H", "Daily nest survival"]))
 #   ) %>% 
-#   mutate(`MR Included` = ifelse(`MR Included` == "Y",1,0)) %>% 
+#   mutate("MR Included" = ifelse("MR Included" == "Y",1,0)) %>% 
 #   mutate(`Abund Included` = ifelse(`Abund Included` == "Y",1,0)) %>% 
-#   mutate(`Nests Included` = ifelse(`Nests Included` == "Y",1,0)) %>%
+#   mutate("Nests Included" = ifelse("Nests Included" == "Y",1,0)) %>%
 #   select(-`Sims per`) %>%
 #   mutate(`Fec` = 1/2 * `Mean Clutch Size` * `Daily nest survival`^30)
 # 
@@ -69,6 +67,9 @@ source(here("scripts", "current version","IPMinitvalues.R")) #changed the MR dat
 # #View(scenarios)
 # saveRDS(scenarios, here("data", "scenarios.Rdata"))
 scenarios <- readRDS(here("data", "scenarios.Rdata"))
+
+n.scenarios <- max(scenarios$`Scenario Number`)
+sims.per <- 25
 
 # AEB note
 # parameter values picked such that
@@ -88,14 +89,14 @@ init.age = c(1000,1000)
 phi.ad = 0.77
 p.1 = 0.98
 
-for (s in 1:n.scenarios) {
+for (s in 1:1) {
   # THINGS THAT DO CHANGE
   phi.1 = scenarios[s, "Juv Surv"]
   p.ad = scenarios[s, "MR detection"]
   p.sur = scenarios[s, "Abund detection"]
   for (i in 1:sims.per) {
     print(paste("scenario: ", s, "; simulation number: ", i, sep = ""))
-    if (scenarios[s, `MR Included`] == 1 & scenarios[s, `Nests Included`] == 1) {
+    if (scenarios[s, "MR Included"] == 1 & scenarios[s, "Nests Included"] == 1) {
       # simulate datasets
       df<-simIPMdata(n.years, n.data, init.age, phi.1, phi.ad, p.1, p.ad, p.sur,
                      max.nest.age, mean.clutch.size, phi.nest, n.sam) 
@@ -154,7 +155,7 @@ for (s in 1:n.scenarios) {
       CmcmcIPM$run(thin=10, reset=T, niter=10000, nburnin=5000)
       out<-as.data.frame(as.matrix(CmcmcIPM$mvSamples))
       
-    } else if (scenarios[s, `MR Included`] == 1 & scenarios[s, `Nests Included`] == 0) {
+    } else if (scenarios[s, "MR Included"] == 1 & scenarios[s, "Nests Included"] == 0) {
       # simulate datasets
       df<-simIPMdata(n.years, n.data, init.age, phi.1, phi.ad, p.1, p.ad, p.sur,
                      max.nest.age, mean.clutch.size, phi.nest, n.sam) 
@@ -213,7 +214,7 @@ for (s in 1:n.scenarios) {
       out<-as.data.frame(as.matrix(Cmcmcnonest$mvSamples))
       
       
-    } else if (scenarios[s, `MR Included`] == 0 & scenarios[s, `Nests Included`] == 1) {
+    } else if (scenarios[s, "MR Included"] == 0 & scenarios[s, "Nests Included"] == 1) {
       # simulate datasets
       df<-simIPMdata(n.years, n.data, init.age, phi.1, phi.ad, p.1, p.ad, p.sur,
                      max.nest.age, mean.clutch.size, phi.nest, n.sam) 
