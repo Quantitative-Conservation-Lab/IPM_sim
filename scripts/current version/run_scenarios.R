@@ -21,52 +21,54 @@ source(here("scripts", "current version","IPMinitvalues.R")) #changed the MR dat
 
 # load scenarios ####
 
-# site
-paramlevels <- read_excel(here("data", "IPM sim spreadsheet.xlsx"), range = "E1:K4")
-paramlevels[, 1] <- c("L", "M", "H")
-colnames(paramlevels)[1] <- "Level"
-scenarios <- read_excel(here("data", "IPM sim spreadsheet.xlsx"), range = "A5:K22")
-scenarios <- scenarios[-c(6, 12), ]
-
-n.scenarios <- max(scenarios$`Scenario Number`)
-sims.per <- max(scenarios$`Sims per`)
-
-scenarios <- scenarios %>% 
-  mutate(`MR detection` = case_when(`MR detection` == "L" ~ as.numeric(paramlevels[paramlevels$Level == "L", "MR detection"]),
-                                    `MR detection` == "M" ~ as.numeric(paramlevels[paramlevels$Level == "M", "MR detection"]),
-                                    `MR detection` == "H" ~ as.numeric(paramlevels[paramlevels$Level == "H", "MR detection"]))
-         ) %>% 
-  mutate(`Abund detection` = case_when(`Abund detection` == "L" ~ as.numeric(paramlevels[paramlevels$Level == "L", "Abund detection"]),
-                                    `Abund detection` == "M" ~ as.numeric(paramlevels[paramlevels$Level == "M", "Abund detection"]),
-                                    `Abund detection` == "H" ~ as.numeric(paramlevels[paramlevels$Level == "H", "Abund detection"]))
-  ) %>% 
-  mutate(`Adult Surv` = case_when(`Adult Surv` == "L" ~ as.numeric(paramlevels[paramlevels$Level == "L", "Adult Surv"]),
-                                    `Adult Surv` == "M" ~ as.numeric(paramlevels[paramlevels$Level == "M", "Adult Surv"]),
-                                    `Adult Surv` == "H" ~ as.numeric(paramlevels[paramlevels$Level == "H", "Adult Surv"]))
-  ) %>% 
-  mutate(`Juv Surv` = case_when(`Juv Surv` == "L" ~ as.numeric(paramlevels[paramlevels$Level == "L", "Juv Surv"]),
-                                    `Juv Surv` == "M" ~ as.numeric(paramlevels[paramlevels$Level == "M", "Juv Surv"]),
-                                    `Juv Surv` == "H" ~ as.numeric(paramlevels[paramlevels$Level == "H", "Juv Surv"]))
-  ) %>% 
-  mutate(`Mean Clutch Size` = case_when(`Mean Clutch Size` == "L" ~ as.numeric(paramlevels[paramlevels$Level == "L", "Mean Clutch Size"]),
-                                    `Mean Clutch Size` == "M" ~ as.numeric(paramlevels[paramlevels$Level == "M", "Mean Clutch Size"]),
-                                    `Mean Clutch Size` == "H" ~ as.numeric(paramlevels[paramlevels$Level == "H", "Mean Clutch Size"]))
-  ) %>% 
-  mutate(`Daily nest survival` = case_when(`Daily nest survival` == "L" ~ as.numeric(paramlevels[paramlevels$Level == "L", "Daily nest survival"]),
-                                    `Daily nest survival` == "M" ~ as.numeric(paramlevels[paramlevels$Level == "M", "Daily nest survival"]),
-                                    `Daily nest survival` == "H" ~ as.numeric(paramlevels[paramlevels$Level == "H", "Daily nest survival"]))
-  ) %>% 
-  mutate(`MR Included` = ifelse(`MR Included` == "Y",1,0)) %>% 
-  mutate(`Abund Included` = ifelse(`Abund Included` == "Y",1,0)) %>% 
-  mutate(`Nests Included` = ifelse(`Nests Included` == "Y",1,0)) %>%
-  select(-`Sims per`) %>%
-  mutate(`Fec` = 1/2 * `Mean Clutch Size` * `Daily nest survival`^30)
-
-lams <- apply(scenarios, 1, function(x) {eigen(matrix(data = c(x[8] * x[11], x[8] * x[11], x[7], x[7]), 
-                                              byrow = TRUE, nrow = 2, ncol = 2))$values[1]})
-
-scenarios <- cbind(scenarios, lams)
-View(scenarios)
+# # site
+# paramlevels <- read_excel(here("data", "IPM sim spreadsheet.xlsx"), range = "E1:K4")
+# paramlevels[, 1] <- c("L", "M", "H")
+# colnames(paramlevels)[1] <- "Level"
+# scenarios <- read_excel(here("data", "IPM sim spreadsheet.xlsx"), range = "A5:K22")
+# scenarios <- scenarios[-c(6, 12), ]
+# 
+# n.scenarios <- max(scenarios$`Scenario Number`)
+# sims.per <- max(scenarios$`Sims per`)
+# 
+# scenarios <- scenarios %>% 
+#   mutate(`MR detection` = case_when(`MR detection` == "L" ~ as.numeric(paramlevels[paramlevels$Level == "L", "MR detection"]),
+#                                     `MR detection` == "M" ~ as.numeric(paramlevels[paramlevels$Level == "M", "MR detection"]),
+#                                     `MR detection` == "H" ~ as.numeric(paramlevels[paramlevels$Level == "H", "MR detection"]))
+#          ) %>% 
+#   mutate(`Abund detection` = case_when(`Abund detection` == "L" ~ as.numeric(paramlevels[paramlevels$Level == "L", "Abund detection"]),
+#                                     `Abund detection` == "M" ~ as.numeric(paramlevels[paramlevels$Level == "M", "Abund detection"]),
+#                                     `Abund detection` == "H" ~ as.numeric(paramlevels[paramlevels$Level == "H", "Abund detection"]))
+#   ) %>% 
+#   mutate(`Adult Surv` = case_when(`Adult Surv` == "L" ~ as.numeric(paramlevels[paramlevels$Level == "L", "Adult Surv"]),
+#                                     `Adult Surv` == "M" ~ as.numeric(paramlevels[paramlevels$Level == "M", "Adult Surv"]),
+#                                     `Adult Surv` == "H" ~ as.numeric(paramlevels[paramlevels$Level == "H", "Adult Surv"]))
+#   ) %>% 
+#   mutate(`Juv Surv` = case_when(`Juv Surv` == "L" ~ as.numeric(paramlevels[paramlevels$Level == "L", "Juv Surv"]),
+#                                     `Juv Surv` == "M" ~ as.numeric(paramlevels[paramlevels$Level == "M", "Juv Surv"]),
+#                                     `Juv Surv` == "H" ~ as.numeric(paramlevels[paramlevels$Level == "H", "Juv Surv"]))
+#   ) %>% 
+#   mutate(`Mean Clutch Size` = case_when(`Mean Clutch Size` == "L" ~ as.numeric(paramlevels[paramlevels$Level == "L", "Mean Clutch Size"]),
+#                                     `Mean Clutch Size` == "M" ~ as.numeric(paramlevels[paramlevels$Level == "M", "Mean Clutch Size"]),
+#                                     `Mean Clutch Size` == "H" ~ as.numeric(paramlevels[paramlevels$Level == "H", "Mean Clutch Size"]))
+#   ) %>% 
+#   mutate(`Daily nest survival` = case_when(`Daily nest survival` == "L" ~ as.numeric(paramlevels[paramlevels$Level == "L", "Daily nest survival"]),
+#                                     `Daily nest survival` == "M" ~ as.numeric(paramlevels[paramlevels$Level == "M", "Daily nest survival"]),
+#                                     `Daily nest survival` == "H" ~ as.numeric(paramlevels[paramlevels$Level == "H", "Daily nest survival"]))
+#   ) %>% 
+#   mutate(`MR Included` = ifelse(`MR Included` == "Y",1,0)) %>% 
+#   mutate(`Abund Included` = ifelse(`Abund Included` == "Y",1,0)) %>% 
+#   mutate(`Nests Included` = ifelse(`Nests Included` == "Y",1,0)) %>%
+#   select(-`Sims per`) %>%
+#   mutate(`Fec` = 1/2 * `Mean Clutch Size` * `Daily nest survival`^30)
+# 
+# lams <- apply(scenarios, 1, function(x) {eigen(matrix(data = c(x[8] * x[11], x[8] * x[11], x[7], x[7]), 
+#                                               byrow = TRUE, nrow = 2, ncol = 2))$values[1]})
+# 
+# scenarios <- cbind(scenarios, lams)
+# #View(scenarios)
+# saveRDS(scenarios, here("data", "scenarios.Rdata"))
+scenarios <- readRDS(here("data", "scenarios.Rdata"))
 
 # AEB note
 # parameter values picked such that
