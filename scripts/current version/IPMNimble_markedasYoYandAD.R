@@ -209,7 +209,7 @@ noMR<-nimbleCode({
   for (t in 1:(nyears-1)){
     lambda[t] <- Ntot[t+1] / Ntot[t]
   }
-  #prior for survey detectin probability
+  #prior for survey detection probability
   p.surv~dunif(0,1)
   #  productivity
   for (t in 1:(nyears-1)){
