@@ -17,8 +17,10 @@ IPMmod<-nimbleCode({
   
   #population projection part
   # Initial population sizes
-  N1[1]<-n1.start
-  Nad[1]<-nad.start
+  n1.start ~ dunif(0, 1000)
+  nad.start ~ dunif(0, 1000)
+  N1[1] <- n1.start
+  Nad[1] <- nad.start
   # Population growth rate
   for (t in 1:(nyears-1)){
     lambda[t] <- Ntot[t+1] / Ntot[t]
@@ -113,8 +115,10 @@ noNests<-nimbleCode({
   
   #population projection part
   # Initial population sizes
-  N1[1]<-n1.start
-  Nad[1]<-nad.start
+  n1.start ~ dunif(0, 1000)
+  nad.start ~ dunif(0, 1000)
+  N1[1] <- n1.start
+  Nad[1] <- nad.start
   # Population growth rate
   for (t in 1:(nyears-1)){
     lambda[t] <- Ntot[t+1] / Ntot[t]
@@ -197,8 +201,10 @@ noMR<-nimbleCode({
   
   #population projection part
   # Initial population sizes
-  N1[1]<-n1.start
-  Nad[1]<-nad.start
+  n1.start ~ dunif(0, 1000)
+  nad.start ~ dunif(0, 1000)
+  N1[1] <- n1.start
+  Nad[1] <- nad.start
   # Population growth rate
   for (t in 1:(nyears-1)){
     lambda[t] <- Ntot[t+1] / Ntot[t]

@@ -81,7 +81,7 @@ mean.clutch.size <- 2.5
 n.sam <- 3
 max.nest.age <- 30
 n.years=10
-n.data=c(1000,200)
+n.data=c(200,1000)
 init.age = c(1000,1000)
 phi.ad = 0.77
 p.1 = 0.98
@@ -132,17 +132,18 @@ for (s in 1:n.scenarios) {
       inits <- list(mean.phi=c(0.4, 0.77),
                     mean.p = 0.5, 
                     #mean.fec = runif(1, 0, 10), 
-                    p.surv=0.5,
+                    p.surv=0.9,
                     z=z.state,
-                    n1.start=1000,#sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
-                    nad.start=1000,#sample(1:30,1),
+                    n1.start=round(mean(y[,1]) * 1.5),#sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
+                    nad.start=round(mean(y[,1]) * 1.5),#sample(1:30,1),
                     phi.nest = 0.975, 
                     lambdaf = 2.5 ,
                     H = Hinits
       )
       # run full model
       # IPM
-      parameters <- c("mean.phi", "mean.p", "fec", "p.surv", "phi.nest", "lambdaf", "N1", "Nad")
+      # AEB note - weird stuff happening with p.surv
+      parameters <- c("mean.phi", "mean.p", "fec", "p.surv", "phi.nest", "lambdaf", "lambda")
       modIPM<-nimbleModel(IPMmod, constants=constants, data=datipm, inits=inits)
       confIPM<-configureMCMC(modIPM) 
       confIPM$addMonitors(parameters)
@@ -190,17 +191,17 @@ for (s in 1:n.scenarios) {
       inits <- list(mean.phi=c(0.4, 0.77),
                     mean.p = 0.5, 
                     #mean.fec = runif(1, 0, 10), 
-                    p.surv=0.5,
+                    p.surv=0.9,
                     z=z.state,
-                    n1.start=1000,#sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
-                    nad.start=1000,#sample(1:30,1),
+                    n1.start=round(mean(y[,1]) * 1.5),#sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
+                    nad.start=round(mean(y[,1]) * 1.5),#sample(1:30,1),
                     phi.nest = 0.975, 
                     lambdaf = 2.5 ,
                     H = Hinits
       )
       # run no nest model
       # NO NEST
-      parameters <- c("mean.phi", "mean.p", "fec", "p.surv", "phi.nest", "lambdaf", "N1", "Nad")
+      parameters <- c("mean.phi", "mean.p", "fec", "p.surv", "phi.nest", "lambdaf", "lambda")
       modnonest<-nimbleModel(noNests, constants=constants, data=datipm, inits=inits)
       confnonest<-configureMCMC(modnonest) 
       confnonest$addMonitors(parameters)
@@ -249,16 +250,16 @@ for (s in 1:n.scenarios) {
       inits <- list(mean.phi=c(0.4, 0.77),
                     mean.p = 0.5, 
                     #mean.fec = runif(1, 0, 10), 
-                    p.surv=0.5,
+                    p.surv=0.9,
                     z=z.state,
-                    n1.start=1000,#sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
-                    nad.start=1000,#sample(1:30,1),
+                    n1.start=round(mean(y[,1]) * 1.5),#sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
+                    nad.start=round(mean(y[,1]) * 1.5),#sample(1:30,1),
                     phi.nest = 0.975, 
                     lambdaf = 2.5 ,
                     H = Hinits
       )
       # NO MR
-      parameters <- c("mean.phi", "fec", "p.surv", "phi.nest", "lambdaf", "N1", "Nad")
+      parameters <- c("mean.phi", "fec", "p.surv", "phi.nest", "lambdaf", "lambda")
       modnoMR<-nimbleModel(noMR, constants=constants, data=datipm, inits=inits)
       confnoMR<-configureMCMC(modnoMR) 
       confnoMR$addMonitors(parameters)
