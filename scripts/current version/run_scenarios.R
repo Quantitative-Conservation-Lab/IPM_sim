@@ -86,14 +86,13 @@ init.age = c(1000,1000)
 phi.ad = 0.77
 p.1 = 0.98
 
-# THIS IS FOR COMPLETE IPM
-
 for (s in 1:n.scenarios) {
   # THINGS THAT DO CHANGE
   phi.1 = scenarios[s, "Juv Surv"]
   p.ad = scenarios[s, "MR detection"]
   p.sur = scenarios[s, "Abund detection"]
   for (i in 1:sims.per) {
+    print(paste("scenario: ", s, "; simulation number: ", i, sep = ""))
     if (scenarios[s, `MR Included`] == 1 & scenarios[s, `Nests Included`] == 1) {
       # simulate datasets
       df<-simIPMdata(n.years, n.data, init.age, phi.1, phi.ad, p.1, p.ad, p.sur,
