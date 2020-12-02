@@ -37,26 +37,22 @@ tbls <- captioner(prefix = "Table")
 
 ```{r load results, results = 'hide', message = FALSE}
 
-test <- readRDS(here::here('data', 'out1_1.Rdata'))
+# test <- readRDS(here::here('data', 'out1_1.Rdata'))
 
-#for investigating, particularly scenarios where survivals are low
-sc <- c(9)
-niter <- 25
-
-test <- data.frame()
-for (s in sc) {
-  for (i in 1:niter) {
-
-temp <- data.frame(readRDS(file = here::here('data', paste0('out', s, '_', i, '.Rdata')))) 
-temp.med <- data.frame(t(apply(temp, 2, median)))
-temp.med$iter <- i
-temp.med$scenario <- s
-test <- rbind(test, temp.med)
-  }
-}
-
-
+#true vals
+truth <- readRDS(here::here('data', 'scenarios.Rdata')) 
+colnames(truth) <- gsub(' ', '', colnames(truth))
+true.vals <- truth %>%
+  dplyr::select(ScenarioNumber, MRdetection, Abunddetection, AdultSurv, JuvSurv, Dailynestsurvival, Fec) %>%
+  dplyr::rename(scenario = ScenarioNumber) %>%
+  reshape2::melt(id.vars = c('scenario'), value.name = 'Truth') %>%
+  transform(variable = factor(variable,
+                              levels = c('AdultSurv', 'JuvSurv', 'MRdetection', 'Fec', 'Abunddetection', 'Dailynestsurvival'),
+                              labels = c('AdultSurv', 'JuvSurv', 'MRdetection', 'Fec', 'Abunddetection', 'Dailynestsurvival')))
+  
 #posterior medians for fec, mean.p, mean.phi[1:2], p.surv, phi.nest
+
+#read in scenarios separately without mean.p below
 sc <- c(1:5, 11:15)
 niter <- 25
 
@@ -93,28 +89,19 @@ meds <- bind_rows(meds, meds2)
 
 post.meds <- meds %>% transform(scenario = factor(scenario)) %>%
   reshape2::melt(id.vars = c('scenario', 'iter')) %>%
-    filter(variable %in% c('mean.phi.1.', 'mean.phi.2.', 'mean.p', 'fec', 'p.surv', 'phi.nest'))
-
-true_vals <- data.frame(scenario = rep(1:15, times = 6),
-                        variable = rep(c('mean.phi.1.', 'mean.phi.2.', 'mean.p', 'fec', 'p.surv', 'phi.nest'), 
-                                       each = 15),
-                        value = c(rep(c(0.8, 0.3, 0.8, 0.3, 0.5), times = 3), #adult phi
-                                  rep(c(0.7, 0.2, 0.7, 0.2, 0.4), times = 3), #juv phi
-                                  c(0.8, 0.8, 0.3, 0.3, 0.5, rep(NA, 5), c(0.8, 0.8, 0.3, 0.3, 0.5)), #mean.p
-                                  rep(NA, 15), #fec: what goes here?
-                                  rep(c(0.85, 0.85, 0.3, 0.3, 0.5), times = 3), #p.surv
-                                  rep(c(0.995, 0.975, 0.995, 0.975, 0.99), times = 3))) #phi.nest
+  filter(variable %in% c('mean.phi.1.', 'mean.phi.2.', 'mean.p', 'fec', 'p.surv', 'phi.nest')) %>%
+  transform(variable = factor(variable,
+                              levels = c('mean.phi.1.', 'mean.phi.2.', 'mean.p', 'fec', 'p.surv', 'phi.nest'),
+                              labels = c('JuvSurv', 'AdultSurv', 'MRdetection', 'Fec', 'Abunddetection', 'Dailynestsurvival'))) 
 
 ggplot(post.meds, aes(y = value, x = scenario, group = scenario)) +
   geom_boxplot() +
   geom_point(size = 0.7, col = 'darkgrey') + 
-  geom_point(data = true_vals, aes(y = value, x = scenario, group = scenario), col = 'darkred') +
+  geom_point(data = true.vals, aes(y = Truth, x = scenario, group = scenario), col = 'darkred') +
   xlab('Scenario') + ylab('Posterior medians') +
   facet_wrap(~variable, scales = 'free_y') +
   theme_classic() +
   theme(axis.text.x = element_text(angle = 90))
-
-
 
 
 ```
