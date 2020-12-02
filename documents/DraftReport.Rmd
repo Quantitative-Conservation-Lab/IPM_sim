@@ -11,6 +11,8 @@ output:
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, results = 'asis', fig.width = 4, fig.height = 3.5)
 #for reference: https://rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf
 
+cols <- c("violetred4", "dodgerblue3", 'deepskyblue1', "#4aaaa5", "#a3d39c", "#f6b61c", "chocolate2", "red3")
+
 
 ```
 
@@ -48,7 +50,10 @@ true.vals <- truth %>%
   reshape2::melt(id.vars = c('scenario'), value.name = 'Truth') %>%
   transform(variable = factor(variable,
                               levels = c('AdultSurv', 'JuvSurv', 'MRdetection', 'Fec', 'Abunddetection', 'Dailynestsurvival'),
-                              labels = c('AdultSurv', 'JuvSurv', 'MRdetection', 'Fec', 'Abunddetection', 'Dailynestsurvival')))
+                              labels = c('AdultSurv', 'JuvSurv', 'MRdetection', 'Fec', 'Abunddetection', 'Dailynestsurvival'))) %>%
+  transform(Data = ifelse(scenario < 6, 'All', 
+                          ifelse(scenario < 11 & scenario > 5, 'Counts + Productivity', 'Counts + MR'))) %>%
+  transform(Truth = ifelse(Data == 'Counts + Productivity' & variable == 'MRdetection', NA, Truth))
   
 #posterior medians for fec, mean.p, mean.phi[1:2], p.surv, phi.nest
 
@@ -87,22 +92,45 @@ meds2 <- rbind(meds2, temp.med)
 
 meds <- bind_rows(meds, meds2)
 
-post.meds <- meds %>% transform(scenario = factor(scenario)) %>%
+post.meds <- meds %>% #transform(scenario = factor(scenario)) %>%
   reshape2::melt(id.vars = c('scenario', 'iter')) %>%
   filter(variable %in% c('mean.phi.1.', 'mean.phi.2.', 'mean.p', 'fec', 'p.surv', 'phi.nest')) %>%
   transform(variable = factor(variable,
                               levels = c('mean.phi.1.', 'mean.phi.2.', 'mean.p', 'fec', 'p.surv', 'phi.nest'),
-                              labels = c('JuvSurv', 'AdultSurv', 'MRdetection', 'Fec', 'Abunddetection', 'Dailynestsurvival'))) 
+                              labels = c('JuvSurv', 'AdultSurv', 'MRdetection', 'Fec', 'Abunddetection', 'Dailynestsurvival'))) %>%
+  transform(Data = ifelse(scenario < 6, 'All', 
+                          ifelse(scenario < 11 & scenario > 5, 'Counts + Productivity', 'Counts + MR')))
 
 ggplot(post.meds, aes(y = value, x = scenario, group = scenario)) +
-  geom_boxplot() +
+  geom_boxplot(aes(color = Data)) +
   geom_point(size = 0.7, col = 'darkgrey') + 
   geom_point(data = true.vals, aes(y = Truth, x = scenario, group = scenario), col = 'darkred') +
   xlab('Scenario') + ylab('Posterior medians') +
   facet_wrap(~variable, scales = 'free_y') +
   theme_classic() +
-  theme(axis.text.x = element_text(angle = 90))
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+        legend.position = 'top') +
+  scale_x_continuous(breaks = 1:15) +
+  scale_color_manual(values = cols[c(2,3,5)])
 
+#relative bias
+
+bias.vals <- post.meds %>% 
+  merge(true.vals %>% dplyr::select(scenario, variable, Truth), by = c('scenario', 'variable')) %>%
+  transform(bias = value-Truth, rel_bias = (value-Truth)/Truth) 
+
+ggplot(bias.vals, aes(y = rel_bias, x = scenario, group = scenario)) +
+  geom_boxplot(aes(color = Data)) +
+  geom_point(size = 0.7, col = 'darkgrey') + 
+  geom_hline(aes(yintercept = 0), linetype = 'dashed', col = 'darkred') +
+  xlab('Scenario') + ylab('Relative bias') +
+  facet_wrap(~variable, scales = 'free_y') +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+        legend.position = 'top') +
+  scale_x_continuous(breaks = 1:15) +
+  scale_color_manual(values = cols[c(2,3,5)])
+  
 
 ```
 
