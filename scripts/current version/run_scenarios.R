@@ -89,7 +89,7 @@ init.age = c(1000,1000)
 phi.ad = 0.77
 p.1 = 0.98
 
-for (s in 1:1) {
+for (s in 15:15) {
   # THINGS THAT DO CHANGE
   phi.1 = scenarios[s, "Juv Surv"]
   p.ad = scenarios[s, "MR detection"]
@@ -155,6 +155,12 @@ for (s in 1:1) {
         CmcmcIPM<-compileNimble(RmcmcIPM, project=CmodelIPM)
         CmcmcIPM$run(thin=10, reset=T, niter=45000, nburnin=5000)
         out<-as.data.frame(as.matrix(CmcmcIPM$mvSamples))
+        
+        # save results to file and to environment
+        outcopy <- out
+        assign(paste("out", s, "_",  i, "-", c, sep = ""), outcopy)
+        saveRDS(out, here("data", paste("out", s, "_",  i, "-", c, ".Rdata", sep = "")))
+        rm(out, outcopy)
       }
     } else if (scenarios[s, "MR Included"] == 1 & scenarios[s, "Nests Included"] == 0) {
       # simulate datasets
@@ -214,6 +220,12 @@ for (s in 1:1) {
         Cmcmcnonest<-compileNimble(Rmcmcnonest, project=Cmodelnonest)
         Cmcmcnonest$run(thin=10, reset=T, niter=10000, nburnin=5000)
         out<-as.data.frame(as.matrix(Cmcmcnonest$mvSamples))
+        
+        # save results to file and to environment
+        outcopy <- out
+        assign(paste("out", s, "_",  i, "-", c, sep = ""), outcopy)
+        saveRDS(out, here("data", paste("out", s, "_",  i, "-", c, ".Rdata", sep = "")))
+        rm(out, outcopy)
       }
     } else if (scenarios[s, "MR Included"] == 0 & scenarios[s, "Nests Included"] == 1) {
       # simulate datasets
@@ -272,14 +284,14 @@ for (s in 1:1) {
         CmcmcnoMR<-compileNimble(RmcmcnoMR, project=CmodelnoMR)
         CmcmcnoMR$run(thin=10, reset=T, niter=10000, nburnin=5000)
         out<-as.data.frame(as.matrix(CmcmcnoMR$mvSamples))
+        
+        # save results to file and to environment
+        outcopy <- out
+        assign(paste("out", s, "_",  i, "-", c, sep = ""), outcopy)
+        saveRDS(out, here("data", paste("out", s, "_",  i, "-", c, ".Rdata", sep = "")))
+        rm(out, outcopy)
       }  
     }
-      
-    # save results to file and to environment
-    outcopy <- out
-    assign(paste("out", s, "_",  i, "-", c, sep = ""), outcopy)
-    saveRDS(out, here("data", paste("out", s, "_",  i, "-", c, ".Rdata", sep = "")))
-    rm(out, outcopy)
   }
 }
 
