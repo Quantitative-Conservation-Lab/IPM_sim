@@ -90,7 +90,8 @@ IPMmod<-nimbleCode({
   } # n
   
   for (c in 1:n.succ.nests) {
-    Fledged[c] ~ dpois(lambdaf) 
+    # AEB note - now using zero truncated poisson
+    Fledged[c] ~ T(dpois(lambdaf), 1, Inf)
   } # c
 
   # Derived quantities #####
