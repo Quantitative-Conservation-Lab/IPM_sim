@@ -89,7 +89,7 @@ init.age = c(1000,1000)
 phi.ad = 0.77
 p.1 = 0.98
 
-for (s in 1:1) {
+for (s in 2:2) {
   # THINGS THAT DO CHANGE
   phi.1 = scenarios[s, "Juv Surv"]
   p.ad = scenarios[s, "MR detection"]
@@ -218,7 +218,7 @@ for (s in 1:1) {
         Rmcmcnonest<-buildMCMC(confnonest) 
         Cmodelnonest<-compileNimble(modnonest)
         Cmcmcnonest<-compileNimble(Rmcmcnonest, project=Cmodelnonest)
-        Cmcmcnonest$run(thin=10, reset=T, niter=10000, nburnin=5000)
+        Cmcmcnonest$run(thin=10, reset=T, niter=45000, nburnin=5000)
         out<-as.data.frame(as.matrix(Cmcmcnonest$mvSamples))
         
         # save results to file and to environment
@@ -282,7 +282,7 @@ for (s in 1:1) {
         RmcmcnoMR<-buildMCMC(confnoMR) 
         CmodelnoMR<-compileNimble(modnoMR)
         CmcmcnoMR<-compileNimble(RmcmcnoMR, project=CmodelnoMR)
-        CmcmcnoMR$run(thin=10, reset=T, niter=10000, nburnin=5000)
+        CmcmcnoMR$run(thin=10, reset=T, niter=45000, nburnin=5000)
         out<-as.data.frame(as.matrix(CmcmcnoMR$mvSamples))
         
         # save results to file and to environment
