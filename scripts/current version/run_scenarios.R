@@ -89,7 +89,7 @@ init.age = c(1000,1000)
 phi.ad = 0.77
 p.1 = 0.98
 
-for (s in 15:15) {
+for (s in 1:1) {
   # THINGS THAT DO CHANGE
   phi.1 = scenarios[s, "Juv Surv"]
   p.ad = scenarios[s, "MR detection"]
