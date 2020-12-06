@@ -67,6 +67,7 @@ library(tidyr)
 library(dplyr)
 library(cowplot)
 library(ggplot2)
+library(coda)
 library(captioner)
 library(knitr)
 library(reshape2)
@@ -82,14 +83,12 @@ tbls <- captioner(prefix = "Table")
 ```
 
 
-```{r load results, results = 'hide', message = FALSE}
-
-# test <- readRDS(here::here('data', 'out1_1.Rdata'))
+```{r figures - multiple chains, results = 'hide', message = FALSE}
 
 #true vals
 truth <- readRDS(here::here('data', 'scenarios.Rdata')) 
 colnames(truth) <- gsub(' ', '', colnames(truth))
-true.vals <- truth %>%
+true_vals <- truth %>%
   dplyr::select(ScenarioNumber, MRdetection, Abunddetection, AdultSurv, JuvSurv, Dailynestsurvival, Fec) %>%
   dplyr::rename(scenario = ScenarioNumber) %>%
   reshape2::melt(id.vars = c('scenario'), value.name = 'Truth') %>%
@@ -99,57 +98,74 @@ true.vals <- truth %>%
   transform(Data = ifelse(scenario < 6, 'All', 
                           ifelse(scenario < 11 & scenario > 5, 'Counts + Productivity', 'Counts + MR'))) %>%
   transform(Truth = ifelse(Data == 'Counts + Productivity' & variable == 'MRdetection', NA, Truth))
-  
-#posterior medians for fec, mean.p, mean.phi[1:2], p.surv, phi.nest
 
-#read in scenarios separately without mean.p below
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+
+### assessing convergence
+
 sc <- c(1:5, 11:15)
-niter <- 25
+nsim <- 25
+# sc <- c(1:2)
+# nsim <- 3
+pars <- c('fec', 'lambdaf', 'mean.p', 'mean.phi[1]', 'mean.phi[2]', 'p.surv', 'phi.nest')
 
-meds <- data.frame()
+out_meds1 <- data.frame() #storage
 for (s in sc) {
-  for (i in 1:niter) {
+  for (i in 1:nsim) { 
+chains <- as.mcmc.list(list(as.mcmc(readRDS(file = here::here('data', paste0('out', s, '_', i, '-', 1, '.Rdata')))), 
+                            as.mcmc(readRDS(file = here::here('data', paste0('out', s, '_', i, '-', 2, '.Rdata')))), 
+                            as.mcmc(readRDS(file = here::here('data', paste0('out', s, '_', i, '-', 3, '.Rdata'))))))
 
-temp <- data.frame(readRDS(file = here::here('data', paste0('out', s, '_', i, '.Rdata')))) 
-temp.med <- data.frame(t(apply(temp, 2, median)))
-temp.med$iter <- i
-temp.med$scenario <- s
+max_rhat <- max(gelman.diag(chains[,pars], multivariate=F, autoburnin=F)$psrf[,1], na.rm = T)
 
-meds <- rbind(meds, temp.med)
-  }
-}
+## posterior medians
+out_temp <- data.frame(t(c(summary(chains)$q[pars,"50%"], max_rhat, i, s)))
+colnames(out_temp) <- c(names(summary(chains)$q[pars,"50%"]), 'max_rhat', 'sim', 'scenario')
 
+out_meds1 <- rbind(out_meds1, out_temp)
+
+  } #sims
+} #scenarios
+
+#scenarios without p.surv
 sc <- c(6:10)
-niter <- 25
+pars <- c('fec', 'lambdaf', 'mean.p', 'mean.phi[1]', 'mean.phi[2]', 'phi.nest')
 
-meds2 <- data.frame()
+out_meds2 <- data.frame() #storage
 for (s in sc) {
-  for (i in 1:niter) {
+  for (i in 1:nsim) { 
+chains <- as.mcmc.list(list(as.mcmc(readRDS(file = here::here('data', paste0('out', s, '_', i, '-', 1, '.Rdata')))), 
+                            as.mcmc(readRDS(file = here::here('data', paste0('out', s, '_', i, '-', 2, '.Rdata')))), 
+                            as.mcmc(readRDS(file = here::here('data', paste0('out', s, '_', i, '-', 3, '.Rdata'))))))
 
-temp <- data.frame(readRDS(file = here::here('data', paste0('out', s, '_', i, '.Rdata')))) 
-temp.med <- data.frame(t(apply(temp, 2, median)))
-temp.med$iter <- i
-temp.med$scenario <- s
+max_rhat <- max(gelman.diag(chains[,pars], multivariate=F, autoburnin=F)$psrf[,1], na.rm = T)
 
-meds2 <- rbind(meds2, temp.med)
-  }
-}
+## posterior medians
+out_temp <- data.frame(t(c(summary(chains)$q[pars,"50%"], max_rhat, i, s)))
+colnames(out_temp) <- c(names(summary(chains)$q[pars,"50%"]), 'max_rhat', 'sim', 'scenario')
 
-meds <- bind_rows(meds, meds2)
+out_meds2 <- rbind(out_meds2, out_temp)
 
-post.meds <- meds %>% #transform(scenario = factor(scenario)) %>%
-  reshape2::melt(id.vars = c('scenario', 'iter')) %>%
-  filter(variable %in% c('mean.phi.1.', 'mean.phi.2.', 'mean.p', 'fec', 'p.surv', 'phi.nest')) %>%
+  } #sims
+} #scenarios
+
+out_meds <- bind_rows(out_meds1, out_meds2)
+
+post_meds <- out_meds %>% 
+  filter(max_rhat < 1.1) %>%
+  dplyr::select(-c(max_rhat, lambdaf)) %>%
+  reshape2::melt(id.vars = c('scenario', 'sim')) %>%
+  filter(variable %in% c('mean.phi[1]', 'mean.phi[2]', 'mean.p', 'fec', 'p.surv', 'phi.nest')) %>%
   transform(variable = factor(variable,
-                              levels = c('mean.phi.1.', 'mean.phi.2.', 'mean.p', 'fec', 'p.surv', 'phi.nest'),
+                              levels = c('mean.phi[1]', 'mean.phi[2]', 'mean.p', 'fec', 'p.surv', 'phi.nest'),
                               labels = c('JuvSurv', 'AdultSurv', 'MRdetection', 'Fec', 'Abunddetection', 'Dailynestsurvival'))) %>%
   transform(Data = ifelse(scenario < 6, 'All', 
                           ifelse(scenario < 11 & scenario > 5, 'Counts + Productivity', 'Counts + MR')))
 
-ggplot(post.meds, aes(y = value, x = scenario, group = scenario)) +
+meds_plot <- ggplot(post_meds, aes(y = value, x = scenario, group = scenario)) +
   geom_boxplot(aes(color = Data)) +
   geom_point(size = 0.7, col = 'darkgrey') + 
-  geom_point(data = true.vals, aes(y = Truth, x = scenario, group = scenario), col = 'darkred') +
+  geom_point(data = true_vals, aes(y = Truth, x = scenario, group = scenario), col = 'darkred') +
   xlab('Scenario') + ylab('Posterior medians') +
   facet_wrap(~variable, scales = 'free_y') +
   theme_classic() +
@@ -159,12 +175,11 @@ ggplot(post.meds, aes(y = value, x = scenario, group = scenario)) +
   scale_color_manual(values = cols[c(2,3,5)])
 
 #relative bias
-
-bias.vals <- post.meds %>% 
-  merge(true.vals %>% dplyr::select(scenario, variable, Truth), by = c('scenario', 'variable')) %>%
+bias_vals <- post_meds %>% 
+  merge(true_vals %>% dplyr::select(scenario, variable, Truth), by = c('scenario', 'variable')) %>%
   transform(bias = value-Truth, rel_bias = (value-Truth)/Truth) 
 
-ggplot(bias.vals, aes(y = rel_bias, x = scenario, group = scenario)) +
+bias_plot <- ggplot(bias_vals, aes(y = rel_bias, x = scenario, group = scenario)) +
   geom_boxplot(aes(color = Data)) +
   geom_point(size = 0.7, col = 'darkgrey') + 
   geom_hline(aes(yintercept = 0), linetype = 'dashed', col = 'darkred') +
@@ -175,7 +190,48 @@ ggplot(bias.vals, aes(y = rel_bias, x = scenario, group = scenario)) +
         legend.position = 'top') +
   scale_x_continuous(breaks = 1:15) +
   scale_color_manual(values = cols[c(2,3,5)])
-  
+
+#rmse
+rmse_vals <- post_meds %>% 
+  merge(true_vals %>% dplyr::select(scenario, variable, Truth), by = c('scenario', 'variable')) %>%
+  transform(rmse.temp = (value-Truth)^2) %>%
+  group_by(Data, scenario, variable) %>%
+  dplyr::summarize(rmse = sqrt(mean(rmse.temp)))
+
+rmse_plot <- ggplot(rmse_vals, aes(y = rmse, x = scenario, group = scenario)) +
+  geom_boxplot(aes(color = Data)) +
+  geom_point(size = 0.7, col = 'darkgrey') +
+  geom_hline(aes(yintercept = 0), linetype = 'dashed', col = 'darkred') +
+  xlab('Scenario') + ylab('RMSE') +
+  facet_wrap(~variable, scales = 'free_y') +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+        legend.position = 'top') +
+  scale_x_continuous(breaks = 1:15) +
+  scale_color_manual(values = cols[c(2,3,5)])
+
+figs("rmse_plot", caption = "Figure of RMSE per scenario.")
+
+
+```
+
+```{r summary table}
+
+posterior_summary <- post_meds %>%
+  group_by(scenario, variable) %>%
+  dplyr::summarize(post_med = round(median(value), 2)) %>%
+  dcast(scenario ~ variable, value.var = 'post_med')
+
+bias_summary <- bias_vals %>%
+  group_by(scenario, variable) %>%
+  dplyr::summarize(mean_bias = round(mean(rel_bias), 2)) %>%
+  dcast(scenario ~ variable, value.var = 'mean_bias')
+
+rmse_summary <- rmse_vals %>%
+  group_by(scenario, variable) %>%
+  dplyr::summarize(mean_rmse = round(mean(rmse), 2)) %>%
+  dcast(scenario ~ variable, value.var = 'mean_rmse')
+
 
 ```
 
@@ -355,21 +411,24 @@ Weegman, M.D., Arnold, T.W., Clark, R.G., Schaub, M., 2020. Partial and complete
 
 **Figures and Tables**  
 
-```{r, fig.height = 8.5, fig.width = 7, fig.align = 'center'}
+```{r plots, fig.height = 8.5, fig.width = 7, fig.align = 'center'}
 
 # plots
+rmse_plot
 
 ```
 
-`r figs("plots", caption = "Plots.")`
+`r figs("rmse_plot", caption = "Plot of RMSE per scenario.")`
 
 
 \newpage
 
-`r tbls("rain_table", caption = "Table of X, Y, Z.")`
-```{r}
+`r tbls("rmse_summary", caption = "Table of RMSE by scenario.")`
+```{r table}
 
-# kable(table, align = 'c', format.args = list(big.mark = ","))
+kable(rmse_summary, align = 'c', format.args = list(big.mark = ","))
 
 ```
+
+
 
