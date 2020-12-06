@@ -105,8 +105,6 @@ true_vals <- truth %>%
 
 sc <- c(1:5, 11:15)
 nsim <- 25
-# sc <- c(1:2)
-# nsim <- 3
 pars <- c('fec', 'lambdaf', 'mean.p', 'mean.phi[1]', 'mean.phi[2]', 'p.surv', 'phi.nest')
 
 out_meds1 <- data.frame() #storage
