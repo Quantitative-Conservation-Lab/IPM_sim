@@ -61,12 +61,13 @@ cols <- c("violetred4", "dodgerblue3", 'deepskyblue1', "#4aaaa5", "#a3d39c", "#f
 
 ```
 
-```{r load packages, results = 'hide', message = FALSE}
+```{r load packages, results = 'hide'}
 
 library(tidyr)
 library(dplyr)
 library(cowplot)
 library(ggplot2)
+library(coda)
 library(captioner)
 library(knitr)
 library(reshape2)
@@ -82,14 +83,12 @@ tbls <- captioner(prefix = "Table")
 ```
 
 
-```{r load results, results = 'hide', message = FALSE}
-
-# test <- readRDS(here::here('data', 'out1_1.Rdata'))
+```{r figures - multiple chains, results = 'hide'}
 
 #true vals
 truth <- readRDS(here::here('data', 'scenarios.Rdata')) 
 colnames(truth) <- gsub(' ', '', colnames(truth))
-true.vals <- truth %>%
+true_vals <- truth %>%
   dplyr::select(ScenarioNumber, MRdetection, Abunddetection, AdultSurv, JuvSurv, Dailynestsurvival, Fec) %>%
   dplyr::rename(scenario = ScenarioNumber) %>%
   reshape2::melt(id.vars = c('scenario'), value.name = 'Truth') %>%
@@ -99,57 +98,72 @@ true.vals <- truth %>%
   transform(Data = ifelse(scenario < 6, 'All', 
                           ifelse(scenario < 11 & scenario > 5, 'Counts + Productivity', 'Counts + MR'))) %>%
   transform(Truth = ifelse(Data == 'Counts + Productivity' & variable == 'MRdetection', NA, Truth))
-  
-#posterior medians for fec, mean.p, mean.phi[1:2], p.surv, phi.nest
 
-#read in scenarios separately without mean.p below
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~ #
+
+### assessing convergence
+
 sc <- c(1:5, 11:15)
-niter <- 25
+nsim <- 25
+pars <- c('fec', 'lambdaf', 'mean.p', 'mean.phi[1]', 'mean.phi[2]', 'p.surv', 'phi.nest')
 
-meds <- data.frame()
+out_meds1 <- data.frame() #storage
 for (s in sc) {
-  for (i in 1:niter) {
+  for (i in 1:nsim) { 
+chains <- as.mcmc.list(list(as.mcmc(readRDS(file = here::here('data', paste0('out', s, '_', i, '-', 1, '.Rdata')))), 
+                            as.mcmc(readRDS(file = here::here('data', paste0('out', s, '_', i, '-', 2, '.Rdata')))), 
+                            as.mcmc(readRDS(file = here::here('data', paste0('out', s, '_', i, '-', 3, '.Rdata'))))))
 
-temp <- data.frame(readRDS(file = here::here('data', paste0('out', s, '_', i, '.Rdata')))) 
-temp.med <- data.frame(t(apply(temp, 2, median)))
-temp.med$iter <- i
-temp.med$scenario <- s
+max_rhat <- max(gelman.diag(chains[,pars], multivariate=F, autoburnin=F)$psrf[,1], na.rm = T)
 
-meds <- rbind(meds, temp.med)
-  }
-}
+## posterior medians
+out_temp <- data.frame(t(c(summary(chains)$q[pars,"50%"], max_rhat, i, s)))
+colnames(out_temp) <- c(names(summary(chains)$q[pars,"50%"]), 'max_rhat', 'sim', 'scenario')
 
+out_meds1 <- rbind(out_meds1, out_temp)
+
+  } #sims
+} #scenarios
+
+#scenarios without p.surv
 sc <- c(6:10)
-niter <- 25
+pars <- c('fec', 'lambdaf', 'mean.p', 'mean.phi[1]', 'mean.phi[2]', 'phi.nest')
 
-meds2 <- data.frame()
+out_meds2 <- data.frame() #storage
 for (s in sc) {
-  for (i in 1:niter) {
+  for (i in 1:nsim) { 
+chains <- as.mcmc.list(list(as.mcmc(readRDS(file = here::here('data', paste0('out', s, '_', i, '-', 1, '.Rdata')))), 
+                            as.mcmc(readRDS(file = here::here('data', paste0('out', s, '_', i, '-', 2, '.Rdata')))), 
+                            as.mcmc(readRDS(file = here::here('data', paste0('out', s, '_', i, '-', 3, '.Rdata'))))))
 
-temp <- data.frame(readRDS(file = here::here('data', paste0('out', s, '_', i, '.Rdata')))) 
-temp.med <- data.frame(t(apply(temp, 2, median)))
-temp.med$iter <- i
-temp.med$scenario <- s
+max_rhat <- max(gelman.diag(chains[,pars], multivariate=F, autoburnin=F)$psrf[,1], na.rm = T)
 
-meds2 <- rbind(meds2, temp.med)
-  }
-}
+## posterior medians
+out_temp <- data.frame(t(c(summary(chains)$q[pars,"50%"], max_rhat, i, s)))
+colnames(out_temp) <- c(names(summary(chains)$q[pars,"50%"]), 'max_rhat', 'sim', 'scenario')
 
-meds <- bind_rows(meds, meds2)
+out_meds2 <- rbind(out_meds2, out_temp)
 
-post.meds <- meds %>% #transform(scenario = factor(scenario)) %>%
-  reshape2::melt(id.vars = c('scenario', 'iter')) %>%
-  filter(variable %in% c('mean.phi.1.', 'mean.phi.2.', 'mean.p', 'fec', 'p.surv', 'phi.nest')) %>%
+  } #sims
+} #scenarios
+
+out_meds <- bind_rows(out_meds1, out_meds2)
+
+post_meds <- out_meds %>% 
+  filter(max_rhat < 1.1) %>%
+  dplyr::select(-c(max_rhat, lambdaf)) %>%
+  reshape2::melt(id.vars = c('scenario', 'sim')) %>%
+  filter(variable %in% c('mean.phi[1]', 'mean.phi[2]', 'mean.p', 'fec', 'p.surv', 'phi.nest')) %>%
   transform(variable = factor(variable,
-                              levels = c('mean.phi.1.', 'mean.phi.2.', 'mean.p', 'fec', 'p.surv', 'phi.nest'),
+                              levels = c('mean.phi[1]', 'mean.phi[2]', 'mean.p', 'fec', 'p.surv', 'phi.nest'),
                               labels = c('JuvSurv', 'AdultSurv', 'MRdetection', 'Fec', 'Abunddetection', 'Dailynestsurvival'))) %>%
   transform(Data = ifelse(scenario < 6, 'All', 
                           ifelse(scenario < 11 & scenario > 5, 'Counts + Productivity', 'Counts + MR')))
 
-ggplot(post.meds, aes(y = value, x = scenario, group = scenario)) +
+meds_plot <- ggplot(post_meds, aes(y = value, x = scenario, group = scenario)) +
   geom_boxplot(aes(color = Data)) +
   geom_point(size = 0.7, col = 'darkgrey') + 
-  geom_point(data = true.vals, aes(y = Truth, x = scenario, group = scenario), col = 'darkred') +
+  geom_point(data = true_vals, aes(y = Truth, x = scenario, group = scenario), col = 'darkred') +
   xlab('Scenario') + ylab('Posterior medians') +
   facet_wrap(~variable, scales = 'free_y') +
   theme_classic() +
@@ -159,12 +173,11 @@ ggplot(post.meds, aes(y = value, x = scenario, group = scenario)) +
   scale_color_manual(values = cols[c(2,3,5)])
 
 #relative bias
-
-bias.vals <- post.meds %>% 
-  merge(true.vals %>% dplyr::select(scenario, variable, Truth), by = c('scenario', 'variable')) %>%
+bias_vals <- post_meds %>% 
+  merge(true_vals %>% dplyr::select(scenario, variable, Truth), by = c('scenario', 'variable')) %>%
   transform(bias = value-Truth, rel_bias = (value-Truth)/Truth) 
 
-ggplot(bias.vals, aes(y = rel_bias, x = scenario, group = scenario)) +
+bias_plot <- ggplot(bias_vals, aes(y = rel_bias, x = scenario, group = scenario)) +
   geom_boxplot(aes(color = Data)) +
   geom_point(size = 0.7, col = 'darkgrey') + 
   geom_hline(aes(yintercept = 0), linetype = 'dashed', col = 'darkred') +
@@ -175,7 +188,48 @@ ggplot(bias.vals, aes(y = rel_bias, x = scenario, group = scenario)) +
         legend.position = 'top') +
   scale_x_continuous(breaks = 1:15) +
   scale_color_manual(values = cols[c(2,3,5)])
-  
+
+#rmse
+rmse_vals <- post_meds %>% 
+  merge(true_vals %>% dplyr::select(scenario, variable, Truth), by = c('scenario', 'variable')) %>%
+  transform(rmse.temp = (value-Truth)^2) %>%
+  group_by(Data, scenario, variable) %>%
+  dplyr::summarize(rmse = sqrt(mean(rmse.temp)))
+
+rmse_plot <- ggplot(rmse_vals, aes(y = rmse, x = scenario, group = scenario)) +
+  geom_boxplot(aes(color = Data)) +
+  geom_point(size = 0.7, col = 'darkgrey') +
+  geom_hline(aes(yintercept = 0), linetype = 'dashed', col = 'darkred') +
+  xlab('Scenario') + ylab('RMSE') +
+  facet_wrap(~variable, scales = 'free_y') +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+        legend.position = 'top') +
+  scale_x_continuous(breaks = 1:15) +
+  scale_color_manual(values = cols[c(2,3,5)])
+
+figs("rmse_plot", caption = "Figure of RMSE per scenario.")
+
+
+```
+
+```{r summary table}
+
+posterior_summary <- post_meds %>%
+  group_by(scenario, variable) %>%
+  dplyr::summarize(post_med = round(median(value), 2)) %>%
+  dcast(scenario ~ variable, value.var = 'post_med')
+
+bias_summary <- bias_vals %>%
+  group_by(scenario, variable) %>%
+  dplyr::summarize(mean_bias = round(mean(rel_bias), 2)) %>%
+  dcast(scenario ~ variable, value.var = 'mean_bias')
+
+rmse_summary <- rmse_vals %>%
+  group_by(scenario, variable) %>%
+  dplyr::summarize(mean_rmse = round(mean(rmse), 2)) %>%
+  dcast(scenario ~ variable, value.var = 'mean_rmse')
+
 
 ```
 
@@ -192,14 +246,15 @@ Abby Bratt, Caroline Cappello, Amelia DuVall, Hannah Sipe, Amanda Warlick
 
 **Introduction**  
 
-Understanding the processes that control population dynamics in wild populations is a critical component of conservation but is frequently constrained by missing demographic information, uncertainty in data, and temporally or spatially misaligned datasets (citation). Integrated population models (IPMs) are an increasingly popular tool in ecology that offer release from these limitations by providing a framework to combine disparate datasets in a single, unified analysis (Schaub & Abadi 2011). This approach can provide several advantages like estimation of otherwise non-identifiable parameters, improved precision in parameter estimation, and [spatio-temporal inference] (citation). These advances have practical benefits for resource managers that must make decisions based on limited available information. As IPMs become more widely used, however, it is critical that they are robustly evaluated. 
+Understanding the processes that control population dynamics in wild populations is a critical component of conservation and management but is frequently limited by missing demographic information, uncertainty, and temporally or spatially misaligned datasets (Schaub & Abadi 2011, Zipkin & Saunders 2017). Integrated population models (IPMs; Besbeas et al. 2002, Brooks et al. 2004) are an increasingly popular tool in ecology that can help overcome these limitations by combining disparate datasets in a single, unified analysis (Schaub & Abadi 2011). This approach can provide several advantages, such as improved precision (Schaub et al. 2007, Tavecchia 2009, Abadi et al. 2010) and the estimation of parameters that would otherwise be unidentifiable (Besbeas 2005, Schaub et al. 2007, Veran & Lebreton 2008), which is often the case for key demographic rates such as recruitment or immigration. These advances have practical benefits for resource managers that must make decisions based on limited available information. As IPMs become more widely used, however, it is critical that they are robustly evaluated. 
 
-Since the introduction of IPMs to ecology in the early 2000s and following the work of Besbeas and colleagues with passerines (Besbeas et al. 2002, 2005), the common approach has been to estimate parameters by combining mark-recapture and abundance data into a joint likelihood. Researchers have has since expanded the use of IPMs to include a variety of taxa (e.g. in bats Rhinolophus ferrumequinum: Schaub et al. 2007, in Svalbard reindeer Rangifer tarandus platyrhynchus: Lee et al. 2015, Antarctic toothfish Dissostichus mawsoni: Mormede et al. 2019, wild boar Sus scrofa: Gamelon et al. 2019), [include multivariate observations with estimation of transition probabilities within multi-state and multi-site systems] (McCrea et al. 2012), evaluate management efforts (Cruz et al. 2018), and to include environmental processes and stochasticity (Oppel et al. 2014, Woodworth et al. 2017). This growth in usage has occurred despite a relatively poor understanding of how to assess goodness of fit however, and we lack knowledge of the limits of the IPM framework in situations where available data are sparse, of poor quality, or when certain data sources are absent. For example, many field studies may have survey and reproductive data while missing survival estimates from mark-recapture datasets. 
+Since the introduction of IPMs to ecology in the early 2000s and following the work of Besbeas and colleagues with passerines (Besbeas et al. 2002, 2005), the common approach has been to estimate parameters by combining mark-recapture and abundance data into a joint likelihood. Researchers have has since expanded the use of IPMs to include a variety of taxa (e.g., bats *Rhinolophus ferrumequinum* (Schaub et al. 2007); Svalbard reindeer *Rangifer tarandus platyrhynchus* (Lee et al. 2015), Antarctic toothfish *Dissostichus mawsoni* (Mormede et al. 2019), wild boar *Sus scrofa* (Gamelon et al. 2019)). Applications have also been developed to estimate transition probabilities within multi-state and multi-site systems (McCrea et al. 2012), evaluate management efficacy and trade-offs (Cruz et al. 2018), and to estimate the effects of environmental processes and stochasticity on demography (Oppel et al. 2014, Woodworth et al. 2017). This proliferation of integrated population modeling has occurred despite a relatively poor understanding of how to assess goodness of fit for the joint likelihood. Additionally, the limitations of the IPM framework are still underexplored, particularly in situations where available data are sparse, of poor quality, or when data to inform specific parameters are entirely absent (i.e., most field studies may have count surveys, but not all have data informing both recruitment and survival). 
 
-Data simulation studies provide an avenue for robust evaluation of the IPM framework, but few such studies exist. Those that have used data simulation largely focus on proof of 1) concept (i.e. improved precision and reduced bias McCrea et al 2010, Chandler & Clark 2014, Schaub & Fletcher 2015, Bled et al. 2017, Ahrestani et al. 2017, Bowler et al. 2019), and 2) model assumptions such as independence of datasets (Abadi et al. 2010, Schaub & Fletcher 2015, Weegman et al. 2020). Riecke et al. (2019) found that parameter estimates from IPMs were highly sensitive to violations of mark-recapture model assumptions (i.e. marker-induced bias and survival heterogeneity). These findings further motivate studies to determine the reliability of IPMs in parameter estimation and in detecting trends when survival is not informed by data or when a data source is sparse, biased, or highly uncertain. 
+Data simulation studies provide an avenue for robust evaluations of the IPM framework, but few such studies exist. Those that have used data simulation largely focus on (1) proof of concept (i.e., improved precision and reduced bias of parameter estimation) or (2) violation of assumptions within the subcomponent models (i.e., marker-induced bias or heterogeneity in survival) or the joint likelihood (i.e., dataset independence). In the former, IPMs generally have led to improved precision and unbiased estimates of parameters that would otherwise be unidentifiable using traditional approaches (McCrea et al. 2010, Chandler & Clark 2014, Schaub & Fletcher 2015, Bled et al. 2017, Ahrestani et al. 2017, Bowler et al. 2019), though not always depending on sample sizes, dominance of one dataset over another, or the likelihood structures (citation). In examining the effects of violating model assumptions on bias and precision, results have been mixed and again largely depend on sample sizes, effect sizes, parameterization, and the dominance of given datasets. In some cases, dependence across datasets has been shown to result in biased estimates or at least overly optimistic estimates of uncertainty (Goodman et al. 2004, Besbeas et al. 2009) while in others the effects on bias and precision are minimal (Abadi et al. 2010, Schaub & Fletcher 2015, Weegman et al. 2020). Riecke et al. (2019) found that estimates for previously unidentifiable parameters were highly sensitive to violations of mark-recapture model assumptions (i.e., marker-induced bias and survival heterogeneity). 
 
-We aim to improve our understanding of this important statistical approach, particularly for passerine bird life history. In this study, we simulate data to examine IPM performance across a range of scenarios where data informing key demographic parameters are sparse or missing. We simulate three datasets for a for a theoretical passerine: 1) census counts, 2) reproductive output, and 3) mark-recapture (MR) of banded individuals. We then systematically vary the uncertainty in our abundance and MR data and run the integrated models under scenarios where demographic parameters like survival and fecundity are high or low. By identifying scenarios where IPMs do not lead to improved precision or cannot estimate unidentifiable parameters, we refine our understanding of the mechanisms underlying IPMs and can better identify when they may serve as a useful tool. 
-
+These studies motivate the further examination of the strengths and weaknesses IPMs across a range of model structures and data landscapes, particularly when certain demographic rates are not directly informed by data or when a data source is sparse, biased, or highly uncertain. This type of analysis has been conducted for species distribution models in a few cases (Farr et al. 2020, Simmonds et al. 2020), but has not yet been rigorously explored for an IPM. Through a simulation analysis, we aim to gain insights about this statistical framework, particularly as applied to a passerine bird life history. We assume all model assumptions are met and compare parameter estimation for a traditional IPM with data informing abundance (count data), survival (mark-recapture data), and reproductive output (nest monitoring data) to situations when either of the latter two datasets are omitted. In each of these three cases, we also examine parameter estimation when juvenile survival varies and under situations with low detection to reflect a higher degree of uncertainty. In future iterations of this analysis, we also plan to compare model performance in situations when datasets informing survival and reproduction are not only uncertain (low detection probability) but also sparse (reduced survey frequency), and the effects of having lower or variable adult survival and reproductive output.
+ 
+Through this study, we will identify scenarios where IPMs may not lead to improved precision or return unbiased estimates of parameters that would otherwise be unidentifiable when certain datasets are excluded. In doing so, we will refine our understanding of the mechanisms underlying IPMs and can better identify when they may serve as a useful tool or might not be necessary or warrant the collection of additional data. Improving our understanding of the strengths and weaknesses of the IPM framework can provide helpful insights for the design and implementation of field survey programs so as to most efficiently make use of limited resources to inform management efforts aimed at monitoring or recovering species that are deemed ecosystem indicators or depleted and in need of conservation intervention.
 
 **Methods**   
 
@@ -355,21 +410,24 @@ Weegman, M.D., Arnold, T.W., Clark, R.G., Schaub, M., 2020. Partial and complete
 
 **Figures and Tables**  
 
-```{r, fig.height = 8.5, fig.width = 7, fig.align = 'center'}
+```{r plots, fig.height = 8.5, fig.width = 7, fig.align = 'center'}
 
 # plots
+rmse_plot
 
 ```
 
-`r figs("plots", caption = "Plots.")`
+`r figs("rmse_plot", caption = "Plot of RMSE per scenario.")`
 
 
 \newpage
 
-`r tbls("rain_table", caption = "Table of X, Y, Z.")`
-```{r}
+`r tbls("rmse_summary", caption = "Table of RMSE by scenario.")`
+```{r table}
 
-# kable(table, align = 'c', format.args = list(big.mark = ","))
+kable(rmse_summary, align = 'c', format.args = list(big.mark = ","))
 
 ```
+
+
 
