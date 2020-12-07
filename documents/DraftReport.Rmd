@@ -56,9 +56,6 @@ Displaying results
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, results = 'asis', fig.width = 4, fig.height = 3.5)
 #for reference: https://rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf
 
-cols <- c("violetred4", "dodgerblue3", 'deepskyblue1', "#4aaaa5", "#a3d39c", "#f6b61c", "chocolate2", "red3")
-
-
 ```
 
 ```{r load packages, results = 'hide'}
@@ -76,6 +73,7 @@ library(here)
 #functions to use for calling figures/tables
 figs <- captioner(prefix = "Figure")
 tbls <- captioner(prefix = "Table")
+cols <- c("violetred4", "dodgerblue3", 'deepskyblue1', "#4aaaa5", "#a3d39c", "#f6b61c", "chocolate2", "red3")
 
 #source a plot theme for figures
 # source(here::here('scripts', 'PlotTheme.R'))
@@ -103,8 +101,9 @@ true_vals <- truth %>%
 
 ### assessing convergence
 
-sc <- c(1:5, 11:15)
-nsim <- 25
+# sc <- c(1:5, 11:15)
+sc <- c(1:5)
+nsim <- 5
 pars <- c('fec', 'lambdaf', 'mean.p', 'mean.phi[1]', 'mean.phi[2]', 'p.surv', 'phi.nest')
 
 out_meds1 <- data.frame() #storage
@@ -126,7 +125,9 @@ out_meds1 <- rbind(out_meds1, out_temp)
 } #scenarios
 
 #scenarios without p.surv
-sc <- c(6:10)
+# sc <- c(6:10)
+sc <- c(6:9)
+
 pars <- c('fec', 'lambdaf', 'mean.p', 'mean.phi[1]', 'mean.phi[2]', 'phi.nest')
 
 out_meds2 <- data.frame() #storage
