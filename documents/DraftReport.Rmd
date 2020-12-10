@@ -401,20 +401,45 @@ Abadi, F., Gimenez, O., Arlettaz, R., Schaub, M., 2010. An assessment of integra
 
 Ahrestani, F.S., Saracco, J.F., Sauer, J.R., Pardieck, K.L., Royle, J.A., 2017. An integrated population model for bird monitoring in North America. Ecol Appl 27, 916–924. https://doi.org/10.1002/eap.1493
 
+Besbeas P., Borysiewicz R.S., Morgan B.J., 2009. Completing the Ecological Jigsaw. In: Thomson D.L., Cooch E.G., Conroy M.J. (eds) Modeling Demographic Processes In Marked Populations. Environmental and Ecological Statistics, vol 3. Springer, Boston, MA. https://doi.org/10.1007/978-0-387-78151-8_22
+
+Besbeas, P., Freeman, S.N., Morgan, B.J.T., Catchpole, E.A., 2002. Integrating mark-recapture-recovery and census data to estimate animal abundance and demographic parameters. Biometrics 58, 540–547.
+
+Besbeas, P., Freeman, S.N., Morgan, B.J.T., 2005. The potential of integrated population modelling. Australian & New Zealand Journal of Statistics 47, 35-48. https://doi.org/10.1111/j.1467-842X.2005.00370.x
+
 Bled, F., Belant, J.L., Daele, L.J.V., Svoboda, N., Gustine, D., Hilderbrand, G., Barnes, V.G., n.d. Using multiple data types and integrated population models to improve our knowledge of apex predator population dynamics. Ecology and Evolution 7, 9531–9543. https://doi.org/10.1002/ece3.3469
 
 Bowler, D.E., Nilsen, E.B., Bischof, R., O’Hara, R.B., Yu, T.T., Oo, T., Aung, M., Linnell, J.D.C., 2019. Integrating data from different survey types for population monitoring of an endangered species: the case of the Eld’s deer. Scientific Reports 9, 7766. https://doi.org/10.1038/s41598-019-44075-9
 
+Brooks S.P., King R., Morgan B.J.T., 2004. A Bayesian approach to
+combining animal abundance and demographic data. Animal
+Biodiversity and Conservation 27, 515–529.
+
 Chandler, R.B., Clark, J.D., 2014. Spatially explicit integrated population models. Methods in Ecology and Evolution 5, 1351–1360. https://doi.org/10.1111/2041-210X.12153
+
+Cruz, J., Windels, S.K., Thogmartin, W.E., Crimmins, S.M., Grim, L.H., Zuckerberg, B., 2018. Managing individual nests promotes population recovery of a top predator. Journal of Applied Ecology 55, 1418–1429.
 
 Farr, M.T., Green, D.S., Holekamp, K.E., Zipkin, E.F., n.d. Integrating distance sampling and presence-only data to estimate species abundance. Ecology n/a, e03204. https://doi.org/10.1002/ecy.3204
 
+Gamelon, M., Baubet, E., Besnard, A., Gaillard, J.-M., Lebreton, J.-D., Touzot, L., Veylit, L., Gimenez, O., 2019.Efficient use of harvest data: An integrated population model for exploited animal populations. bioRxiv 776104. doi: https://doi.org/10.1101/776104
+
+Lee, A.M., Bjørkvoll, E.M., Hansen, B.B., Albon, S.D., Stien, A., Sæther, B.‐E., Engen, S., Veiberg, V., Loe, L.E., Grøtan, V., 2015. An integrated population model for a long‐lived ungulate: more efficient data use with Bayesian methods. Oikos 124, 806-816. https://doi.org/10.1111/oik.01924
+
 McCrea, R.S., Morgan, B.J.T., Gimenez, O., Besbeas, P., Lebreton, J.-D., Bregnballe, T., 2010. Multi-Site Integrated Population Modelling. Journal of Agricultural, Biological and Environmental Statistics 15, 539–561. https://doi.org/10.1007/s13253-010-0027-5 
+
+Mormede, S., Parker, S.J., Pinkerton, M.H., 2020. Comparing spatial distribution modelling of fisheries data with single-area or spatially-explicit integrated population models, a case study of toothfish in the Ross Sea region.
+Fisheries Research 221, 105381. https://doi.org/10.1016/j.fishres.2019.105381
+
+Oppel, S., Hilton, G., Ratcliffe, N., Fenton, C., Daley, J., Gray, G., Vickery, J., Gibbons, D., 2014. Assessing population viability while accounting for demographic and environmental uncertainty. Ecology 95, 1809–1818.
 
 Riecke, T.V., Williams, P.J., Behnke, T.L., Gibson, D., Leach, A.G., Sedinger, B.S., Street, P.A., Sedinger, J.S., 2019. Integrated population models: model assumptions and inference. Methods Ecol Evol 2041–210X.13195. https://doi.org/10.1111/2041-210X.13195
 
+Schaub, M., Abadi, F., 2011. Integrated population models: A novel analysis framework for deeper insights into population dynamics. Journal of Ornithology 152:S227–S237.
+
 Schaub, M., Fletcher, D., 2015. Estimating immigration using a Bayesian integrated population model: choice of 
 parametrization and priors. Environ Ecol Stat 22, 535–549. https://doi.org/10.1007/s10651-015-0309-8
+
+Schaub, M., Gimenez, O., Sierro, A., Arlettaz, R., 2007. Use of Integrated Modeling to Enhance Estimates of Population Dynamics Obtained from Limited Data. Conservation Biology 21, 945-955. https://doi.org/10.1111/j.1523-1739.2007.00743.x
 
 Simmonds, E.G., Jarvis, S.G., Henrys, P.A., Isaac, N.J.B., O’Hara, R.B., 2020. Is more data always better? A simulation study of benefits and limitations of integrated distribution models. Ecography 43, 1413–1422. https://doi.org/10.1111/ecog.05146
 
@@ -422,7 +447,13 @@ Sun, C.C., Royle, J.A., Fuller, A.K., 2019. Incorporating citizen science data i
 
 Tavecchia, G., Besbeas, P., Coulson, T., Morgan, B.J.T., Clutton‐Brock, T.H., 2009. Estimating Population Size and Hidden Demographic Parameters with State‐Space Modeling. The American Naturalist 173, 722–733. https://doi.org/10.1086/598499
 
+Véran, S., Lebreton, J.D., 2008. The potential of integrated modelling in conservation biology: A case study of the black‐footed albatross (Phoebastria nigripes). Can J Statistics, 36, 85-98. https://doi.org/10.1002/cjs.5550360109
+
 Weegman, M.D., Arnold, T.W., Clark, R.G., Schaub, M., 2020. Partial and complete dependency among data sets has minimal consequence on estimates from integrated population models. Ecological Applications. https://doi.org/10.1002/eap.2258
+
+Woodworth, B., Wheelwright, N., Newman, A., Schaub, M., Norris, D.R., 2017. Winter temperatures limit population growth rate of a migratory songbird. Nat Commun 8, 14812. https://doi.org/10.1038/ncomms14812
+
+Zipkin, E.F., Saunders, S.P., 2018. Synthesizing multiple data types for biological conservation using integrated population models. Biological Conservation 217, 240–250.
 
  
 \newpage
