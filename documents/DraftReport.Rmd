@@ -55,7 +55,7 @@ cols <- c("violetred4", "dodgerblue3", 'deepskyblue1', "#4aaaa5", "#a3d39c", "#f
 ```
 
 
-```{r figures - multiple chains, results = 'hide', cache = F}
+```{r figures - multiple chains, eval = F, results = 'hide', cache = F}
 
 #true vals
 truth <- readRDS(here::here('data', 'scenarios.Rdata')) 
@@ -195,7 +195,7 @@ rmse_vals <- post_meds %>%
 
 ```
 
-```{r summary table}
+```{r summary table, eval = F}
 
 posterior_summary <- post_meds %>%
   group_by(scenario, variable) %>%
@@ -429,7 +429,7 @@ Zipkin, E.F., Saunders, S.P., 2018. Synthesizing multiple data types for biologi
 
 **Figures and Tables**  
 
-```{r plots, fig.height = 8.5, fig.width = 7, fig.align = 'center'}
+```{r plots, eval = F, fig.height = 8.5, fig.width = 7, fig.align = 'center'}
 
 # plots
 rmse_plot
@@ -442,7 +442,7 @@ rmse_plot
 \newpage
 
 `r tbls("rmse_summary", caption = "Table of RMSE by scenario.")`
-```{r table}
+```{r table, eval = F}
 
 kable(rmse_summary, align = 'c', format.args = list(big.mark = ","))
 
