@@ -8,44 +8,17 @@ output:
 
 To-do's
 
-Presentation
-<!-- - caroline/amelia -->
--designate/delegate sections/slides
-
 Write-up
-<!-- - intro (amanda re-reads and checks for possible additions) -->
 - methods/equation check: change YOTY to juv (hannah)
 - simulation write-up (amelia)
 - results (abby/hannah)
 
-- discussion (TBD)
--- summarize high-level finding
-
--- why we think we see what we see
---- crux of the issue.... 
-(1) how the life cycle model relies on different data sources
-(2) parameter identifiability
-(3) ?
-
--- limitations/caveats of this particular study (what can/can't we make inference to/about)
---- life histories
-
--- future directions
---- degrading quantity/quality
-
--- importance of the work
-(1) understanding IPMs better
-(2) understanding weaknesses of IPMs: when does the integration almost hurt instead of help?
-(3) survey design
 
 Figures/analysis/etc
 - posterior densities (amanda)
 <!-- - life cycle/survey timing diagram (amelia) -->
 - figure captions/printing (amanda)
 <!-- - 3 dags (amelia) -->
-
-Code review
-- annotate data simulation (amanda! caroline! amelia!)
 
 Displaying results
 - posterior densities
@@ -377,19 +350,15 @@ Examined relative bias, RMSE, etc
 
 **Discussion**  
 
-Review project aim and main findings  
+This simulation analysis aims to explore the benefits and weaknesses of data integration for population models across varying levels of data quality (degree of uncertainty) and quantity (sample size, number of available datasets) for a typical passerine bird species. In essence, one of the main goals of the study was to examine when and to what extent and under what circumstances developing IPMs is worth the potential additional resources needed for data collection. Or, similarly, when this type of data integration framework can facilitate the estimation of parameters not directly informed by available data. Our initial results reaffirm the benefits of data integration for avian population modeling and highlight avenues of future investigation.
 
-Elaborate on interesting finding 1  
-- Implications of not exploring this in an application?  
-- Future areas of work?  
-- Extension to more complex life history? Data scenarios?  
+In our example of a typical passerine life history, the full IPM was the only data landscape in which parameters were successfully returned with relatively little to no bias. In this case, we can also see the importance of integrating all three datasets for the estimation of juvenile survival, which is not directly informed by any of the datasets. Even in the full IPM, however, we do see increased bias and decreased accuracy (as measured by higher RMSE) in survival (particularly juvenile) at low detection rates that is not improved upon when the survival rate is higher.  This suggests that detection probability is a strong determinant in parameter uncertainty. An important future scenario to examine under this full data landscape is whether that uncertainty could be overcome by increasing sample sizes and/or survey frequency.  
 
-Elaborate on interesting finding 2
-- Implications of not exploring this in an application?  
-- Future areas of work?  
-- Extension to more complex life history? Data scenarios?  
+When examining model performance across the other reduced data landscapes, similar patterns arose when removing either mark-resight or productivity datasets. With only two datasets, bias increased and accuracy was reduced only for parameters directly informed by the dataset that was omitted, and this deterioration in model performance was much greater than from decreased detection probability in the full IPM. This pattern, if explored further, will start to reveal some of the trade-offs that are most interesting to more fully investigate using this framework. Specifically, it will be helpful to examine to what extent sample size would have to increase and uncertainty would have to be reduced in order to estimate the implicit parameters with a similar degree of accuracy and precision as with the IPM. And, when aiming to improve data quality and quantity, whether it can be accomplished more readily by increasing sample sizes and/or detection probability in mark-resight data versus productivity data. In other words, for our passerine, if, when, and to what extent does one dataset dominate another in terms of estimating abundance? 
 
-Broaden to implications of work, study design, existing IPMs
+With the progression of these analyses, our aim is to additionally understand how some of these trade-offs within an IPM framework might vary for other life histories (e.g., additional life stages) and survey features. Here we assume that all datasets are independent and that mark-recapture model assumptions hold, but it would be possible to explore violations of any of these. We are also interested in examining the ability of our IPM to detect a trend in demographic rates or abundance across the three data landscapes or in the face of unmodeled heterogeneity. 
+
+Most research applications using an IPM framework cite the benefits of improved parameter estimation, including reduced bias and the ability to estimate implicit parameters, though not all authors can or choose to confirm this through data simulation or compare their IPM estimates with those from traditional modeling frameworks. It is likely that the benefits of IPMs are fairly variable and context-specific, meaning that the degree to which IPMs improve parameter estimation depend on life history, model assumptions, sample sizes, parameter uncertainty, and likelihood structure. This type of study can enhance our growing understanding of IPM performance when datasets may be sparse, biased, or both. Depending on the goal of a given monitoring or conservation and management program, it can be helpful to understand how biases in existing data affect our ability to produce accurate estimates of abundance and trends, and how it might or might not be possible to overcome sparseness or bias by collecting additional data. This information can be key to designing and implementing monitoring surveys for avian populations.
 
 
 \newpage
