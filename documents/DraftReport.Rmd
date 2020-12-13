@@ -12,7 +12,7 @@ Write-up
 - methods/equation check: change YOTY to juv (hannah)*done* I changed some of the writing about the model and the notation used, could use a second look over by another person!
 
 - simulation write-up (amelia)
-- results (abby/hannah)
+- results (abby/hannah) - Hannah: wrote out a rough draft of results, will revisit tomorrow, but got something down to start with
 
 
 Figures/analysis/etc
