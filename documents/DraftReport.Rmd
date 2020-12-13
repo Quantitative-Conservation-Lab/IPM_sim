@@ -9,7 +9,8 @@ output:
 To-do's
 
 Write-up
-- methods/equation check: change YOTY to juv (hannah)
+- methods/equation check: change YOTY to juv (hannah)*done* I changed some of the writing about the model and the notation used, could use a second look over by another person!
+
 - simulation write-up (amelia)
 - results (abby/hannah)
 
@@ -251,54 +252,58 @@ Through this study, we will identify scenarios where IPMs may not lead to improv
 **Methods**   
 
 *Data simulation: life history*  
-We simulated data for an avian species assuming life history stages and traits of a typical passerine. Our simulated hypothetical species has two age-classes: young-of-year (YOY) and adults. Each age class has a unique survival rate ($S_1$, $S_{ad}$) and adults produce new chicks at rate *f*, and those chicks survive to be YOY at rate $S_1$. Current YOY will also breed the following year to produce surviving chicks at rate $f \times S_1$ (Fig 1). We assume an annual breeding cycle, with females nesting once per year. The period from nest initiation to fledging is 30 days regardless of clutch size. 
+We simulated data for an avian species assuming life history stages and traits of a typical passerine. Our simulated hypothetical species has two age-classes: 1 year-old juveniles and adults (individuals older than 1 year). Each age class has a unique survival rate ($\phi_1$, $\phi_{ad}$) and adults produce new chicks at fecundity rate *f*, and those chicks survive to be juveniles at rate $\phi_1$. Current juveniles will also breed the following year to produce surviving chicks at rate $f \times \phi_1$ (Fig 1). We assume an annual breeding cycle, with females nesting once per year. The period from nest initiation to fledging is 30 days regardless of clutch size. We also assume that survival and fecundity are constant across years and individuals. 
 
 As is often the convention, we use a female-only model because we assume that the population dynamics of our species are driven largely by female abundance and demography. All demographic rates are assumed constant over a 15-year study period. The population is quite small and the survey extends across the entire range, therefore we assume no immigration or emigration.
 
 *Model framework and assumptions*  
 
 *Count model*  
-We simulated data such that the population is surveyed annually in a 15-year pre-breeding census. Count surveys are conducted three times per year in quick succession such that we assume the population is closed between secondary sampling periods. We use an N-mixture model (citations) to estimate annual abundance from these repeated counts, where we assume no individual is double counted and that individual detections are independent and occur with equal probability. The underlying state process represents the latent variables of stage-specific abundance at each occasion: 
+We simulated data such that the population is surveyed annually in a 10-year pre-breeding census. Count surveys are conducted three times per year in quick succession such that we assume the population is closed between secondary sampling periods. We use an N-mixture model (citations) to estimate annual abundance from these repeated counts, where we assume no individual is double counted and that individual detections are independent and occur with equal probability. The underlying state process represents the latent variables of stage-specific abundance at each occasion for 1 year-olds, $N_{1}$ is modeled as:
 
-$$N_{1, t+1} \sim \text{Poisson}(N_{1,t}, S_{1,t}, \frac{f_t}{2} + N_{ad,t}S_{ad,t},\frac{f_t}{2})$$  
+$$N_{1, t+1} \sim \text{Poisson}(N_{1,t}\times \phi_{1}\times \frac{f}{2} + N_{ad,t}\times \phi_{ad}\times \frac{f}{2})$$  
+where the number of juveniles in the next year, $N_{1,t+1}$, is estimated using a Poisson distribution with probability based on the sum of stage-specific individuals at time $t$ that survive ($\phi_{1,ad}$) and reproduce ($f$). 
 
-$$N_{ad,t+1} \sim \text{Binomial}(N_{1,t} + N_{ad,t}, S_{ad,t})$$  
+A binomial distribution is used to estimate the number of adults in the next year, $N_{ad, t+1}$ based on the stage-specific survival and abundance in the previous occasion (i.e. $t$):
+$$N_{ad,t+1} \sim \text{Binomial}(N_{1,t} + N_{ad,t}, \phi_{ad,t})$$  
 
-where the number of juveniles ($N_1$) is estimated using a Poisson distribution with probability based on the sum of stage-specific individuals that survive ($S_{1,ad}$) and reproduce ($f_t$). A binomial distribution is used to estimate the number of adults based on the stage-specific survival and abundance in the previous occasion. 
 
-The observation process model, 
+The observation process model for the count data in each year $t$ is modeled using a binomial distribution: 
 
-$$y_t = N_{tot, t} + \epsilon$$
-$$\epsilon \sim \text{Normal}(0, \sigma^2_y)$$
+$$y_t \sim \text{Binomial} (N_{tot, t}, p_s)$$
+with $N_{tot,t}=N_{1,t}+N_{ad,t}$. The observed counts in each year, $y_t$, are assumed to be binomially distributed with a sample size of $N_{tot,t}$ and probability of detection $p_s$. The probability of detection for the observation process, $p_s$, of the count model is assumed constant across years and surveys. The survey detection probability was modeled on the probability scale using a uniform prior, $p_{s} \sim \text{Uniform}(0,1)$.
 
-describes counts *y* at time *t* given given stage-specific abundance as binomially distributed with sample size $N_t$ and detection probability $p$, with normally distributed observation error $\epsilon$ estimated with mean = 0 with the prior for $\sigma_y$ being U(0,10). 
-<!-- from amanda: help - prior for observation error?  -->
+The likelihood of the N-mixture abundance model is the product of the state and observation process models: $L_{Abundance}(\text{y}| ~N_1, ~N_{ad}, ~{p_s}, \phi_1,~\phi_{ad}, f)$
 
-The overall likelihood for this hierarchical state-space model can be described as the product of the state and observation process models:
-$$L_{SS}(\text{y}|\text{N}, S_1, S_{ad}, f, \sigma^2_y) = L_O(\text{y}|\text{N},\sigma^2_y) \times L_S(\text{N}|S_1, S_{ad}, f)$$
- 
 *Nest success productivity model*   
 
-In this simulation, nests are monitored according to the procedures described in Martin and Geupel (1993), where adults are observed for behavioral clues that indicate nesting behavior and followed until a nest is found. After locating a nest, it is revisited every 2-3 days to check its status until it either fledges or fails. We assume no state uncertainty in our nest observations, that nests can be correctly aged when first found, and that monitored nests are independent and representative of the population. We assume the daily survival probability is uniform across nest stages (*i.e.*, laying, incubating, nestlings). We estimate daily nest survival to obtain unbiased estimates for the probability of nest success (*i.e.*, at least 1 chick fledges): We use a Poisson model to estimate the average number of chicks fledged conditional on a nest being successful.
+In this simulation, nests are monitored according to the procedures described in Martin and Geupel (1993), where adults are observed for behavioral clues that indicate nesting behavior and followed until a nest is found. After locating a nest, it is revisited every 2-3 days to check its status until it either fledges or fails. We assume no state uncertainty in our nest observations, that nests can be correctly aged when first found, and that monitored nests are independent and representative of the population. We assume the daily survival probability is uniform across nest stages (*i.e.*, laying, incubating, nestlings). We estimate daily nest survival to obtain unbiased estimates for the probability of nest success (*i.e.*, at least 1 chick fledges): We use a Poisson model to estimate the number of chicks fledged conditional on a nest being successful.
 
-$$J_t \sim \text{Poisson}(\rho_t) $$
-$$\rho_t = R_tf_t $$
+$$\text{Fledged}_t \sim \text{Poisson}(\lambda_{\text{fledglings}}) $$
+The fecundity rate, *f*, is derived from the rate at which chicks fledge,
+$$f=\frac{1}{2}\times\lambda_{\text{fledglings}}*\phi_{n}^{30}$$
+where $\phi_{n}$ is the nest survival probability and we assume that the maximum nest age, the number of days the nest was active, is 30. 
+The observation process for the daily nest surveys is modeled using a Bernoulli distribution, based on daily nest survival probabilities and the state of the nest during the previous survey occasion:
 
-where the number of nestlings counted $J$ in year *t* is modeled using a Poisson distribution with the product of the number of surveyed broods $R_t$ and fecundity $f_t$ at each occasion. Fecundity is estimated using a uniform prior (0, 20) and the likelihood of this daily nest survival model can be described as $L_P(\text{J}, \text{R}|\text{f})$. 
+$$\text{NestStatus}_{n,d}\sim\text{Bernoulli}(\phi_{n}*\text{NestStatus}_{n,d-1})$$
+where $\text{NestStatus}_{n,d}$ is the status of nest $n$ at survey occasion $d$, $\phi_{n}$ is the nest surivial probability, and $\text{NestStatus}_{n,d-1}$ is the state of nest $n$ at the previous survey occasion $d-1$. 
+
+The likelihood of the nest success productivity model is $L_{Productivity}(\text{NestStatus}, \text{Fledged} | ~\phi_{n}, ~\lambda_{\text{fledglings}})$
 
 *Mark-resight model*  
-In this simulation study, YOY chicks are marked in the nest just prior to fledging with a unique combination of colored leg bands such that they can be individually identified over the course of their lives. Every chick in every nest that fledges is banded from a single annual comprehensive mark-resight survey per breeding season. To estimate stage-specific survival based on the individual encounter histories, we use a Cormack-Jolly-Seber (citation) model where we assume that marks are not lost or misread and that each marked individual has independent and identical survival and detection probabilities across occasions. The ecological state process *z* describes the probability that individual *i* at time *t* is alive or dead, namely:  
+In this simulation study, juveniles and adults are marked just prior to the end of the breeding season with a unique combination of colored leg bands such that they can be individually identified over the course of their lives. 
+Marked individuals are resighted during marking efforts in future years. To estimate stage-specific survival based on the individual encounter histories, we use a Cormack-Jolly-Seber (citation) model where we assume that marks are not lost or misread and that each marked individual has independent and identical survival and detection probabilities across occasions. The ecological state process *z* describes the probability that individual *i* at time *t* is alive or dead, namely:  
 
-$$ z_{i,t}|z_{i,t-1} \sim \text{Bernoulli}(z_{i,t-1} S_{1,ad}) $$
+$$ z_{i,t}|z_{i,t-1} \sim \text{Bernoulli}(z_{i,t-1}\times \phi_{ad}) $$
 
-where the state at time *t* is modeled with a Bernouli distribution based on the state at the previous occasion and state-specific survival probabilities $S_1$ and $S_{ad}$. Similarly, the observation process model
 
-$$ y_{i,t}|z_{i,t} \sim  \text{Bernoulli}(z_{i,t} p)$$
+where the state at time *t* is modeled with a Bernoulli distribution based on the state at the previous occasion and adult survival probability $\phi_{ad}$. Similarly, the observation process model
+
+$$ CH_{i,t}|z_{i,t} \sim  \text{Bernoulli}(z_{i,t}\times p_{mr})$$
   
-describes observations *y* using a Bernouli distribution based on the state of the individual in the current occasion and detection probability *p*. Mean survival and detection probabilities are modeled on the probability scale using uniform priors, $S_{1,ad} \sim \text{Uniform}(0,1)$ and $p \sim \text{Uniform}(0,1)$, respectively. The overall likelihood of the mark-resight model estimating survival probabilities is the product of the state and observation process models: $L_{SS}(\text{y}|\text{z}, ~S_1, ~S_{ad}, ~\text{p}) = L_O(\text{y}|\text{z},~\text{p})     \times L_S(\text{z}|S_1,~S_{ad})$.
+describes capture history observations *CH* using a Bernouli distribution based on the state of the individual in the current occasion and detection probability $p_{mr}$. Mean survival and detection probabilities are modeled on the probability scale using uniform priors, $\phi_{ad} \sim \text{Uniform}(0,1)$ and $p_{mr} \sim \text{Uniform}(0,1)$, respectively. The likelihood of the mark-resight model estimating the adult survival probability: $L_{Survival}(\text{y}|\text{z}, ~\phi_{ad}, ~p_{mr})$
 
 *Integrated population model*  
-
 To estimate abundance of the overall population $N_{tot}$ at each time *t*, the parameter estimates from the productivity and mark-resight models are combined with the stage-specific abundane estimated using the N-mixture model in a stochastic leslie population matrix model.
 
 <!-- From amanda: help: not sure if we need something like this since we have the equations above? -->
@@ -313,6 +318,12 @@ To estimate abundance of the overall population $N_{tot}$ at each time *t*, the 
 The joint likelihood for the integrated population model is the product of the likelihoods for the three subcomponent models. In instances when one dataset is removed, informative priors are used in place of the data to inform each of the relevant parameters (Table 1). 
 
 [IPM joint likelihood equation]
+The overall likelihood for this hierarchical state-space model can be described as the product of the state and observation process models:
+$$L_{IPM}(\text{y}, ~CH, ~\text{NestStatus}, ~\text{Fledged}|~N_{1},~N_{ad}, phi_1, phi_{ad}, f, p_{mr}, p_s, ~\lambda_{\text{fledglings}}, ~\phi_n) 
+$$=$L_{Abundance}(\text{y}| ~N_1, ~N_{ad}, ~{p_s}, \phi_1,~\phi_{ad}, f)\times$$
+$$L_{Productivity}(\text{NestStatus}, \text{Fledged} | ~\phi_{n}, ~\lambda_{\text{fledglings}}) \times$$
+$$L_{Survival}(\text{y}|\text{z}, ~\phi_{ad}, ~p_{mr})$$
+
 
 *Simulation scenarios* 
 We developed three versions of an IPM: 1) a "full" IPM that incorporates all three datasets (counts, productivity, mark-resight); 2) an IPM with the counts and productivity datasets only (excludes mark-resight dataset); and, 3) an IPM with the counts and mark-resight datasets only (excludes the productivity dataset). There are numerous scenarios we could run to vary detection and survival probabilities for each IPM version and test our objectives. We opted to run a select number of scenarios to provide preliminary findings to inform future work. For each version of the IPM, we ran 5 scenarios, for a total of 15 scenarios. Within each scenario, we varied the following parameters: mark-resight probability (0.3, 0.5, 0.8), count detection probability (0.3, 0.5, 0.85), and juvenile survival (0.3, 0.4, 0.5). The remaining parameters were kept constant for all scenarios: daily nest survival (0.975), mean clutch size (2.5), max nest age (30), initial age distribution (1000 juveniles, 1000 adults), and adult survival (0.77). For demographic parameters, we chose to vary juvenile survival because it is a hidden parameter, and these various values result in 5% annual decline, steady population growth, and 5% annual growth, respectively. 
@@ -347,6 +358,7 @@ Nimble; iterations, burn-in, etc
 Examined relative bias, RMSE, etc  
 
 **Results**  
+
 
 **Discussion**  
 
