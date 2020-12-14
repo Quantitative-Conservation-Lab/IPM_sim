@@ -281,11 +281,11 @@ In this simulation, nests are monitored according to the procedures described in
 
 $$\text{Fledged}_t \sim \text{Poisson}(\lambda_{\text{fledglings}}) $$
 The fecundity rate, *f*, is derived from the rate at which chicks fledge,
-$$f=\frac{1}{2}\times\lambda_{\text{fledglings}}*\phi_{n}^{30}$$
+$$f=\frac{1}{2}\times\lambda_{\text{fledglings}}\times\phi_{n}^{30}$$
 where $\phi_{n}$ is the nest survival probability and we assume that the maximum nest age, the number of days the nest was active, is 30. 
 The observation process for the daily nest surveys is modeled using a Bernoulli distribution, based on daily nest survival probabilities and the state of the nest during the previous survey occasion:
 
-$$\text{NestStatus}_{n,d}\sim\text{Bernoulli}(\phi_{n}*\text{NestStatus}_{n,d-1})$$
+$$\text{NestStatus}_{n,d}\sim\text{Bernoulli}(\phi_{n}\times\text{NestStatus}_{n,d-1})$$
 where $\text{NestStatus}_{n,d}$ is the status of nest $n$ at survey occasion $d$, $\phi_{n}$ is the nest surivial probability, and $\text{NestStatus}_{n,d-1}$ is the state of nest $n$ at the previous survey occasion $d-1$. 
 
 The likelihood of the nest success productivity model is $L_{Productivity}(\text{NestStatus}, \text{Fledged} | ~\phi_{n}, ~\lambda_{\text{fledglings}})$
@@ -304,7 +304,7 @@ $$ CH_{i,t}|z_{i,t} \sim  \text{Bernoulli}(z_{i,t}\times p_{mr})$$
 describes capture history observations *CH* using a Bernouli distribution based on the state of the individual in the current occasion and detection probability $p_{mr}$. Mean survival and detection probabilities are modeled on the probability scale using uniform priors, $\phi_{ad} \sim \text{Uniform}(0,1)$ and $p_{mr} \sim \text{Uniform}(0,1)$, respectively. The likelihood of the mark-resight model estimating the adult survival probability: $L_{Survival}(\text{y}|\text{z}, ~\phi_{ad}, ~p_{mr})$
 
 *Integrated population model*  
-To estimate abundance of the overall population $N_{tot}$ at each time *t*, the parameter estimates from the productivity and mark-resight models are combined with the stage-specific abundane estimated using the N-mixture model in a stochastic leslie population matrix model.
+To estimate abundance of the overall population $N_{tot}$ at each time *t*, the parameter estimates from the productivity and mark-resight models are combined with the stage-specific abundance estimated using the N-mixture model in a stochastic leslie population matrix model.
 
 <!-- From amanda: help: not sure if we need something like this since we have the equations above? -->
 <!-- $$ \left[\begin{array} -->
@@ -319,10 +319,10 @@ The joint likelihood for the integrated population model is the product of the l
 
 [IPM joint likelihood equation]
 The overall likelihood for this hierarchical state-space model can be described as the product of the state and observation process models:
-$$L_{IPM}(\text{y}, ~CH, ~\text{NestStatus}, ~\text{Fledged}|~N_{1},~N_{ad}, phi_1, phi_{ad}, f, p_{mr}, p_s, ~\lambda_{\text{fledglings}}, ~\phi_n) 
-$$=$L_{Abundance}(\text{y}| ~N_1, ~N_{ad}, ~{p_s}, \phi_1,~\phi_{ad}, f)\times$$
-$$L_{Productivity}(\text{NestStatus}, \text{Fledged} | ~\phi_{n}, ~\lambda_{\text{fledglings}}) \times$$
-$$L_{Survival}(\text{y}|\text{z}, ~\phi_{ad}, ~p_{mr})$$
+$$L_{IPM}(\text{y}, ~CH, ~\text{NestStatus}, ~\text{Fledged}|~N_{1},~N_{ad}, ~\phi_1, ~\phi_{ad}, ~f, ~p_{mr}, ~p_s, ~\lambda_{\text{fledglings}}, ~\phi_n) \ = $$
+$$L_{Abundance}(\text{y}| ~N_1, ~N_{ad}, ~{p_s}, ~\phi_1,~\phi_{ad}, ~f)\ \times$$
+$$L_{Productivity}(\text{NestStatus}, ~\text{Fledged} | ~\phi_{n}, ~\lambda_{\text{fledglings}})\ \times$$
+$$L_{Survival}(\text{y}|~\text{z}, ~\phi_{ad}, ~p_{mr})$$
 
 
 *Simulation scenarios* 
