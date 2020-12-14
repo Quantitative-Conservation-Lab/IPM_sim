@@ -8,14 +8,10 @@ output:
 
 To-do's
 
-Write-up
-- methods/equation check: change YOTY to juv (hannah)*done* I changed some of the writing about the model and the notation used, could use a second look over by another person!
-
-- simulation write-up (amelia)
-- results (abby/hannah) - Hannah: wrote out a rough draft of results, will revisit tomorrow, but got something down to start with
-
-
 Figures/analysis/etc
+
+*my understanding is that these are all done - just need to be pasted in to the final doc*
+
 - posterior densities (amanda)
 <!-- - life cycle/survey timing diagram (amelia) -->
 - figure captions/printing (amanda)
@@ -230,7 +226,7 @@ write.csv(summary_tab, file = here::here('results', 'summary_table.csv'))
 **Title**  
 
 Ideas: 
-- Performance of integrated population models across varying data landscapes  
+- Performance of integrated population models across varying data landscapes *happy with this one for now because it's consistent with our presentation*
 - When and how far can we push the integrated population model framework? Estimating demographic parameters under variable data landscapes  
 - Pushing the limits: examining minimal data requirements for estimating demographic parameters in an integrated population model framework  
 
@@ -254,7 +250,9 @@ Through this study, we will identify scenarios where IPMs may not lead to improv
 *Data simulation: life history*  
 We simulated data for an avian species assuming life history stages and traits of a typical passerine. Our simulated hypothetical species has two age-classes: 1 year-old juveniles and adults (individuals older than 1 year). Each age class has a unique survival rate ($\phi_1$, $\phi_{ad}$) and adults produce new chicks at fecundity rate *f*, and those chicks survive to be juveniles at rate $\phi_1$. Current juveniles will also breed the following year to produce surviving chicks at rate $f \times \phi_1$ (Fig 1). We assume an annual breeding cycle, with females nesting once per year. The period from nest initiation to fledging is 30 days regardless of clutch size. We also assume that survival and fecundity are constant across years and individuals. 
 
-As is often the convention, we use a female-only model because we assume that the population dynamics of our species are driven largely by female abundance and demography. All demographic rates are assumed constant over a 15-year study period. The population is quite small and the survey extends across the entire range, therefore we assume no immigration or emigration.
+As is often the convention, we use a female-only model because we assume that the population dynamics of our species are driven largely by female abundance and demography. All demographic rates are assumed constant over a 10-year study period. The population is quite small and the survey extends across the entire range, therefore we assume no immigration or emigration.
+
+*insert life cycle diagram here - figure 1*
 
 *Model framework and assumptions*  
 
@@ -303,10 +301,12 @@ $$ CH_{i,t}|z_{i,t} \sim  \text{Bernoulli}(z_{i,t}\times p_{mr})$$
   
 describes capture history observations *CH* using a Bernouli distribution based on the state of the individual in the current occasion and detection probability $p_{mr}$. Mean survival and detection probabilities are modeled on the probability scale using uniform priors, $\phi_{ad} \sim \text{Uniform}(0,1)$ and $p_{mr} \sim \text{Uniform}(0,1)$, respectively. The likelihood of the mark-resight model estimating the adult survival probability: $L_{Survival}(\text{y}|\text{z}, ~\phi_{ad}, ~p_{mr})$
 
+*insert figure for observation timeline - figure 2*
+
 *Integrated population model*  
 To estimate abundance of the overall population $N_{tot}$ at each time *t*, the parameter estimates from the productivity and mark-resight models are combined with the stage-specific abundance estimated using the N-mixture model in a stochastic leslie population matrix model.
 
-<!-- From amanda: help: not sure if we need something like this since we have the equations above? -->
+<!-- From amanda: help: not sure if we need something like this since we have the equations above? aeb - we can use begin{align} if we want and put $~ or &= where we want things to be centered around, but I think this is good enough for now-->
 <!-- $$ \left[\begin{array} -->
 <!-- {l} -->
 <!-- N_{1,t+1} \sim \text{Binomial}(N_{1,t},~S_{1,t}) \\ -->
@@ -315,18 +315,22 @@ To estimate abundance of the overall population $N_{tot}$ at each time *t*, the 
 <!-- \end{array}\right]  -->
 <!-- $$  -->
 
-The joint likelihood for the integrated population model is the product of the likelihoods for the three subcomponent models. In instances when one dataset is removed, informative priors are used in place of the data to inform each of the relevant parameters (Table 1). 
+The joint likelihood for the integrated population model is the product of the likelihoods for the three subcomponent models. In instances when one dataset is removed, noninformative priors are used in place of the data to inform each of the relevant parameters. 
 
-[IPM joint likelihood equation]
+[IPM joint likelihood equation] *is this how we want this?*
 The overall likelihood for this hierarchical state-space model can be described as the product of the state and observation process models:
 $$L_{IPM}(\text{y}, ~CH, ~\text{NestStatus}, ~\text{Fledged}|~N_{1},~N_{ad}, ~\phi_1, ~\phi_{ad}, ~f, ~p_{mr}, ~p_s, ~\lambda_{\text{fledglings}}, ~\phi_n) \ = $$
-$$L_{Abundance}(\text{y}| ~N_1, ~N_{ad}, ~{p_s}, ~\phi_1,~\phi_{ad}, ~f)\ \times$$
+$$L_{Abundance}(\text{y}| ~N_1, ~N_{ad}, ~{p_s},~\phi_{ad}, ~f)\ \times$$
 $$L_{Productivity}(\text{NestStatus}, ~\text{Fledged} | ~\phi_{n}, ~\lambda_{\text{fledglings}})\ \times$$
 $$L_{Survival}(\text{y}|~\text{z}, ~\phi_{ad}, ~p_{mr})$$
 
 
 *Simulation scenarios*  
-We developed three versions of an IPM: 1) a "full" IPM that incorporates all three datasets (counts, productivity, mark-resight); 2) an IPM with the counts and productivity datasets only (excludes mark-resight dataset); and, 3) an IPM with the counts and mark-resight datasets only (excludes the productivity dataset). There are numerous scenarios we could run to vary detection and survival probabilities for each IPM version and test our objectives. We opted to run a select number of scenarios to provide preliminary findings to inform future work. For each version of the IPM, we ran 5 scenarios, for a total of 15 scenarios (Table for scenarios). Within each scenario, we varied the following parameters: mark-resight probability (0.3, 0.5, 0.8), count detection probability (0.3, 0.5, 0.85), and juvenile survival (0.3, 0.4, 0.5). The remaining parameters were kept constant for all scenarios: daily nest survival (0.975), mean clutch size (2.5), max nest age (30), initial age distribution (1000 juveniles, 1000 adults), and adult survival (0.77). For demographic parameters, we chose to vary juvenile survival because it is a hidden parameter, and these various values result in 5% annual decline, steady population growth, and 5% annual growth, respectively. 
+We developed three versions of an IPM: 1) a "full" IPM that incorporates all three datasets (counts, productivity, mark-resight); 2) an IPM with the counts and productivity datasets only (excludes mark-resight dataset); and, 3) an IPM with the counts and mark-resight datasets only (excludes the productivity dataset) (Figure 3). There are numerous scenarios we could run to vary detection and survival probabilities for each IPM version and test our objectives. We opted to run a select number of scenarios to provide preliminary findings to inform future work. For each version of the IPM, we ran 5 scenarios, for a total of 15 scenarios (Table for scenarios). Within each scenario, we varied the following parameters: mark-resight probability (0.3, 0.5, 0.8), count detection probability (0.3, 0.5, 0.85), and juvenile survival (0.3, 0.4, 0.5). The remaining parameters were kept constant for all scenarios: daily nest survival (0.975), mean clutch size (2.5), max nest age (30), initial age distribution (1000 juveniles, 1000 adults), and adult survival (0.77). For demographic parameters, we chose to vary juvenile survival because it is a hidden parameter, and these various values result in 5% annual decline, a stable population size, and 5% annual growth, respectively. 
+
+*need a table here - table 1 for true values, table 2 for varied params*
+
+*also have the three dags next to each other - figure 3*
 
 <!-- amelia - maybe easiest to create table in word doc when we also add figures? -->
 
@@ -356,17 +360,25 @@ We developed three versions of an IPM: 1) a "full" IPM that incorporates all thr
 <!-- Quality: decrease p (0.1, 0.5, 0.8) or annual surveys (5 vs. 10)   -->
 
 *Estimation and diagnostics*   
-<!-- amelia - just a quick draft, but is this right? -->
-Models were ran in NIMBLE using program R (NIMBLE 2020). We ran 45,000 iterations with the first 5,000 as a burn-in. We thinned samples to reduce autocorrelation and retained every 10th sample, for a total of 4,000 samples. Model convergence was assessed visually using trace plots and the Brooks-Gelman-Rubin statistic (Rhat). We examined model performance using relative bias and root mean square error (RMSE).
+<!-- amelia - just a quick draft, but is this right? AEB checked - made one small fix -->
+Models were ran in NIMBLE using program R (NIMBLE 2020). We ran 45,000 iterations with the first 35,000 as a burn-in. We thinned samples to reduce autocorrelation and retained every 10th sample, for a total of 1,000 samples. Model convergence was assessed visually using trace plots and the Brooks-Gelman-Rubin statistic (Rhat). We examined model performance using relative bias and root mean square error (RMSE).
 
 **Results**  
 -something about lack of convergence?
 
-Fitting the 'full' IPM model, including all simulated data types (counts, productivity, and mark-resight), generally produced parameter estimates close to the true value. The median model parameter estimates for $\phi_1$, $\phi_ad$, $f$, $\phi_n$, and $\p_{mr}$ across the 25 simulated data sets and under scenarios 1-5 resulted in estimates where the true parameter values are contained within $50%$ of the estimates. The model parameter estimates for the survey detection probability, $p_s$, were returned under scenarios where $p_s$ was $0.85$ (i.e. scenarios 1 and 2), but with greater uncertainty in the model estimates for scenarios 3,4,5 where the true value of $p_s$ was $0.3$ or $0.5$ (posterior median boxplot figure). Relative bias under scenarios $1-5$ was generally low (less than $|0.1|$), with the exection of $p_s$ with high bias resulting in scenarios 3,4,5 where the model was not able to recover this parameter (boxplot and table for bias). RMSE for the full model was also generally low (less than $|0.1|$), with the exception of $\phi_1$ and $p_s$. The RMSE for $\phi_1$ was high for scenarios 3, which the RMSE for $p_s$ was high for scenarios 3,4,5 (Table for RMSE). 
+- figures here
+- *posterior medians - figure 4*
+- *relative bias - figure 5*
+- *rmse table - table 2*
 
-The IPM fit with data only from count and productivity datasets (excluding mark-resight) provided median estimates of $\phi_n$ and $f$ that were close to truth under all scenarios (6-10). The median estimates for $\phi_1$ and $\phi_{ad}$ showed high variation in the model estimates for all scenarios and was unable to capture the true parameter values for scenarios 9 and 10 for both parameters. The survey detection probability median model estimates for scenarios 6,7,and 10 resulted in medians covering the true parameter estimates, but under scenarios 8 and 9 the model estimates over and underestimated the true parameter value, respectively (Boxplot Figure). The relative bias for $\phi_1$ under scenarios 7,9,and 10 was high (greater than $|0.1|$), the relative bias for $\phi_ad$ under scenario 9 was also high. The relative bias for $p_s$ was high under scenarios 8 and 9 (Boxplot and table for relative bias). The RMSE of the model estimates for $\phi_n$ and $f$ under scenarios 6-10 was close to 0. The RMSE for $\phi_1$ was high (greater than 0.1) for all scenarios (6-10), the RMSE for $\phi_{ad}$ was high for scenarios 6,7,9,and 10. The RMSE for $p_s$ was high for scenarios 8,9,and 10 (Table for RMSE). 
+*Full model*
+Fitting the 'full' IPM model, including all simulated data types (counts, productivity, and mark-resight), generally produced parameter estimates close to the true value. The median model parameter estimates for $\phi_1$, $\phi_ad$, $f$, $\phi_n$, and $\p_{mr}$ across the 25 simulated data sets and under scenarios 1-5 resulted in estimates where the true parameter values are contained within $50%$ of the estimates. The model parameter estimates for the survey detection probability, $p_s$, were returned under scenarios where $p_s$ was $0.85$ (i.e. scenarios 1 and 2), but with greater uncertainty in the model estimates for scenarios 3,4,5 where the true value of $p_s$ was $0.3$ or $0.5$ (Figure 4). Relative bias under scenarios $1-5$ was generally low (less than $|0.1|$), with the exection of $p_s$ with high bias resulting in the low detection scenarios 3,4,5 where the model was not able to recover this parameter (Figure 5). RMSE for the full model was also generally low (less than $|0.1|$), with the exception of $\phi_1$ and $p_s$. The RMSE for $\phi_1$ was high for scenarios 3, which the RMSE for $p_s$ was high for scenarios 3,4,5 (Table 3). 
 
-The IPM fit with data only from count and mark-resight datasets (excluding productivity data) resulted in median estimates of $\phi_{ad}$ and $p_{mr}$ that were close to truth for scenarios 11-15. The model excluding the productivity data resulted in medians that underestimated $f$, $\phi_ad$, and $\phi_1$ under all scenarios. The model was able to capture the true value of $p_{s}$ under scenarios 11, 12, 13, and 15 (Boxplot figure). The relative bias and RMSE for $\phi_1$ and $f$ were high. Whereas the relative bias and RMSE for all other parameters in scenarios 11-15 was low (less than |0.1|; bias boxplot and table). 
+*Counts + Productivity*
+The IPM fit with data only from count and productivity datasets (excluding mark-resight) provided median estimates of $\phi_n$ and $f$ that were close to truth under all scenarios (6-10). The median estimates for $\phi_1$ and $\phi_{ad}$ showed high variation in the model estimates for all scenarios and was unable to capture the true parameter values for scenarios 9 and 10 for both parameters. The survey detection probability median model estimates for scenarios 6,7,and 10 resulted in medians covering the true parameter estimates, but under scenarios 8 and 9 the model estimates over and underestimated the true parameter value, respectively (Figure 4). The relative bias for $\phi_1$ under scenarios 7,9,and 10 was high (greater than $|0.1|$), the relative bias for $\phi_ad$ under scenario 9 was also high. The relative bias for $p_s$ was high under scenarios 8 and 9 (Figure 5). The RMSE of the model estimates for $\phi_n$ and $f$ under scenarios 6-10 was close to 0. The RMSE for $\phi_1$ was high (greater than 0.1) for all scenarios (6-10), the RMSE for $\phi_{ad}$ was high for scenarios 6,7,9,and 10. The RMSE for $p_s$ was high for scenarios 8,9,and 10 (Table 3). 
+
+*Counts + Mark-resight*
+The IPM fit with data only from count and mark-resight datasets (excluding productivity data) resulted in median estimates of $\phi_{ad}$ and $p_{mr}$ that were close to truth for scenarios 11-15. The model excluding the productivity data resulted in medians that underestimated $f$, $\phi_ad$, and $\phi_1$ under all scenarios. The model was able to capture the true value of $p_{s}$ under scenarios 11, 12, 13, and 15 (Figure 4). The relative bias and RMSE for $\phi_1$ and $f$ were high. Whereas the relative bias and RMSE for all other parameters in scenarios 11-15 was low (less than |0.1|; Figure 5). 
 
 **Discussion**  
 
