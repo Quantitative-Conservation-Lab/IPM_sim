@@ -328,33 +328,37 @@ $$L_{Survival}(\text{y}|~\text{z}, ~\phi_{ad}, ~p_{mr})$$
 *Simulation scenarios* 
 We developed three versions of an IPM: 1) a "full" IPM that incorporates all three datasets (counts, productivity, mark-resight); 2) an IPM with the counts and productivity datasets only (excludes mark-resight dataset); and, 3) an IPM with the counts and mark-resight datasets only (excludes the productivity dataset). There are numerous scenarios we could run to vary detection and survival probabilities for each IPM version and test our objectives. We opted to run a select number of scenarios to provide preliminary findings to inform future work. For each version of the IPM, we ran 5 scenarios, for a total of 15 scenarios. Within each scenario, we varied the following parameters: mark-resight probability (0.3, 0.5, 0.8), count detection probability (0.3, 0.5, 0.85), and juvenile survival (0.3, 0.4, 0.5). The remaining parameters were kept constant for all scenarios: daily nest survival (0.975), mean clutch size (2.5), max nest age (30), initial age distribution (1000 juveniles, 1000 adults), and adult survival (0.77). For demographic parameters, we chose to vary juvenile survival because it is a hidden parameter, and these various values result in 5% annual decline, steady population growth, and 5% annual growth, respectively. 
 
+<!-- amelia - maybe easiest to create table in word doc when we also add figures? -->
 
-Metrics to monitor  
-CV (precision)  
-RMSE (accuracy)  
-Relative bias  
+<!-- amelia - I think these are all old notes? -->
+<!-- Metrics to monitor   -->
+<!-- CV (precision)   -->
+<!-- RMSE (accuracy)   -->
+<!-- Relative bias   -->
 
-Vary data quantity/combinations and demographic rates  
-Low MR detection vs high  
-Low daily nest survival vs high  
-Low abund detection vs high  
+<!-- Vary data quantity/combinations and demographic rates   -->
+<!-- Low MR detection vs high   -->
+<!-- Low daily nest survival vs high   -->
+<!-- Low abund detection vs high   -->
 
-Best scenario, using all three datasets  
-Potential add-on: vary life history traits:  
-Survival: 0.3 vs. 0.8  
-Fecundity: 0.3 vs. 0.5  
-Remove nest monitoring entirely - use other two datasets (MR and counts)  
-Model adjustments: informed priors?   
-Sensitivity to priors?  
-Remove MR data entirely - use other two datasets (nest monitoring and counts)  
-Model adjustments: informed priors?  
-Sensitivity to priors?   
-Poorer quality MR  
-Quantity: decrease N (20 individuals vs. 100 resights per year)  
-Quality: decrease p (0.1, 0.5, 0.8) or annual surveys (5 vs. 10)  
+<!-- Best scenario, using all three datasets   -->
+<!-- Potential add-on: vary life history traits:   -->
+<!-- Survival: 0.3 vs. 0.8   -->
+<!-- Fecundity: 0.3 vs. 0.5   -->
+<!-- Remove nest monitoring entirely - use other two datasets (MR and counts)   -->
+<!-- Model adjustments: informed priors?    -->
+<!-- Sensitivity to priors?   -->
+<!-- Remove MR data entirely - use other two datasets (nest monitoring and counts)   -->
+<!-- Model adjustments: informed priors?   -->
+<!-- Sensitivity to priors?    -->
+<!-- Poorer quality MR   -->
+<!-- Quantity: decrease N (20 individuals vs. 100 resights per year)   -->
+<!-- Quality: decrease p (0.1, 0.5, 0.8) or annual surveys (5 vs. 10)   -->
 
 *Estimation and diagnostics*   
-Nimble; iterations, burn-in, etc  
+<!-- amelia - just a quick draft, but is this right? -->
+Models were ran in NIMBLE using program R (NIMBLE 2020). We ran 45,000 iterations with the first 5,000 as a burn-in. We thinned samples to reduce autocorrelation and retained every 10th sample, for a total of 4,000 samples. Model convergence was assessed visually using trace plots. 
+
 Examined relative bias, RMSE, etc  
 
 **Results**  
@@ -384,7 +388,7 @@ Most research applications using an IPM framework cite the benefits of improved 
 
 **Literature cited**  
 
-Abadi, F., Gimenez, O., Arlettaz, R., Schaub, M., 2010. An assessment of integrated population models: bias, accuracy, and violation of the assumption of independence. Ecology 91, 7–14. https://doi.org/10.1890/08-2235.1
+Abadi, F., Gimenez, O., Arlettaz, R., Schaub, M., 2010a. An assessment of integrated population models: bias, accuracy, and violation of the assumption of independence. Ecology 91, 7–14. https://doi.org/10.1890/08-2235.1
 
 Ahrestani, F.S., Saracco, J.F., Sauer, J.R., Pardieck, K.L., Royle, J.A., 2017. An integrated population model for bird monitoring in North America. Ecol Appl 27, 916–924. https://doi.org/10.1002/eap.1493
 
@@ -412,10 +416,12 @@ Gamelon, M., Baubet, E., Besnard, A., Gaillard, J.-M., Lebreton, J.-D., Touzot, 
 
 Lee, A.M., Bjørkvoll, E.M., Hansen, B.B., Albon, S.D., Stien, A., Sæther, B.‐E., Engen, S., Veiberg, V., Loe, L.E., Grøtan, V., 2015. An integrated population model for a long‐lived ungulate: more efficient data use with Bayesian methods. Oikos 124, 806-816. https://doi.org/10.1111/oik.01924
 
-McCrea, R.S., Morgan, B.J.T., Gimenez, O., Besbeas, P., Lebreton, J.-D., Bregnballe, T., 2010. Multi-Site Integrated Population Modelling. Journal of Agricultural, Biological and Environmental Statistics 15, 539–561. https://doi.org/10.1007/s13253-010-0027-5 
+McCrea, R.S., Morgan, B.J.T., Gimenez, O., Besbeas, P., Lebreton, J.-D., Bregnballe, T., 2010. Multi-Site Integrated Population Modelling. Journal of Agricultural, Biological and Environmental Statistics 15, 539–561. https://doi.org/10.1007/s13253-010-0027-5
 
 Mormede, S., Parker, S.J., Pinkerton, M.H., 2020. Comparing spatial distribution modelling of fisheries data with single-area or spatially-explicit integrated population models, a case study of toothfish in the Ross Sea region.
 Fisheries Research 221, 105381. https://doi.org/10.1016/j.fishres.2019.105381
+
+NIMBLE Development Team. 2020. NIMBLE: MCMC, Particle Filtering, and Programmable Hierarchical Modeling.  doi: 10.5281/zenodo.1211190. R package version 0.10.1, https://cran.r-project.org/package=nimble.
 
 Oppel, S., Hilton, G., Ratcliffe, N., Fenton, C., Daley, J., Gray, G., Vickery, J., Gibbons, D., 2014. Assessing population viability while accounting for demographic and environmental uncertainty. Ecology 95, 1809–1818.
 
