@@ -325,7 +325,7 @@ $$L_{Productivity}(\text{NestStatus}, ~\text{Fledged} | ~\phi_{n}, ~\lambda_{\te
 $$L_{Survival}(\text{y}|~\text{z}, ~\phi_{ad}, ~p_{mr})$$
 
 
-*Simulation scenarios* 
+*Simulation scenarios*  
 We developed three versions of an IPM: 1) a "full" IPM that incorporates all three datasets (counts, productivity, mark-resight); 2) an IPM with the counts and productivity datasets only (excludes mark-resight dataset); and, 3) an IPM with the counts and mark-resight datasets only (excludes the productivity dataset). There are numerous scenarios we could run to vary detection and survival probabilities for each IPM version and test our objectives. We opted to run a select number of scenarios to provide preliminary findings to inform future work. For each version of the IPM, we ran 5 scenarios, for a total of 15 scenarios. Within each scenario, we varied the following parameters: mark-resight probability (0.3, 0.5, 0.8), count detection probability (0.3, 0.5, 0.85), and juvenile survival (0.3, 0.4, 0.5). The remaining parameters were kept constant for all scenarios: daily nest survival (0.975), mean clutch size (2.5), max nest age (30), initial age distribution (1000 juveniles, 1000 adults), and adult survival (0.77). For demographic parameters, we chose to vary juvenile survival because it is a hidden parameter, and these various values result in 5% annual decline, steady population growth, and 5% annual growth, respectively. 
 
 <!-- amelia - maybe easiest to create table in word doc when we also add figures? -->
@@ -357,7 +357,7 @@ We developed three versions of an IPM: 1) a "full" IPM that incorporates all thr
 
 *Estimation and diagnostics*   
 <!-- amelia - just a quick draft, but is this right? -->
-Models were ran in NIMBLE using program R (NIMBLE 2020). We ran 45,000 iterations with the first 5,000 as a burn-in. We thinned samples to reduce autocorrelation and retained every 10th sample, for a total of 4,000 samples. Model convergence was assessed visually using trace plots. 
+Models were ran in NIMBLE using program R (NIMBLE 2020). We ran 45,000 iterations with the first 5,000 as a burn-in. We thinned samples to reduce autocorrelation and retained every 10th sample, for a total of 4,000 samples. Model convergence was assessed visually using trace plots and the Brooks-Gelman-Rubin statistic (Rhat). 
 
 Examined relative bias, RMSE, etc  
 
