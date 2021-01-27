@@ -27,14 +27,14 @@
       #b.) T/F for which count survey model to use
       #c.) T/F for whether to include juvenile survival as an observed parameter
 
-n.years<-20
+n.years<-10
 n.data.types<-c(10,10,10) #MR, Count, Productivity
-age.init<-c(50,50) #juveniles, adults
+age.init<-c(150,150) #juveniles, adults
 #MR model and population projection
-phi.1<-0.65
-phi.ad<-0.75
-p.1<-0.76 #for if juveniles are detected in mr
-p.ad<-0.8
+phi.1<-0.5
+phi.ad<-0.5
+p.1<-0.9 #for if juveniles are detected in mr
+p.ad<-0.9
 #count model
 p.count<-0.55 #for binomial: y_count~bin(truecount, p.count)
 #alternative: for normal count model
@@ -46,7 +46,7 @@ mean.clutch.size <- 2.5
 phi.nest <- 0.975
 n.sam <- 3
 #alternative for if different model for nest success
-f<-1 #just adults reproduce?
+f<-2 #just adults reproduce?
 p.prod<-0.4 #probability of detection the reproduction
 
 #In function add in T/F for which sims to do
