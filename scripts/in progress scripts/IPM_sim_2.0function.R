@@ -92,7 +92,10 @@ lesmat[2,]<-c(phi.ad, phi.ad)
 for(t in 1:n.years){
   N[,(t+1)]<-lesmat%*%N[,t]
 }
-
+el<-eigen(lesmat)$values[1]
+if(el<0.95 || el>1.05){
+  print("Lambda is either too low or too high, revisit parameters")
+}
 #eigen(lesmat) #for lambda, if we need to check
 no.animals<-sum(N) #number of animals ever in the system at anytime
 no.ani.max<-round(no.animals*2.5) #include more for simulation of offspring
@@ -481,7 +484,7 @@ for(t in 1:n.years){
 # }
 
 df<-IPMSimFunction(n.years=10, n.data.types=c(0.25,0.25,0.25), 
-                   age.init=c(150,150), phi.1=0.6, phi.ad=0.7, f=1, max.nest.age=NA,
+                   age.init=c(150,150), phi.1=0.3, phi.ad=0.3, f=0.5, max.nest.age=NA,
                    mean.clutch.size=NA, phi.nest=NA, ADonly=T,p.1=NA,p.ad=0.8,
                    BinMod=T,n.sam=3,p.count=0.55,sig=NA,
                    productivity=T,p.prod=0.65)
