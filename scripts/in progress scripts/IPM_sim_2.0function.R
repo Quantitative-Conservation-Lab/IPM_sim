@@ -95,6 +95,7 @@ for(t in 1:n.years){
 el<-eigen(lesmat)$values[1]
 if(el<0.95 || el>1.05){
   print("Lambda is either too low or too high, revisit parameters")
+  print(el)
 }
 #eigen(lesmat) #for lambda, if we need to check
 no.animals<-sum(N) #number of animals ever in the system at anytime
