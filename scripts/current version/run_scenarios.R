@@ -9,6 +9,12 @@ library(dplyr)
 library(tidyr)
 library(nimble)
 
+
+# NOTES FROM MEETING 1/12/21
+# param based simulation - stop function for param combinations that result in unreasonable lambda
+# is daily nest surv realistic
+# option b - simpler nest survival model
+
 # source files ######
 
 # source data simulation functions
@@ -67,6 +73,7 @@ source(here("scripts", "current version","IPMinitvalues.R")) #changed the MR dat
 # #View(scenarios)
 # saveRDS(scenarios, here("data", "scenarios.Rdata"))
 scenarios <- readRDS(here("data", "scenarios.Rdata"))
+forpaper <- write.csv(scenarios, "scenarios.csv")
 
 n.scenarios <- max(scenarios$`Scenario Number`)
 sims.per <- 25
