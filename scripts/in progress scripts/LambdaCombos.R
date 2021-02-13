@@ -2,6 +2,44 @@
 #Here is a little code to pick scenarios of parameter values
 # that align with lambda
 
+getNviable <- function() {
+  # TODO
+  # 1 - figure out how many viable combos there are - then add them to the scenarios table
+  # 2 - what ARE the viable combinations
+  
+  # NOW THE EXCITING PART - how many valid combos
+  #creat a matrix for all possible combinations of these 3
+  coms <- expand.grid(fec = fec, phi1 = surv, phiad = surv)
+  #output vector
+  lams<-numeric(length(coms[,1]))
+  #leslie matrix for each
+  mats<-array(dim=c(length(coms[,1]), 2,2))
+  
+  for(i in 1:length(coms[,1])){ #loop over combinations
+    #leslie matrix for each combination
+    mats[i,1,]<-c(coms[i,"phi1"]*coms[i,"fec"],coms[i,"phi1"]*coms[i,"fec"])
+    mats[i,2,]<-c(coms[i,"phiad"], coms[i,"phiad"])
+    #Get the eigenvalue for each leslie matrix, which is the lambda
+    lams[i]<-eigen(mats[i,,])$values[1]
+  }
+  
+  return(cbind(coms, lams))
+}  
+
+#saveRDS(scenarios, scenarios.RDS)
+
+      # #look at how many are within these arbitrary bounds
+      # length(which(lams>=0.95 & lams<=1.05))
+      # #put those that we care about in a matrix and pull out the values for the parameters
+      # intv<-which(lams>=0.95 & lams<=1.05)
+      # scenmat<-matrix(nrow=length(intv), ncol=3)
+      # for(i in 1:length(scenmat[,1])){
+      #   scenmat[i,1]<-phi1[coms[intv[i],1]]
+      #   scenmat[i,2]<-fec[coms[intv[i],2]]
+      #   scenmat[i,3]<-phiad[coms[intv[i],3]]
+
+#HANNAH STUFF ########
+
 #make a sequence of adult and juvenile survival
 phiad<-phi1<-seq(0.05,0.95,by=0.05)
 #make the same length for fecundity
