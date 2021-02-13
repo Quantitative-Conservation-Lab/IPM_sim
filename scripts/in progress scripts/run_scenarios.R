@@ -9,92 +9,29 @@ library(dplyr)
 library(tidyr)
 library(nimble)
 
+# source functions
 
-# NOTES FROM MEETING 1/12/21
-# param based simulation - stop function for param combinations that result in unreasonable lambda
-# is daily nest surv realistic
-# option b - simpler nest survival model
+# load simulated data ####
 
-# source files ######
+# TODO
+# set this code up to be parallelized
 
-# source data simulation functions
-source(here("scripts", "current version","IPMsimData_markasYoYandAd.R")) #changed the MR data
-source(here("scripts", "current version","productivityDataSim.R"))
-# source model functions
-source(here("scripts", "current version","IPMNimble_markedasYoYandAD.R")) #changed the MR data
-# source initial value functions
-source(here("scripts", "current version","IPMinitvalues.R")) #changed the MR data
+# 324 different scenarios
+# how to split them up
 
-# load scenarios ####
+# Most efficient way to run things
+# loon has 20 cores
 
-# # site
-# paramlevels <- read_excel(here("data", "IPM sim spreadsheet.xlsx"), range = "E1:K4")
-# paramlevels[, 1] <- c("L", "M", "H")
-# colnames(paramlevels)[1] <- "Level"
-# scenarios <- read_excel(here("data", "IPM sim spreadsheet.xlsx"), range = "A5:K22")
-# scenarios <- scenarios[-c(6, 12), ]
-# 
-# 
-# scenarios <- scenarios %>% 
-#   mutate(`MR detection` = case_when(`MR detection` == "L" ~ as.numeric(paramlevels[paramlevels$Level == "L", "MR detection"]),
-#                                     `MR detection` == "M" ~ as.numeric(paramlevels[paramlevels$Level == "M", "MR detection"]),
-#                                     `MR detection` == "H" ~ as.numeric(paramlevels[paramlevels$Level == "H", "MR detection"]))
-#          ) %>% 
-#   mutate(`Abund detection` = case_when(`Abund detection` == "L" ~ as.numeric(paramlevels[paramlevels$Level == "L", "Abund detection"]),
-#                                     `Abund detection` == "M" ~ as.numeric(paramlevels[paramlevels$Level == "M", "Abund detection"]),
-#                                     `Abund detection` == "H" ~ as.numeric(paramlevels[paramlevels$Level == "H", "Abund detection"]))
-#   ) %>% 
-#   mutate(`Adult Surv` = case_when(`Adult Surv` == "L" ~ as.numeric(paramlevels[paramlevels$Level == "L", "Adult Surv"]),
-#                                     `Adult Surv` == "M" ~ as.numeric(paramlevels[paramlevels$Level == "M", "Adult Surv"]),
-#                                     `Adult Surv` == "H" ~ as.numeric(paramlevels[paramlevels$Level == "H", "Adult Surv"]))
-#   ) %>% 
-#   mutate(`Juv Surv` = case_when(`Juv Surv` == "L" ~ as.numeric(paramlevels[paramlevels$Level == "L", "Juv Surv"]),
-#                                     `Juv Surv` == "M" ~ as.numeric(paramlevels[paramlevels$Level == "M", "Juv Surv"]),
-#                                     `Juv Surv` == "H" ~ as.numeric(paramlevels[paramlevels$Level == "H", "Juv Surv"]))
-#   ) %>% 
-#   mutate(`Mean Clutch Size` = case_when(`Mean Clutch Size` == "L" ~ as.numeric(paramlevels[paramlevels$Level == "L", "Mean Clutch Size"]),
-#                                     `Mean Clutch Size` == "M" ~ as.numeric(paramlevels[paramlevels$Level == "M", "Mean Clutch Size"]),
-#                                     `Mean Clutch Size` == "H" ~ as.numeric(paramlevels[paramlevels$Level == "H", "Mean Clutch Size"]))
-#   ) %>% 
-#   mutate(`Daily nest survival` = case_when(`Daily nest survival` == "L" ~ as.numeric(paramlevels[paramlevels$Level == "L", "Daily nest survival"]),
-#                                     `Daily nest survival` == "M" ~ as.numeric(paramlevels[paramlevels$Level == "M", "Daily nest survival"]),
-#                                     `Daily nest survival` == "H" ~ as.numeric(paramlevels[paramlevels$Level == "H", "Daily nest survival"]))
-#   ) %>% 
-#   mutate("MR Included" = ifelse("MR Included" == "Y",1,0)) %>% 
-#   mutate(`Abund Included` = ifelse(`Abund Included` == "Y",1,0)) %>% 
-#   mutate("Nests Included" = ifelse("Nests Included" == "Y",1,0)) %>%
-#   select(-`Sims per`) %>%
-#   mutate(`Fec` = 1/2 * `Mean Clutch Size` * `Daily nest survival`^30)
-# 
-# lams <- apply(scenarios, 1, function(x) {eigen(matrix(data = c(x[8] * x[11], x[8] * x[11], x[7], x[7]), 
-#                                               byrow = TRUE, nrow = 2, ncol = 2))$values[1]})
-# 
-# scenarios <- cbind(scenarios, lams)
-# #View(scenarios)
-# saveRDS(scenarios, here("data", "scenarios.Rdata"))
-scenarios <- readRDS(here("data", "scenarios.Rdata"))
-forpaper <- write.csv(scenarios, "scenarios.csv")
+# using 12 at a time
+  # which datasets present x lambda level
 
-n.scenarios <- max(scenarios$`Scenario Number`)
-sims.per <- 25
+# https://r-nimble.org/nimbleExamples/parallelizing_NIMBLE.html
+# ask hannah for example 
+# also ask hannah for example of running models until all converge
 
-# AEB note
-# parameter values picked such that
-# parameter with most uncertainty - juv survival (one we observe most indirectly)
-  # how good at we are recovering that 
+# then have to run all detection levels - 27
 
-# run simulations ######
 
-# THINGS THAT NEVER CHANGE
-phi.nest <- 0.975
-mean.clutch.size <- 2.5
-n.sam <- 3
-max.nest.age <- 30
-n.years=10
-n.data=c(200,1000)
-init.age = c(1000,1000)
-phi.ad = 0.77
-p.1 = 0.98
 
 for (s in 2:2) {
   # THINGS THAT DO CHANGE
@@ -301,22 +238,4 @@ for (s in 2:2) {
     }
   }
 }
-
-# s <- 1 # for full test
-# s <- 11 # for no nests test
-# s <- 6 # for no nests test
-
-# TODO
-# try one of each
-# put up on loon...
-# could start many instances of r
-# 15 instances of R - 1 for each simulation scenario
-
-# visualize results #####
-# TODO
-# fill this in
-
-# create tables #####
-# TODO
-# fill this in
 

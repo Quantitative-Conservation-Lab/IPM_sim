@@ -2,77 +2,76 @@
 
 #INPUT FOR DATA SIMULATION FUNCTION
 
-#1.) YEARS: number of years to simulate
-n.years<-10
+# TODO
+# could do a T/F for stable age dist or not
 
-#2.) OBSERVED DATA OUTPUT: a vector specified as c(Mark-resight, Count, Productivity)
-# Can be either the proportion of the simulated individuals that are observed for 
-# each data type.
-n.data.types<-c(0.25,0.3,0.25)
-#OR the number of individuals in the population that we observe
-#Note that this is the maximum and especially for MR data, if the individual died, then
-# there will be no observation of them, so observing 100 individuals is not guaranteed
-#same goes for count and nest data
-n.data.types<-c(100,100,100)
-
-#3.) TRUE STARTING POPULATION/INITIAL AGE DISTRIBUTION
-#Can specify it as the number of 1year olds and adults:
-age.init<-c(150,150)
-
-#The stable age distribution from the leslie matrix will be used to initialize 
-#the initial starting population, so it will always start with 300 individuals, but
-# the distribution will depend on the stable age distribution
-
-
-#4.) Constant Parameter Values to simulate population from
-  #a.) 1year old survival
-phi.1<-0.5
-  #b.) adult survival
-phi.ad<-0.7
-  #c.) fecundity
-  #where fecundity is the same for 1year olds and adults
-  #can be specified as a single rate with 'productivity=T' or as in the nest success model
-productivity=T
-f<-1.4 
- # If nest success model is to be used, then 'productivity=F' and specify
-  # max.nest.age
-  #mean.clutch.size 
-  #phi.nest 
-  #n.sam
-productivity=F
-max.nest.age<-30
-mean.clutch.size <- 2.5
-phi.nest <- 0.975
-n.sam <- 3
-
-#5.) PARAMETERS FOR DETECTION AND MODEL SELECTION
-#a.) Mark Resight model
-#If we only mark adults and resight adults, then 
-ADonly=T
-p.ad<-0.7
-#If we mark 1yearolds and adults
-ADonly=F
-p.1<-0.5
-
-#b.) Count model
-#define the number of times we go and count
-n.sam<-3
-#if we want to model the observation process for the count data as binomial, 
-# where counts~Binomial(truecount,p.count) then:
-BinMod=T
-p.count<-0.55
-#If we want to model it as normal, where counts~normal(truecounts, sig)
-BinMod=F
-sig<-2
-
-#c) Productivity/nest success
-#we defined which we want to use above, with productivity=T/F
-#If we want a Poisson process to model the productivity, then add in observation
-p.prod<-0.4
+# #1.) YEARS: number of years to simulate
+# n.years<-15 # first 5 are burn-in (population deviates from stable age dist), last 10 are fit
+# 
+# #2.) OBSERVED DATA OUTPUT: a vector specified as c(Mark-resight, Count, Productivity)
+# # Can be either the proportion of the simulated individuals that are observed for 
+# # each data type.
+# n.data.types<-c(0.25,0.3,0.25)
+# #OR the number of individuals in the population that we observe
+# #Note that this is the maximum and especially for MR data, if the individual died, then
+# # there will be no observation of them, so observing 100 individuals is not guaranteed
+# #same goes for count and nest data
+# n.data.types<-c(100,100,100)
+# 
+# #3.) TRUE STARTING POPULATION/INITIAL AGE DISTRIBUTION
+# #Can specify it as the number of 1year olds and adults:
+# age.init<-c(500,500)
+# 
+# #The stable age distribution from the leslie matrix will be used to initialize 
+# #the initial starting population, so it will always start with 1000 individuals, but
+# # the distribution will depend on the stable age distribution
+# 
+# 
+# #4.) Constant Parameter Values to simulate population from
+# 
+#   #a.) 1year old survival
+# phi.1<-0.5
+#   #b.) adult survival
+# phi.ad<-0.7
+#   #c.) fecundity
+#   #where fecundity is the same for 1year olds and adults
+#   #can be specified as a single rate with 'productivity=T' or as in the nest success model
+# productivity=T
+# f<-1.4 
+# 
+# #5.) PARAMETERS FOR DETECTION AND MODEL SELECTION
+# 
+# # TODO
+# # AEB - this section will change
+# 
+# #a.) Mark Resight model
+# #If we only mark adults and resight adults, then 
+# ADonly = T
+# p.ad <- 0.7
+# #If we mark 1yearolds and adults
+# ADonly=F
+# p.1<-0.5
+# 
+# #b.) Count model
+# #define the number of times we go and count
+# n.sam<-3
+# #if we want to model the observation process for the count data as binomial, 
+# # where counts~Binomial(truecount,p.count) then:
+# BinMod=T
+# p.count<-0.55
+# #If we want to model it as normal, where counts~normal(truecounts, sig)
+# BinMod=F
+# sig<-2
+# 
+# #c) Productivity/nest success
+# #we defined which we want to use above, with productivity=T/F
+# #If we want a Poisson process to model the productivity, then add in observation
+# p.prod<-0.4
 
 IPMSimFunction<-function(n.years, n.data.types, age.init, phi.1, phi.ad, f, max.nest.age,
-                         mean.clutch.size, phi.nest, ADonly,p.1,p.ad,
-                         BinMod,n.sam,p.count,sig,productivity,p.prod){
+                         mean.clutch.size, phi.nest, ADonly, p.1, p.ad,
+                         BinMod, n.sam, p.count, sig, productivity, p.prod){
+  
   nmin1.years<-n.years-1
   nplus1.years<-n.years+1
   
@@ -101,7 +100,7 @@ if(el<0.95 || el>1.05){
 no.animals<-sum(N) #number of animals ever in the system at anytime
 no.ani.max<-round(no.animals*2.5) #include more for simulation of offspring
 ####stable age distribution is:
-sad<-N[,nplus1.years]/sum(N[,nplus1.years]) # the proportion of the popualtion that is in each age class
+sad<-N[,nplus1.years]/sum(N[,nplus1.years]) # the proportion of the population that is in each age class
 #lambda from N, matches eigenvalue
 #nlam<-N[,nplus1.years]/N[,n.years]
 #note that this is without demographic stochasticity and 
@@ -130,41 +129,6 @@ indfates[2,1,(age1+1):sum(age1+age2)]<-1 #adults in year 1
 #this commented out bit is for if we dont want to start at stable age distribution
 #indfates[1,1,1:age.init[1]]<-1
 #indfates[2,1,(age.init[1]+1):sum(age.init)]<-1
-
-#Need to source in these functions, they are annoying here, but help to show 
-#what is happening
-oneyr_fatefn<-function(ind,time){
-  indfates[3,time,ind]<-rpois(1,fec)
-  zsurv1<-rbinom(1,1,phi.ad)
-  indfates[2,time+1,ind]<-ifelse(zsurv1==1,1,NA) #do they survive?
-  indfates[4,time+1,ind]<-ifelse(zsurv1==0, 1,NA) #or die?
-  indfates[1,time+1,ind]<-NA #cant stay 1yearold
-  return(indfates[,time:(time+1),ind])
-}
-
-adfatefn<-function(ind,time){
-  indfates[3,time,ind]<-rpois(1,fec)
-  zsurv1<-rbinom(1,1,phi.ad)
-  indfates[2,time+1,ind]<-ifelse(zsurv1==1,1,NA) #do they survive?
-  indfates[4,time+1,ind]<-ifelse(zsurv1==0, 1,NA) #or die?
-  indfates[1,time+1,ind]<-NA #can't age backwards
-  return(indfates[,time:(time+1),ind])
-}
-
-deadfn<-function(ind,time){
-  indfates[4,time+1,ind]<-1
-  indfates[1:3,time+1,ind]<-NA
-  return(indfates[,(time+1),ind])
-}
-
-chickfatefn<-function(ind, time){
-  zsurv1<-rbinom(1,1,phi.1)
-  indfates[1,time+1,ind]<-ifelse(zsurv1==1,1,NA) #do they survive to become 1yrolds
-  indfates[4,time+1,ind]<-ifelse(zsurv1==0, 1,NA) #or die?
-  indfates[2,time+1,ind]<-NA #not adult yet
-  indfates[3,time+1,ind]<-NA
-  return(indfates[,(time+1),ind])
-}
 
 inpop<-numeric(n.years) #track the population over time
 #inpop[1]<-sum(age.init) alternative way to do it
@@ -218,9 +182,9 @@ Ntot <- dim(indfates)[3]
 xt1 <- matrix(data = seq(1:Ntot), ncol = 1)
 resamp1 <- resamp2 <- resamp3 <- numeric()
 nds<-numeric(length(n.data.types))
-if(sum(n.data.types)>1){
+if(sum(n.data.types)>1){ # is n.data.types numbers
   nds<-n.data.types
-}else{
+}else{ # or proportions
   nds<-Ntot*n.data.types
 }
 # Sample 1
@@ -446,7 +410,7 @@ for(u in 1:n.years){
 # Create reproductive success data
 ######################################################
 #if producivity is T, then this nest success model
-#Abby can add in if we want to include it
+#Abby can add in if we want to include it - AEB: let's omit for now
 #if F, then it is the below model
 #IND_Nest <- indfates[,,resamp3]
 TRUE_nestlings<-numeric(n.years)
@@ -477,33 +441,27 @@ for(t in 1:n.years){
               n.sam, fec=fec, N=N, R_obs=R_obs, OBS_nestlings=OBS_nestlings))
 
 }
-#for the model it would be:
-#where the data to give it is the observed OBS_nestlings and R_obs
-# for (t in 1:(nyears-1)){
-#   OBS_nestlings[t] ~ dpois(rho[t])
-#   rho[t] <- R_obs[t]*fecundity[t]
-# }
 
-df<-IPMSimFunction(n.years=10, n.data.types=c(0.25,0.25,0.25), 
-                   age.init=c(150,150), phi.1=0.3, phi.ad=0.3, f=0.5, max.nest.age=NA,
-                   mean.clutch.size=NA, phi.nest=NA, ADonly=T,p.1=NA,p.ad=0.8,
-                   BinMod=T,n.sam=3,p.count=0.55,sig=NA,
-                   productivity=T,p.prod=0.65)
-n.years=10
-n.data.types=c(0.25,0.25,0.25) 
-age.init=c(50,50)
-phi.1=0.2
-phi.ad=0.2
-f=0.5
-max.nest.age=NA
-mean.clutch.size=NA
-phi.nest=NA
-ADonly=F
-p.1=0.3
-p.ad=0.2
-BinMod=F
-n.sam=3
-p.count=0.2
-sig=0.3
-productivity=T
-p.prod=0.65
+# df<-IPMSimFunction(n.years=10, n.data.types=c(0.25,0.25,0.25),
+#                    age.init=c(150,150), phi.1=0.3, phi.ad=0.3, f=0.5, max.nest.age=NA,
+#                    mean.clutch.size=NA, phi.nest=NA, ADonly=T,p.1=NA,p.ad=0.8,
+#                    BinMod=T,n.sam=3,p.count=0.55,sig=NA,
+#                    productivity=T,p.prod=0.65)
+# n.years=10
+# n.data.types=c(0.25,0.25,0.25) 
+# age.init=c(50,50)
+# phi.1=0.2
+# phi.ad=0.2
+# f=0.5
+# max.nest.age=NA
+# mean.clutch.size=NA
+# phi.nest=NA
+# ADonly=F
+# p.1=0.3
+# p.ad=0.2
+# BinMod=F
+# n.sam=3
+# p.count=0.2
+# sig=0.3
+# productivity=T
+# p.prod=0.65
