@@ -13,6 +13,27 @@
 # create flags for sims that need attention
 # test convergence on some scenarios to figure out what burnin iterations and thinning should be
 
+# standardize language
+# scenario - parameter combination that we hope to recover
+# observation structure/version - which datasets are included and detection levels
+# simulation - unique model run
+
+# generate 25 scenarios per lambda 
+# for every scenario generate 50 populations
+# then apply each detection level to generate 3x3x3= 27 datasets representing each
+# level of detection for abundance, productivity, and mark-resight
+# then - do like leave one out approach fitting 4 different models to the same dataset
+# 27 * 4 = 108 versions per level of lambda 
+# lucidchart figure for this
+
+# assuming this
+# generate 1250 populations
+# 1250 * 27 datasets
+# fit 4 models to each of those (135000)
+
+library(tidyverse)
+library(stringr)
+
 # FUNCTION FROM HANNAH CODE
 getNviable <- function() {
   # TODO
@@ -38,19 +59,12 @@ getNviable <- function() {
   return(cbind(coms, lams))
 }  
 
-# simulations per scenario
-sims.per <- 100 # 50 for euring, 100 for manuscript
-
-incl.abund <- factor(x = c("Y"))
-incl.MR <- factor(x = c("Y", "N"))
-incl.prod <- factor(x = c("Y", "N"))
-
 # TODO
 # for these ones, draw detection values from
 # a standard normal
 det.abund <- factor(x = c("L", "M", "H"))
-det.MR <- factor(x = c("L", "M", "H"))
-det.prod <- factor(x = c("L", "M", "H"))
+det.MR <- factor(x = c("L", "M", "H", "NA"))
+det.prod <- factor(x = c("L", "M", "H", "NA"))
 
 # can play around with this
 # l - 0.98 pm 0.01
@@ -58,20 +72,32 @@ det.prod <- factor(x = c("L", "M", "H"))
 # h - 1.02 pm 0.01
 lambda <- factor(x = c("L", "M", "H"))
 
+# TODO
+# run best case scenarios with these trends to make sure model works well
+# if can't capture well - increase those lambdas
+
 # Fec levels
 # can play around with this
-fec <- seq(1, 3, 0.05)/2
+
+# TODO
+# up range to 6 for example
+# what is rel between fecundity and adult survival and lambda - are we capturing that 2d space well
+fec <- seq(1, 6, 0.05)/2
 
 # surviv levels
 # can play around with this
-surv <- seq(0.1, 0.9, 0.01)
 
-scenarios <- expand.grid(sims.per = sims.per, 
-                         incl.abund = incl.abund, incl.MR = incl.MR, incl.prod = incl.prod, 
-                         det.abund = det.abund, det.MR = det.MR, det.prod = det.prod, 
+# TODO
+# up this range too - 0.975
+surv <- seq(0.1, 0.98, 0.01)
+
+# TODO
+# could bin these into HML and sample the lambda scenarios makig sure we represent the 2d space well
+
+scenarios <- expand.grid(det.abund = det.abund, det.MR = det.MR, det.prod = det.prod, 
                          lambda = lambda)
 
-priority_score <- apply(scenarios[, 5:8], 1, function(x) sum(str_detect(x, "[HL]")))
+priority_score <- apply(scenarios[, 1:3], 1, function(x) sum(str_detect(x, "[HL]")))
 
 lams <- getNviable() # this is kind of slow
 
@@ -83,8 +109,6 @@ n.viable.low <- dim(lamlowcombs)[1]
 n.viable.med <- dim(lammedcombs)[1]
 n.viable.high <- dim(lamhighcombs)[1]
 
-scenarios.picked <- 10 # there are a bajillion of each scenario viable, so sample some
-
 scenarios <- scenarios %>% 
   mutate(n.viable.combinations = case_when(
     lambda == "L" ~ n.viable.low,
@@ -94,35 +118,15 @@ scenarios <- scenarios %>%
   )
 
 scenarios <- cbind(scenarios, 
-                   priority_score, 
-                   scenarios.picked)
-
-# let's say we can run each incl.X * det.X combination on a separate r instance - 108 instances
-# would require multiple machines - perhaps loon + delphine?
-n.instances <- dim(expand.grid(incl.abund = incl.abund, incl.MR = incl.MR, incl.prod = incl.prod, 
-                               det.abund = det.abund, det.MR = det.MR, det.prod = det.prod))[1]
-
-total.sims <- sims.per * dim(scenarios)[1] * scenarios.picked
-total.sims
-
-# let's say length per dat sim + model run is 5 mins
-time.per <- 10 # on average
-
-# what is reasonable here...
-# how should we cap this for now
-total.time <- time.per * total.sims / n.instances/ 60 / 24  # in days, 
-# NOTE this assumes total use of the computers
-total.time
+                   scenarios.picked,
+                   priority_score) %>% 
+  arrange(desc(priority_score)) %>% 
+  mutate(batch = ceiling(row_number() / 24))
 
 # STUFF TO SAVE
 saveRDS(scenarios, "scenarios.RDS")
 saveRDS(lamlowcombs, "low.lam.combos.RDS")
 saveRDS(lammedcombs, "med.lam.combos.RDS")
 saveRDS(lamhighcombs, "high.lam.combos.RDS")
-
-
-
-
-
 
 

@@ -20,12 +20,14 @@ library(nimble)
 # how to split them up
 
 # Most efficient way to run things
-# loon has 20 cores
+# loon has 20 cores - 40 logical - can use 30 reasonably
 
 # using 12 at a time
-  # which datasets present x lambda level
+  # which datasets present x lambda level 
+  # x 3 = 36 at a time - 1 detection level at a time
 
 # https://r-nimble.org/nimbleExamples/parallelizing_NIMBLE.html
+
 # ask hannah for example 
 # also ask hannah for example of running models until all converge
 
