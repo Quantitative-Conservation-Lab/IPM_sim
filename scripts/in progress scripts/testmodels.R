@@ -93,13 +93,14 @@ const1 <- list(nyears = ncol(lowpopDat$ch),
 
 #### INITIAL VALUES ####
 z.state <- state.data(lowpopDat$ch)
-inits1 <- list(p.surv = detect.m,
-               mean.phi = c(detect.m, detect.m),
-               mean.p = detect.m,
-               fec = detect.m, 
+inits1 <- list(p.surv = detect.l,
+               mean.phi = c(detect.l, detect.l),
+               mean.p = detect.l,
+               fec = detect.l, 
                z=z.state,
-               n1.start=round(mean(lowpopDat$SUR[,1]) * 1.5),
-               nad.start=round(mean(lowpopDat$SUR[,1]) * 1.5))
+               n1.start= sum(lowpopTraj[1, 1, ], na.rm = TRUE),
+               nad.start= sum(lowpopTraj[2, 1, ], na.rm = TRUE)
+               )
 
 #### PARAMETERS TO MONITOR ####
 params1 <- c("p.surv", "mean.phi", "mean.p", "fec", "lambda")
@@ -120,15 +121,19 @@ conf1 <- configureMCMC(Rmodel1, monitors = params1, thin = nt,
 Rmcmc1 <- buildMCMC(conf1)  
 Cmodel1 <- compileNimble(Rmodel1, showCompilerOutput = FALSE)
 Cmcmc1 <- compileNimble(Rmcmc1, project = Rmodel1)
+beep(sound = 3)
 
 #### RUN MCMC ####
 t.start <- Sys.time()
+sink("sad_output.txt")
 out2 <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,
                 setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE)  
+sink()
 t.end <- Sys.time()
 (runTime <- t.end - t.start)
+beep(sound = 3)
 
-d####
+####
 
 # run each model
 

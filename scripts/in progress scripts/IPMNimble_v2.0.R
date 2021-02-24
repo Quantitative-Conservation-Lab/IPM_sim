@@ -15,8 +15,8 @@ IPMmod<-nimbleCode({
   # System process
   
   # Initial population sizes
-  n1.start ~ dunif(0, 1000)
-  nad.start ~ dunif(0, 1000)
+  n1.start ~ dunif(0, 500)
+  nad.start ~ dunif(0, 500)
   N1[1] <- n1.start
   Nad[1] <- nad.start
   
