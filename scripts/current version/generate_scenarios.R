@@ -101,9 +101,9 @@ priority_score <- apply(scenarios[, 1:3], 1, function(x) sum(str_detect(x, "[HL]
 
 lams <- getNviable() # this is kind of slow
 
-lamlowcombs <- lams %>% filter(lams >= 0.96 & lams <= 0.98)
+lamlowcombs <- lams %>% filter(lams >= 0.94 & lams <= 0.96)
 lammedcombs <- lams %>% filter(lams >= 0.99 & lams <= 1.01)
-lamhighcombs <- lams %>% filter(lams >= 1.02 & lams <= 1.04)
+lamhighcombs <- lams %>% filter(lams >= 1.04 & lams <= 1.06)
 
 n.viable.low <- dim(lamlowcombs)[1]
 n.viable.med <- dim(lammedcombs)[1]

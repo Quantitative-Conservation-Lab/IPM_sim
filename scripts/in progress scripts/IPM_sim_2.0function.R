@@ -21,7 +21,7 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
     N[,(t+1)]<-lesmat%*%N[,t]
   }
   el<-eigen(lesmat)$values[1]
-  if(el<0.95 || el>1.05){
+  if(el<0.90 || el>1.10){
     print("Lambda is either too low or too high, revisit parameters")
     print(el)
   }

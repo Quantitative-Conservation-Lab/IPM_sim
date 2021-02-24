@@ -46,7 +46,8 @@ IPMmod<-nimbleCode({
   for(i in 1:n.ind){
     z[i,first[i]]<-1
     for(t in (first[i]+1):(nyears)){
-      z[i,t]~dbern(z[i,t-1]*mean.phi[age[i,t]]) 
+      # AEB note - changed this from age because the thing wasnt working
+      z[i,t]~dbern(z[i,t-1]*mean.phi[2]) 
       ch.y[i,t]~dbern(z[i,t]*mean.p)
     }
   }
@@ -73,7 +74,7 @@ IPMmod<-nimbleCode({
   
   # Population growth rate
   for (t in 1:(nyears-1)){
-    lambda[t] <- Ntot[t+1] / Ntot[t]
+    lambda[t] <- (Ntot[t+1] + 1e-4) / (Ntot[t] + 1e-4)
   }
   # END derived quantities
   
@@ -149,7 +150,7 @@ nonests<-nimbleCode({
 
 ##### NO MR ##### 
 
-IPMmod<-nimbleCode({
+nomr<-nimbleCode({
   
   # COUNTS #####
   
@@ -267,3 +268,4 @@ abundonly<-nimbleCode({
   # END derived quantities
   
 })
+
