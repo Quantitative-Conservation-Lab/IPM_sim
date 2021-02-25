@@ -1,12 +1,48 @@
 simPopTrajectory <- function(n.years, n.data.types, age.init, 
                              phi.1, phi.ad, f){
   
+  #######
+  # HELPER FUNCTIONS
+  oneyr_fatefn<-function(ind,time){
+    indfates[3,time,ind]<-rpois(1,fec)
+    zsurv1<-rbinom(1,1,phi.ad)
+    indfates[2,time+1,ind]<-ifelse(zsurv1==1,1,NA) #do they survive?
+    indfates[4,time+1,ind]<-ifelse(zsurv1==0, 1,NA) #or die?
+    indfates[1,time+1,ind]<-NA #cant stay 1yearold
+    return(indfates[,time:(time+1),ind])
+  }
+  
+  adfatefn<-function(ind,time){
+    indfates[3,time,ind]<-rpois(1,fec)
+    zsurv1<-rbinom(1,1,phi.ad)
+    indfates[2,time+1,ind]<-ifelse(zsurv1==1,1,NA) #do they survive?
+    indfates[4,time+1,ind]<-ifelse(zsurv1==0, 1,NA) #or die?
+    indfates[1,time+1,ind]<-NA #can't age backwards
+    return(indfates[,time:(time+1),ind])
+  }
+  
+  deadfn<-function(ind,time){
+    indfates[4,time+1,ind]<-1
+    indfates[1:3,time+1,ind]<-NA
+    return(indfates[,(time+1),ind])
+  }
+  
+  chickfatefn<-function(ind, time){
+    zsurv1<-rbinom(1,1,phi.1)
+    indfates[1,time+1,ind]<-ifelse(zsurv1==1,1,NA) #do they survive to become 1yrolds
+    indfates[4,time+1,ind]<-ifelse(zsurv1==0, 1,NA) #or die?
+    indfates[2,time+1,ind]<-NA #not adult yet
+    indfates[3,time+1,ind]<-NA
+    return(indfates[,(time+1),ind])
+  }
+  ######
+  
   nmin1.years<-n.years-1
   nplus1.years<-n.years+1
   
   #derive true fecundity from the parameters, for productivity use f
   #if(productivity==T){
-  fec<-f # AEB - do not divide by 2
+  fec <- f # AEB - do not divide by 2
   #}else{
   #  fec<-1/2*mean.clutch.size*phi.nest^max.nest.age
   #}
@@ -69,11 +105,11 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
     for(i in 1:inpop[t]){
       tempstep[i,t]<-which(indfates[c(1,2,4),t,i]==1)
       if(tempstep[i,t]==1){
-        indfates[,(t:(t+1)),i]<-oneyr_fatefn(ind=i, time=t)#[,(t:(t+1))]
+        indfates[,(t:(t+1)),i]<-oneyr_fatefn(ind = i, time = t)#[,(t:(t+1))]
       }else if(tempstep[i,t]==2){
-        indfates[,(t:(t+1)),i]<-adfatefn(ind=i, time=t)#[,(t:(t+1))]
+        indfates[,(t:(t+1)),i]<-adfatefn(ind = i, time = t)#[,(t:(t+1))]
       } else if(tempstep[i,t]==3){
-        indfates[,((t+1)),i]<-deadfn(ind=i, time=t)#[,(t:(t+1))]
+        indfates[,((t+1)),i]<-deadfn(ind = i, time = t)#[,(t:(t+1))]
       }
     } #i loop over population size at time t
     #see how many chicks were produced and add them to the population to track
@@ -82,7 +118,7 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
     if(inpop[t+1]>inpop[t]){
       indfates[3,t,(inpop[t]+1):inpop[t+1]]<-1
       for(i in (inpop[t]+1):inpop[t+1]){
-        indfates[,((t+1)),i]<-chickfatefn(ind=i, time=t)#[,(t:(t+1))]
+        indfates[,((t+1)),i]<-chickfatefn(ind = i, time = t)#[,(t:(t+1))]
       }
     }else{}
   } 
@@ -104,7 +140,7 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
   mean(adj[2:10])
   #close *enough* to actual lambda, again demographic stochasticity is the cause!
   
-  return(indfates)
+  return(indfates = indfates, N = N)
   
 }
   
@@ -374,7 +410,7 @@ simData <- function(indfates, n.years, n.data.types,
   
   
   return(list(ch=ch, SUR=SUR, age_ch=age_ch, firstobs=firstobs, lastobs=lastobs,
-              n.sam, fec=fec, N=N, R_obs=R_obs, OBS_nestlings=OBS_nestlings))
+              n.sam = n.sam, R_obs=R_obs, OBS_nestlings=OBS_nestlings))
   
 }
 

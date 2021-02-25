@@ -2,9 +2,23 @@
 
 # simulate trajectory
 
-low.comb <- lamlowcombs[sample(1:5000, 1), 1:3]
-med.comb <- lammedcombs[sample(1:5000, 1), 1:3]
-high.comb <- lamhighcombs[sample(1:5000, 1), 1:3]
+# load data
+scenarios <- readRDS(here("data", "scenarios.RDS"))
+low.lam.combos <- readRDS(here("data", "low.lam.combos.RDS"))
+med.lam.combos <- readRDS(here("data", "med.lam.combos.RDS"))
+high.lam.combos <- readRDS(here("data", "high.lam.combos.RDS"))
+
+# functions
+source(here("scripts", "in progress scripts", "simHelperFns.R"))
+source(here("scripts", "in progress scripts", "IPM_sim_2.0function.R"))
+source(here("scripts", "in progress scripts", "compute_time_calc.R"))
+
+low.comb <- low.lam.combos[sample(1:5000, 1), 1:3]
+med.comb <- med.lam.combos[sample(1:5000, 1), 1:3]
+high.comb <- high.lam.combos[sample(1:5000, 1), 1:3]
+
+# thought
+# make adult survival be higher?? force it
 
 lowpopTraj <- simPopTrajectory(n.years=15, 
                                n.data.types=c(0.25,0.25,0.25),
@@ -12,6 +26,7 @@ lowpopTraj <- simPopTrajectory(n.years=15,
                                phi.1=as.numeric(low.comb[2]), 
                                phi.ad=as.numeric(low.comb[3]), 
                                f=as.numeric(low.comb[1]))
+# returns indfates and n
 
 medpopTraj <- simPopTrajectory(n.years=15, 
                                n.data.types=c(0.25,0.25,0.25),
@@ -27,13 +42,17 @@ highpopTraj <- simPopTrajectory(n.years=15,
                                 phi.ad=as.numeric(high.comb[3]), 
                                 f=as.numeric(high.comb[1]))
 
+
 # simulate data
 
 detect.l <- 0.3
 detect.m <- 0.5
 detect.h <- 0.8
 
-lowpopDat <- simData (indfates = lowpopTraj, 
+# next steps
+# abby needs to make the repository more readable
+
+lowpopDat <- simData (indfates = lowpopTraj$indfates, 
                       n.years = 15, 
                       n.data.types = c(0.25,0.25,0.25), 
                       ADonly = T, 
@@ -46,7 +65,8 @@ lowpopDat <- simData (indfates = lowpopTraj,
                       sig = 0, 
                       productivity = T)
 
-medpopDat <- simData (indfates = lowpopTraj, 
+
+medpopDat <- simData (indfates = lowpopTraj$indfates, #lowpopTraj$indfates
                       n.years = 15, 
                       n.data.types = c(0.25,0.25,0.25), 
                       ADonly = T, 
@@ -98,6 +118,9 @@ inits1 <- list(p.surv = detect.l,
                mean.p = detect.l,
                fec = detect.l, 
                z=z.state,
+               # TODO
+               # why are these 150 - should start ad stable age distrib
+               # need to double check this
                n1.start= sum(lowpopTraj[1, 1, ], na.rm = TRUE),
                nad.start= sum(lowpopTraj[2, 1, ], na.rm = TRUE)
                )
@@ -106,10 +129,10 @@ inits1 <- list(p.surv = detect.l,
 params1 <- c("p.surv", "mean.phi", "mean.p", "fec", "lambda")
 
 #### MCMC SETTINGS ####
-nb <- 100000 #burn-in
+nb <- 100#000 #burn-in
 ni <- nb + nb #total iterations
-nt <- 10  #thin
-nc <- 3  #chains
+nt <- 1#0  #thin
+nc <- 1  #chains
 
 #### COMPILE CONFIGURE AND BUILD ####
 Rmodel1 <- nimbleModel(code = IPMmod, constants = const1, data = dat1, 

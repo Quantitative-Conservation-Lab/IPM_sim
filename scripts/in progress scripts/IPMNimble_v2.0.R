@@ -47,7 +47,10 @@ IPMmod<-nimbleCode({
     z[i,first[i]]<-1
     for(t in (first[i]+1):(nyears)){
       # AEB note - changed this from age because the thing wasnt working
-      z[i,t]~dbern(z[i,t-1]*mean.phi[2]) 
+      # use this if we mark chicks at all
+      #z[i,t]~dbern(z[i,t-1]*mean.phi[age[i, t-1] + 1]) # was mean.phi[age[i, t-1]]
+      # use this if we mark adults or YOY only
+      z[i,t]~dbern(z[i,t-1]*mean.phi[2])
       ch.y[i,t]~dbern(z[i,t]*mean.p)
     }
   }
@@ -68,13 +71,14 @@ IPMmod<-nimbleCode({
   for (t in 1:(nyears-1)){
     f[t] <- fec
   }
+  
   fec ~ dunif(0, 5)
   
   # DERIVED QUANTITIES #####
   
   # Population growth rate
   for (t in 1:(nyears-1)){
-    lambda[t] <- (Ntot[t+1] + 1e-4) / (Ntot[t] + 1e-4)
+    lambda[t] <- (Ntot[t+1] + 1e-8) / (Ntot[t] + 1e-8) # adding tiny number to avoid Nan
   }
   # END derived quantities
   
