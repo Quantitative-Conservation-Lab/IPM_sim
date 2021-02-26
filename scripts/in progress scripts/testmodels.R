@@ -116,22 +116,26 @@ const1 <- list(nyears = ncol(lowpopDat$ch),
 
 #### INITIAL VALUES ####
 z.state <- state.data(lowpopDat$ch)
-inits1 <- list(p.surv = detect.l,
+
+inits1 <- list(p.surv = runif(1,0,1),
                mean.phi = runif(2,0,1),#c(detect.l, detect.l),
                mean.p = runif(1,0,1),#detect.l,
-               fec = runif(1,0,1),#detect.l, 
+               fec = runif(1,0,5),#detect.l, 
                z=z.state,
                # TODO
                # why are these 150 - should start ad stable age distrib
                # need to double check this
                #n1.start= sum(lowpopTraj$indfates[1, 1, ], na.rm = TRUE),
                #nad.start= sum(lowpopTraj$indfates[2, 1, ], na.rm = TRUE)
-               n1.start=lowpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
-               nad.start=lowpopTraj$Nouts[2,1] 
+              # n1.start=lowpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
+              # nad.start=lowpopTraj$Nouts[2,1] 
+               n1.start=medpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
+               nad.start=medpopTraj$Nouts[2,1] 
                )
 
 #### PARAMETERS TO MONITOR ####
-params1 <- c("p.surv", "mean.phi", "fec", "lambda","Ntot","N1","Nad","f","rho")#0.3764911
+params1 <- c("p.surv", "mean.phi","mean.p", "fec", "lambda","Ntot","N1","Nad","f","rho")#0.3764911
+#dont need all of these later, but wanted to look at them now
 
 #### MCMC SETTINGS ####
 nb <- 10000#000 #burn-in
@@ -149,14 +153,16 @@ conf1 <- configureMCMC(Rmodel1, monitors = params1)#, thin = nt,
 Rmcmc1 <- buildMCMC(conf1)  
 Cmodel1 <- compileNimble(Rmodel1, showCompilerOutput = FALSE)
 Cmcmc1 <- compileNimble(Rmcmc1, project = Rmodel1)
+library(beepr)
 beep(sound = 2)
 
 #### RUN MCMC ####
 t.start <- Sys.time()
-sink("sad_output.txt")
-out2 <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,
-                setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE)  
-sink()
+#sink("sad_output.txt")
+#changed to checking to just see a matrix, since it is working!
+out2 <- as.data.frame(as.matrix(runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,
+                setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE) )) 
+#sink()
 t.end <- Sys.time()
 (runTime <- t.end - t.start)
 beep(sound = 3)
