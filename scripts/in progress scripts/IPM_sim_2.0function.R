@@ -140,7 +140,17 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
   mean(adj[2:10])
   #close *enough* to actual lambda, again demographic stochasticity is the cause!
   
-  return(indfates = indfates, N = N)
+  #HAS:
+  #we dont want to output the leslie matrix N, we want to output the N 
+  #from the indfates
+  Nouts<-matrix(nrow=2,ncol=n.years)
+  for(t in 1:n.years){
+    Nouts[1,t]<-sum(indfates[1,t,], na.rm=T)
+    Nouts[2,t]<-sum(indfates[2,t,],na.rm=T)
+  }
+  #so we would compare the model estimated Nouts to see if it is tracking it 
+  #we probably dont care about this for actual analysis, but for checking it is good to have on hand
+  return(list(indfates = indfates, Nouts = Nouts))
   
 }
   
