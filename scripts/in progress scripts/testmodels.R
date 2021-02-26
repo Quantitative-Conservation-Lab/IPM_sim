@@ -134,9 +134,9 @@ inits1 <- list(p.surv = detect.l,
 params1 <- c("p.surv", "mean.phi", "fec", "lambda","Ntot","N1","Nad","f","rho")#0.3764911
 
 #### MCMC SETTINGS ####
-nb <- 100#000 #burn-in
+nb <- 10000#000 #burn-in
 ni <- nb + nb #total iterations
-nt <- 1#0  #thin
+nt <- 10  #thin
 nc <- 1  #chains
 
 #### COMPILE CONFIGURE AND BUILD ####
