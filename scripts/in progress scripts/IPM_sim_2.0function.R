@@ -140,7 +140,7 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
   mean(adj[2:10])
   #close *enough* to actual lambda, again demographic stochasticity is the cause!
   
-  return(indfates = indfates, N = N)
+  return(list(indfates = indfates, N = N))
   
 }
   
