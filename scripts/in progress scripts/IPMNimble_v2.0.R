@@ -17,8 +17,8 @@ IPMmod<-nimbleCode({
   # Initial population sizes
   n1.start ~ dunif(0, 500)
   nad.start ~ dunif(0, 500)
-  N1[1] <- n1.start
-  Nad[1] <- nad.start
+  N1[1] <- round(n1.start)
+  Nad[1] <- round(nad.start)
   
   for (t in 2:nyears){
     N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
@@ -95,8 +95,8 @@ nonests<-nimbleCode({
   # Initial population sizes
   n1.start ~ dunif(0, 1000)
   nad.start ~ dunif(0, 1000)
-  N1[1] <- n1.start
-  Nad[1] <- nad.start
+  N1[1] <- round(n1.start)
+  Nad[1] <- round(nad.start)
   
   for (t in 2:nyears){
     N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
@@ -146,7 +146,7 @@ nonests<-nimbleCode({
   
   # Population growth rate
   for (t in 1:(nyears-1)){
-    lambda[t] <- Ntot[t+1] / Ntot[t]
+    lambda[t] <- (Ntot[t+1] + 1e-8) / (Ntot[t] + 1e-8)
   }
   # END derived quantities
   
@@ -163,13 +163,13 @@ nomr<-nimbleCode({
   # Initial population sizes
   n1.start ~ dunif(0, 1000)
   nad.start ~ dunif(0, 1000)
-  N1[1] <- n1.start
-  Nad[1] <- nad.start
+  N1[1] <- round(n1.start)
+  Nad[1] <- round(nad.start)
   
   for (t in 2:nyears){
     N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
     Nad[t] ~ dbin(mean.phi[2],(Ntot[t-1]))
-  }
+    }
   
   for (t in 1:nyears){
     Ntot[t] <- round(Nad[t] + N1[t])
@@ -209,7 +209,7 @@ nomr<-nimbleCode({
   
   # Population growth rate
   for (t in 1:(nyears-1)){
-    lambda[t] <- Ntot[t+1] / Ntot[t]
+    lambda[t] <- (Ntot[t+1] + 1e-8) / (Ntot[t] + 1e-8)
   }
   # END derived quantities
   
@@ -226,8 +226,8 @@ abundonly<-nimbleCode({
   # Initial population sizes
   n1.start ~ dunif(0, 1000)
   nad.start ~ dunif(0, 1000)
-  N1[1] <- n1.start
-  Nad[1] <- nad.start
+  N1[1] <- round(n1.start)
+  Nad[1] <- round(nad.start)
   
   for (t in 2:nyears){
     N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
@@ -267,7 +267,7 @@ abundonly<-nimbleCode({
   
   # Population growth rate
   for (t in 1:(nyears-1)){
-    lambda[t] <- Ntot[t+1] / Ntot[t]
+    lambda[t] <- (Ntot[t+1] + 1e-8) / (Ntot[t] + 1e-8)
   }
   # END derived quantities
   
