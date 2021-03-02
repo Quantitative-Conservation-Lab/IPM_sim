@@ -3,35 +3,37 @@ scenarios <- readRDS(here("data", "scenarios.RDS"))
 high.lam.combos <- readRDS(here("data", "high.lam.combos.RDS"))
 
 # functions
-#source(here("scripts", "in progress scripts", "simHelperFns.R"))
-source(here("scripts", "in progress scripts", "IPM_sim_2.0function.R"))
-source(here("scripts", "in progress scripts", "compute_time_calc.R"))
-source(here("scripts", "in progress scripts", "IPMNimble_v2.0.R"))
+source(here("scripts", "current version",
+            "1 - simulating data", "IPM_sim_2.0function.R"))
+source(here("scripts", "current version",
+            "2 - models", "IPMNimble_v2.0.R"))
 
 high.comb <- high.lam.combos[sample(1:5000, 1), 1:3]
 
-highpopTraj <- simPopTrajectory(n.years=15, 
+highpopTraj <- simPopTrajectory(n.years=15,
                                n.data.types=c(0.25,0.25,0.25),
-                               age.init=c(150,150), 
-                               phi.1=as.numeric(high.comb[2]), 
-                               phi.ad=as.numeric(high.comb[3]), 
+                               age.init=c(150,150),
+                               phi.1=as.numeric(high.comb[2]),
+                               phi.ad=as.numeric(high.comb[3]),
                                f=as.numeric(high.comb[1]))
 
 # simulate data
 
+detect.l <- 0.3
+detect.m <- 0.5
 detect.h <- 0.8
 
 highpopDat <- simData (indfates = highpopTraj$indfates, #highpopTraj$indfates
-                      n.years = 15, 
-                      n.data.types = c(0.25,0.25,0.25), 
-                      ADonly = T, 
-                      p.1 = detect.h, 
-                      p.ad = detect.h, 
+                      n.years = 15,
+                      n.data.types = c(0.25,0.25,0.25),
+                      ADonly = T,
+                      p.1 = detect.h,
+                      p.ad = detect.h,
                       p.count = detect.h,
                       p.prod = detect.h,
-                      BinMod = T, 
-                      n.sam = 3,  
-                      sig = 0, 
+                      BinMod = T,
+                      n.sam = 3,
+                      sig = 0,
                       productivity = T)
 
 # RUN MODELS ###########
@@ -42,49 +44,34 @@ highpopDat <- simData (indfates = highpopTraj$indfates, #highpopTraj$indfates
 #########
 
 #### DATA ####
-dat1 <- list(y = highpopDat$SUR, 
-             ch.y = highpopDat$ch, 
-             OBS_nestlings = highpopDat$OBS_nestlings, 
+dat1 <- list(y = highpopDat$SUR,
+             ch.y = highpopDat$ch,
+             OBS_nestlings = highpopDat$OBS_nestlings,
              R_obs = highpopDat$R_obs
 )
 
 
 #### CONSTANTS ####
 
-# AEB TODO
-# this does not work well...
-#HAS: we dont need age if they are all adults at their first resight?
-#age = ageunknown(highpopDat$age_ch)
-const1 <- list(nyears = ncol(highpopDat$ch), 
+const1 <- list(nyears = ncol(highpopDat$ch),
                n.sam = nrow(highpopDat$SUR),
                n.ind = nrow(highpopDat$ch),
                first = highpopDat$firstobs)
-#age = age) age doesnt matter, so removing it
 
 #### INITIAL VALUES ####
 z.state <- state.data(highpopDat$ch)
 
-inits1 <- list(#p.surv = runif(1,0,1),
-  # AEB - ok I am an idiot - was putting the detection parameters as initial values
-  # on the demographic parameters!!!!!!!!! ugh
-  
+inits1 <- list(
   mean.phi = c(high.comb$phi1, high.comb$phiad),#c(detect.h, detect.h),
   mean.p = detect.h,
   p.surv = detect.h,
-  fec = high.comb$fec,#detect.h, 
+  fec = high.comb$fec,#detect.h,
   #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
   #mean.p = runif(1,0,1),#detect.h,
-  #fec = runif(1,0,5),#detect.h, 
+  #fec = runif(1,0,5),#detect.h,
   z=z.state,
-  # TODO
-  # why are these 150 - should start ad stable age distrib
-  # need to double check this
-  #n1.start= sum(highpopTraj$indfates[1, 1, ], na.rm = TRUE),
-  #nad.start= sum(highpopTraj$indfates[2, 1, ], na.rm = TRUE)
   n1.start=highpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
-  nad.start=highpopTraj$Nouts[2,1] 
-  #n1.start=highpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
-  #nad.start=highpopTraj$Nouts[2,1] 
+  nad.start=highpopTraj$Nouts[2,1]
 )
 
 #### PARAMETERS TO MONITOR ####
@@ -98,13 +85,13 @@ nt <- 10  #thin
 nc <- 3  #chains
 
 #### COMPILE CONFIGURE AND BUILD ####
-Rmodel1 <- nimbleModel(code = IPMmod, constants = const1, data = dat1, 
+Rmodel1 <- nimbleModel(code = IPMmod, constants = const1, data = dat1,
                        check = FALSE, calculate = FALSE, inits = inits1)
-conf1 <- configureMCMC(Rmodel1, monitors = params1)#, thin = nt, 
-#control = list(maxContractions = 1000)) 
+conf1 <- configureMCMC(Rmodel1, monitors = params1)#, thin = nt,
+#control = list(maxContractions = 1000))
 # lots of initial model checking you can do by exploring conf1
 # if you wanted to change samplers this is where you would do that
-Rmcmc1 <- buildMCMC(conf1)  
+Rmcmc1 <- buildMCMC(conf1)
 Cmodel1 <- compileNimble(Rmodel1, showCompilerOutput = FALSE)
 Cmcmc1 <- compileNimble(Rmcmc1, project = Rmodel1)
 library(beepr)
@@ -113,7 +100,6 @@ beep(sound = 2)
 #### RUN MCMC ####
 t.start <- Sys.time()
 #sink("sad_output.txt")
-#changed to checking to just see a matrix, since it is working!
 outIPM <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,
                   setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE)
 #sink()
@@ -137,8 +123,6 @@ high.comb
 
 # check model convergence
 
-# AEB TODO
-# what the heck why is it mixing so terribly?
 gelman.diag(outIPM)
 #plot(out2)
 
@@ -147,47 +131,31 @@ gelman.diag(outIPM)
 #########
 
 #### DATA ####
-dat1 <- list(y = highpopDat$SUR, 
+dat1 <- list(y = highpopDat$SUR,
              ch.y = highpopDat$ch
 )
 
 
 #### CONSTANTS ####
 
-# AEB TODO
-# this does not work well...
-#HAS: we dont need age if they are all adults at their first resight?
-#age = ageunknown(highpopDat$age_ch)
-const1 <- list(nyears = ncol(highpopDat$ch), 
+const1 <- list(nyears = ncol(highpopDat$ch),
                n.sam = nrow(highpopDat$SUR),
                n.ind = nrow(highpopDat$ch),
                first = highpopDat$firstobs)
-#age = age) age doesnt matter, so removing it
 
 #### INITIAL VALUES ####
 z.state <- state.data(highpopDat$ch)
 
-inits1 <- list(#p.surv = runif(1,0,1),
-  # AEB - ok I am an idiot - was putting the detection parameters as initial values
-  # on the demographic parameters!!!!!!!!! ugh
-  
-  mean.phi = c(high.comb$phi1, high.comb$phiad),#c(detect.h, detect.h),
-  mean.p = detect.h,
-  p.surv = detect.h,
-  fec = high.comb$fec,#detect.h, 
-  #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
-  #mean.p = runif(1,0,1),#detect.h,
-  #fec = runif(1,0,5),#detect.h, 
-  z=z.state,
-  # TODO
-  # why are these 150 - should start ad stable age distrib
-  # need to double check this
-  #n1.start= sum(highpopTraj$indfates[1, 1, ], na.rm = TRUE),
-  #nad.start= sum(highpopTraj$indfates[2, 1, ], na.rm = TRUE)
-  n1.start=highpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
-  nad.start=highpopTraj$Nouts[2,1] 
-  #n1.start=highpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
-  #nad.start=highpopTraj$Nouts[2,1] 
+inits1 <- list(mean.phi = c(high.comb$phi1, high.comb$phiad),#c(detect.h, detect.h),
+               mean.p = detect.h,
+               p.surv = detect.h,
+               fec = high.comb$fec,#detect.h,
+               #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
+               #mean.p = runif(1,0,1),#detect.h,
+               #fec = runif(1,0,5),#detect.h,
+               z=z.state,
+               n1.start=highpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
+               nad.start=highpopTraj$Nouts[2,1]
 )
 
 #### PARAMETERS TO MONITOR ####
@@ -201,13 +169,13 @@ nt <- 10  #thin
 nc <- 3  #chains
 
 #### COMPILE CONFIGURE AND BUILD ####
-Rmodel1 <- nimbleModel(code = nonests, constants = const1, data = dat1, 
+Rmodel1 <- nimbleModel(code = nonests, constants = const1, data = dat1,
                        check = FALSE, calculate = FALSE, inits = inits1)
-conf1 <- configureMCMC(Rmodel1, monitors = params1)#, thin = nt, 
-#control = list(maxContractions = 1000)) 
+conf1 <- configureMCMC(Rmodel1, monitors = params1)#, thin = nt,
+#control = list(maxContractions = 1000))
 # lots of initial model checking you can do by exploring conf1
 # if you wanted to change samplers this is where you would do that
-Rmcmc1 <- buildMCMC(conf1)  
+Rmcmc1 <- buildMCMC(conf1)
 Cmodel1 <- compileNimble(Rmodel1, showCompilerOutput = FALSE)
 Cmcmc1 <- compileNimble(Rmcmc1, project = Rmodel1)
 library(beepr)
@@ -240,8 +208,6 @@ high.comb
 
 # check model convergence
 
-# AEB TODO
-# what the heck why is it mixing so terribly?
 gelman.diag(outnonests)
 #plot(out2)
 
@@ -250,46 +216,30 @@ gelman.diag(outnonests)
 #########
 
 #### DATA ####
-dat1 <- list(y = highpopDat$SUR, 
-             OBS_nestlings = highpopDat$OBS_nestlings, 
+dat1 <- list(y = highpopDat$SUR,
+             OBS_nestlings = highpopDat$OBS_nestlings,
              R_obs = highpopDat$R_obs
 )
 
 
 #### CONSTANTS ####
 
-# AEB TODO
-# this does not work well...
-#HAS: we dont need age if they are all adults at their first resight?
-#age = ageunknown(highpopDat$age_ch)
-const1 <- list(nyears = ncol(highpopDat$ch), 
+const1 <- list(nyears = ncol(highpopDat$ch),
                n.sam = nrow(highpopDat$SUR))
-#age = age) age doesnt matter, so removing it
 
 #### INITIAL VALUES ####
 z.state <- state.data(highpopDat$ch)
 
-inits1 <- list(#p.surv = runif(1,0,1),
-  # AEB - ok I am an idiot - was putting the detection parameters as initial values
-  # on the demographic parameters!!!!!!!!! ugh
-  
-  mean.phi = c(high.comb$phi1, high.comb$phiad),#c(detect.h, detect.h),
-  #mean.p = detect.h,
-  p.surv = detect.h,
-  fec = high.comb$fec,#detect.h, 
-  #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
-  #mean.p = runif(1,0,1),#detect.h,
-  #fec = runif(1,0,5),#detect.h, 
-  #z=z.state,
-  # TODO
-  # why are these 150 - should start ad stable age distrib
-  # need to double check this
-  #n1.start= sum(highpopTraj$indfates[1, 1, ], na.rm = TRUE),
-  #nad.start= sum(highpopTraj$indfates[2, 1, ], na.rm = TRUE)
-  n1.start=highpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
-  nad.start=highpopTraj$Nouts[2,1] 
-  #n1.start=highpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
-  #nad.start=highpopTraj$Nouts[2,1] 
+inits1 <- list(mean.phi = c(high.comb$phi1, high.comb$phiad),#c(detect.h, detect.h),
+               #mean.p = detect.h,
+               p.surv = detect.h,
+               fec = high.comb$fec,#detect.h,
+               #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
+               #mean.p = runif(1,0,1),#detect.h,
+               #fec = runif(1,0,5),#detect.h,
+               #z=z.state,
+               n1.start=highpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
+               nad.start=highpopTraj$Nouts[2,1]
 )
 
 #### PARAMETERS TO MONITOR ####
@@ -303,13 +253,13 @@ nt <- 10  #thin
 nc <- 3  #chains
 
 #### COMPILE CONFIGURE AND BUILD ####
-Rmodel1 <- nimbleModel(code = nomr, constants = const1, data = dat1, 
+Rmodel1 <- nimbleModel(code = nomr, constants = const1, data = dat1,
                        check = FALSE, calculate = FALSE, inits = inits1)
-conf1 <- configureMCMC(Rmodel1, monitors = params1)#, thin = nt, 
-#control = list(maxContractions = 1000)) 
+conf1 <- configureMCMC(Rmodel1, monitors = params1)#, thin = nt,
+#control = list(maxContractions = 1000))
 # lots of initial model checking you can do by exploring conf1
 # if you wanted to change samplers this is where you would do that
-Rmcmc1 <- buildMCMC(conf1)  
+Rmcmc1 <- buildMCMC(conf1)
 Cmodel1 <- compileNimble(Rmodel1, showCompilerOutput = FALSE)
 Cmcmc1 <- compileNimble(Rmcmc1, project = Rmodel1)
 library(beepr)
@@ -318,7 +268,6 @@ beep(sound = 2)
 #### RUN MCMC ####
 t.start <- Sys.time()
 #sink("sad_output.txt")
-#changed to checking to just see a matrix, since it is working!
 outnomr <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,
                    setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE)
 #sink()
@@ -344,8 +293,6 @@ high.comb
 
 # check model convergence
 
-# AEB TODO
-# what the heck why is it mixing so terribly?
 gelman.diag(outnomr)
 #plot(out2)
 
@@ -360,38 +307,22 @@ dat1 <- list(y = highpopDat$SUR
 
 #### CONSTANTS ####
 
-# AEB TODO
-# this does not work well...
-#HAS: we dont need age if they are all adults at their first resight?
-#age = ageunknown(highpopDat$age_ch)
-const1 <- list(nyears = ncol(highpopDat$ch), 
+const1 <- list(nyears = ncol(highpopDat$ch),
                n.sam = nrow(highpopDat$SUR))
-#age = age) age doesnt matter, so removing it
 
 #### INITIAL VALUES ####
 z.state <- state.data(highpopDat$ch)
 
-inits1 <- list(#p.surv = runif(1,0,1),
-  # AEB - ok I am an idiot - was putting the detection parameters as initial values
-  # on the demographic parameters!!!!!!!!! ugh
-  
-  mean.phi = c(high.comb$phi1, high.comb$phiad),#c(detect.h, detect.h),
-  #mean.p = detect.h,
-  p.surv = detect.h,
-  fec = high.comb$fec,#detect.h, 
-  #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
-  #mean.p = runif(1,0,1),#detect.h,
-  #fec = runif(1,0,5),#detect.h, 
-  #z=z.state,
-  # TODO
-  # why are these 150 - should start ad stable age distrib
-  # need to double check this
-  #n1.start= sum(highpopTraj$indfates[1, 1, ], na.rm = TRUE),
-  #nad.start= sum(highpopTraj$indfates[2, 1, ], na.rm = TRUE)
-  n1.start=highpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
-  nad.start=highpopTraj$Nouts[2,1] 
-  #n1.start=highpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
-  #nad.start=highpopTraj$Nouts[2,1] 
+inits1 <- list(mean.phi = c(high.comb$phi1, high.comb$phiad),#c(detect.h, detect.h),
+               #mean.p = detect.h,
+               p.surv = detect.h,
+               fec = high.comb$fec,#detect.h,
+               #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
+               #mean.p = runif(1,0,1),#detect.h,
+               #fec = runif(1,0,5),#detect.h,
+               #z=z.state,
+               n1.start=highpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
+               nad.start=highpopTraj$Nouts[2,1]
 )
 
 #### PARAMETERS TO MONITOR ####
@@ -405,13 +336,13 @@ nt <- 10  #thin
 nc <- 3  #chains
 
 #### COMPILE CONFIGURE AND BUILD ####
-Rmodel1 <- nimbleModel(code = abundonly, constants = const1, data = dat1, 
+Rmodel1 <- nimbleModel(code = abundonly, constants = const1, data = dat1,
                        check = FALSE, calculate = FALSE, inits = inits1)
-conf1 <- configureMCMC(Rmodel1, monitors = params1)#, thin = nt, 
-#control = list(maxContractions = 1000)) 
+conf1 <- configureMCMC(Rmodel1, monitors = params1)#, thin = nt,
+#control = list(maxContractions = 1000))
 # lots of initial model checking you can do by exploring conf1
 # if you wanted to change samplers this is where you would do that
-Rmcmc1 <- buildMCMC(conf1)  
+Rmcmc1 <- buildMCMC(conf1)
 Cmodel1 <- compileNimble(Rmodel1, showCompilerOutput = FALSE)
 Cmcmc1 <- compileNimble(Rmcmc1, project = Rmodel1)
 library(beepr)
@@ -420,7 +351,6 @@ beep(sound = 2)
 #### RUN MCMC ####
 t.start <- Sys.time()
 #sink("sad_output.txt")
-#changed to checking to just see a matrix, since it is working!
 outabund <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,
                     setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE)
 #sink()
@@ -447,7 +377,5 @@ high.comb
 
 # check model convergence
 
-# AEB TODO
-# what the heck why is it mixing so terribly?
 gelman.diag(outabund)
 #plot(out2)

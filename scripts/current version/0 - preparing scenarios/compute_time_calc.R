@@ -13,12 +13,12 @@ n.instances <- cores.per.computer * computers
 total.sims <- sims.per * scenarios.picked * dim(scenarios)[1]
 total.sims
 
-# let's say length per dat sim + model run is 5 mins
+# let's say length per dat sim + model run is x minutes
 time.per <- 10 # on average
 
 # what is reasonable here...
 # how should we cap this for now
-total.time <- time.per * total.sims / n.instances/ 60 / 24  # in days, 
+total.time <- time.per * total.sims / n.instances/ 60 / 24  # in days,
 # NOTE this assumes total use of the computers
 total.time
 
