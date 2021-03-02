@@ -2,6 +2,7 @@
 # load data
 # toggle between right model
 
+library("here")
 library("nimble")
 
 # initial value functions
@@ -32,7 +33,11 @@ IPMmod<-nimbleCode({
   # Observation process
   
   #prior for survey detection probability
-  p.surv~dunif(0,1)
+  #p.surv~dunif(0,1)
+  # AEB - let's see if this helps the mixing on this parameter
+  # seems reasonable to think that your survey detection would be between
+  # approx 0.2 and 0.8, avoids boundary issue near 0
+  p.surv ~ T(dnorm(0.5, sd = 0.3), 0, Inf)
   
   for(n in 1:n.sam){
     for (t in 1:nyears){
@@ -93,8 +98,8 @@ nonests<-nimbleCode({
   # System process
   
   # Initial population sizes
-  n1.start ~ dunif(0, 1000)
-  nad.start ~ dunif(0, 1000)
+  n1.start ~ dunif(0, 500)
+  nad.start ~ dunif(0, 500)
   N1[1] <- round(n1.start)
   Nad[1] <- round(nad.start)
   
@@ -110,7 +115,7 @@ nonests<-nimbleCode({
   # Observation process
   
   #prior for survey detection probability
-  p.surv~dunif(0,1)
+  p.surv ~ T(dnorm(0.5, sd = 0.3), 0, Inf)
   
   for(n in 1:n.sam){
     for (t in 1:nyears){
@@ -124,7 +129,7 @@ nonests<-nimbleCode({
   for(i in 1:n.ind){
     z[i,first[i]]<-1
     for(t in (first[i]+1):(nyears)){
-      z[i,t]~dbern(z[i,t-1]*mean.phi[age[i,t]]) 
+      z[i,t]~dbern(z[i,t-1]*mean.phi[2]) 
       ch.y[i,t]~dbern(z[i,t]*mean.p)
     }
   }
@@ -161,8 +166,8 @@ nomr<-nimbleCode({
   # System process
   
   # Initial population sizes
-  n1.start ~ dunif(0, 1000)
-  nad.start ~ dunif(0, 1000)
+  n1.start ~ dunif(0, 500)
+  nad.start ~ dunif(0, 500)
   N1[1] <- round(n1.start)
   Nad[1] <- round(nad.start)
   
@@ -178,7 +183,7 @@ nomr<-nimbleCode({
   # Observation process
   
   #prior for survey detection probability
-  p.surv~dunif(0,1)
+  p.surv ~ T(dnorm(0.5, sd = 0.3), 0, Inf)
   
   for(n in 1:n.sam){
     for (t in 1:nyears){
@@ -224,8 +229,8 @@ abundonly<-nimbleCode({
   # System process
   
   # Initial population sizes
-  n1.start ~ dunif(0, 1000)
-  nad.start ~ dunif(0, 1000)
+  n1.start ~ dunif(0, 500)
+  nad.start ~ dunif(0, 500)
   N1[1] <- round(n1.start)
   Nad[1] <- round(nad.start)
   
@@ -241,7 +246,7 @@ abundonly<-nimbleCode({
   # Observation process
   
   #prior for survey detection probability
-  p.surv~dunif(0,1)
+  p.surv ~ T(dnorm(0.5, sd = 0.3), 0, Inf)
   
   for(n in 1:n.sam){
     for (t in 1:nyears){

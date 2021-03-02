@@ -9,7 +9,7 @@ med.lam.combos <- readRDS(here("data", "med.lam.combos.RDS"))
 high.lam.combos <- readRDS(here("data", "high.lam.combos.RDS"))
 
 # functions
-source(here("scripts", "in progress scripts", "simHelperFns.R"))
+#source(here("scripts", "in progress scripts", "simHelperFns.R"))
 source(here("scripts", "in progress scripts", "IPM_sim_2.0function.R"))
 source(here("scripts", "in progress scripts", "compute_time_calc.R"))
 
@@ -118,30 +118,37 @@ const1 <- list(nyears = ncol(lowpopDat$ch),
 z.state <- state.data(lowpopDat$ch)
 
 inits1 <- list(p.surv = runif(1,0,1),
-               mean.phi = runif(2,0,1),#c(detect.l, detect.l),
-               mean.p = runif(1,0,1),#detect.l,
-               fec = runif(1,0,5),#detect.l, 
+               # AEB - ok I am an idiot - was putting the detection parameters as initial values
+               # on the demographic parameters!!!!!!!!! ugh
+               
+               mean.phi = c(low.comb$phi1, low.comb$phiad),#c(detect.l, detect.l),
+               mean.p = detect.l,
+               p.surv = detect.l,
+               fec = low.comb$fec,#detect.l, 
+               #mean.phi = runif(2,0,1),#c(detect.l, detect.l),
+               #mean.p = runif(1,0,1),#detect.l,
+               #fec = runif(1,0,5),#detect.l, 
                z=z.state,
                # TODO
                # why are these 150 - should start ad stable age distrib
                # need to double check this
                #n1.start= sum(lowpopTraj$indfates[1, 1, ], na.rm = TRUE),
                #nad.start= sum(lowpopTraj$indfates[2, 1, ], na.rm = TRUE)
-              # n1.start=lowpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
-              # nad.start=lowpopTraj$Nouts[2,1] 
-               n1.start=medpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
-               nad.start=medpopTraj$Nouts[2,1] 
+               n1.start=lowpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
+               nad.start=lowpopTraj$Nouts[2,1] 
+               #n1.start=medpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
+               #nad.start=medpopTraj$Nouts[2,1] 
                )
 
 #### PARAMETERS TO MONITOR ####
-params1 <- c("p.surv", "mean.phi","mean.p", "fec", "lambda","Ntot","N1","Nad","f","rho")#0.3764911
+params1 <- c("p.surv", "mean.phi","mean.p", "fec", "lambda") #,"Ntot","N1","Nad","f","rho")#0.3764911
 #dont need all of these later, but wanted to look at them now
 
 #### MCMC SETTINGS ####
-nb <- 10000#000 #burn-in
+nb <- 100000 #burn-in
 ni <- nb + nb #total iterations
 nt <- 10  #thin
-nc <- 1  #chains
+nc <- 3  #chains
 
 #### COMPILE CONFIGURE AND BUILD ####
 Rmodel1 <- nimbleModel(code = IPMmod, constants = const1, data = dat1, 
@@ -160,8 +167,8 @@ beep(sound = 2)
 t.start <- Sys.time()
 #sink("sad_output.txt")
 #changed to checking to just see a matrix, since it is working!
-out2 <- as.data.frame(as.matrix(runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,
-                setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE) )) 
+out2 <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,
+                setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE)
 #sink()
 t.end <- Sys.time()
 (runTime <- t.end - t.start)
@@ -189,4 +196,7 @@ gelman.diag(out2)
 plot(out2)
 
 
-
+# LOOKS GOOD
+# still need to check
+# H M L
+# with all combinations of
