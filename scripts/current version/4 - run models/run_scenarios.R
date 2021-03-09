@@ -21,14 +21,23 @@ source(here("scripts", "current version",
     # TODO
     # Make this decision with the group
     # create parallel cluster????
-        # pro - tidier file structure
-        # con - no ability to check convergence
+      # pro - tidier file structure
+      # con - no ability to check convergence
     # loop over chains ????
-        # pro - ability to check convergence
-        # con - messy file structure
+      # pro - ability to check convergence
+      # con - messy file structure
     # run model for x number of iterations (incl if/else for model type)
     # check to see if model has converged
     # save output
+
+# if m-array speeds things significantly
+  # add more iterations to all
+  # create a flag for things that didn't converge -
+  # could just rerun these, or restart chains
+
+# HAS idea
+# add more iterations to models that we think should converge slowest
+  # e.g. fewer datasets and low detection
 
 # ARCHIVE ####
 # for (s in 2:2) {
