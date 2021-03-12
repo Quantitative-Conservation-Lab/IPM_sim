@@ -1,14 +1,23 @@
+library(here)
+library(nimble)
+
 # load data
 scenarios <- readRDS(here("data", "scenarios.RDS"))
 low.lam.combos <- readRDS(here("data", "low.lam.combos.RDS"))
+med.lam.combos <- readRDS(here("data", "med.lam.combos.RDS"))
+high.lam.combos <- readRDS(here("data", "high.lam.combos.RDS"))
 
 # functions
 source(here("scripts", "current version",
             "1 - simulating data", "IPM_sim_2.0function.R"))
 source(here("scripts", "current version",
             "2 - models", "IPMNimble_v2.0.R"))
+source(here("scripts", "current version",
+            "4 - run models", "run_scenarios_helperFns.R"))
 
 low.comb <- low.lam.combos[sample(1:5000, 1), 1:3]
+med.comb <- med.lam.combos[sample(1:5000, 1), 1:3]
+high.comb <- high.lam.combos[sample(1:5000, 1), 1:3]
 
 lowpopTraj <- simPopTrajectory(n.years=15,
                                n.data.types=c(0.25,0.25,0.25),
@@ -17,24 +26,147 @@ lowpopTraj <- simPopTrajectory(n.years=15,
                                phi.ad=as.numeric(low.comb[3]),
                                f=as.numeric(low.comb[1]))
 
-# simulate data
+medpopTraj <- simPopTrajectory(n.years=15,
+                               n.data.types=c(0.25,0.25,0.25),
+                               age.init=c(150,150),
+                               phi.1=as.numeric(med.comb[2]),
+                               phi.ad=as.numeric(med.comb[3]),
+                               f=as.numeric(med.comb[1]))
 
+highpopTraj <- simPopTrajectory(n.years=15,
+                               n.data.types=c(0.25,0.25,0.25),
+                               age.init=c(150,150),
+                               phi.1=as.numeric(high.comb[2]),
+                               phi.ad=as.numeric(high.comb[3]),
+                               f=as.numeric(high.comb[1]))
+
+# simulate data
 detect.l <- 0.3
 detect.m <- 0.5
 detect.h <- 0.8
 
-lowpopDat <- simData (indfates = lowpopTraj$indfates,
-                      n.years = 15,
-                      n.data.types = c(0.25,0.25,0.25),
-                      ADonly = T,
-                      p.1 = detect.l,
-                      p.ad = detect.l,
-                      p.count = detect.l,
-                      p.prod = detect.l,
-                      BinMod = T,
-                      n.sam = 3,
-                      sig = 0,
-                      productivity = T)
+detect <- c(detect.l, detect.m, detect.h)
+
+nb <- 100000#0 #burn-in
+ni <- nb + nb #total iterations
+nt <- 10  #thin
+nc <- 3  #chains
+
+# TODO #####
+# Fix this section
+assign("test8", outIPM)
+
+saveRDS(test7, "test7.RDS")
+saveRDS(test8, "test8.RDS")
+#######
+
+for (d in 1:3) {
+  lowpopDat <- simData (indfates = lowpopTraj$indfates,
+                        n.years = 15,
+                        n.data.types = c(0.25,0.25,0.25),
+                        ADonly = T,
+                        p.1 = detect[d],
+                        p.ad = detect[d],
+                        p.count = detect[d],
+                        p.prod = detect[d],
+                        BinMod = T,
+                        n.sam = 3,
+                        sig = 0,
+                        productivity = T)
+  medpopDat <- simData (indfates = lowpopTraj$indfates,
+                        n.years = 15,
+                        n.data.types = c(0.25,0.25,0.25),
+                        ADonly = T,
+                        p.1 = detect[d],
+                        p.ad = detect[d],
+                        p.count = detect[d],
+                        p.prod = detect[d],
+                        BinMod = T,
+                        n.sam = 3,
+                        sig = 0,
+                        productivity = T)
+  highpopDat <- simData (indfates = lowpopTraj$indfates,
+                        n.years = 15,
+                        n.data.types = c(0.25,0.25,0.25),
+                        ADonly = T,
+                        p.1 = detect[d],
+                        p.ad = detect[d],
+                        p.count = detect[d],
+                        p.prod = detect[d],
+                        BinMod = T,
+                        n.sam = 3,
+                        sig = 0,
+                        productivity = T)
+  for (m in 1:4) {
+    if(m == 1) {
+      popDat <- highpopDat
+      popTraj <- highpopTraj
+      comb <- high.comb
+      runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+
+      popDat <- medpopDat
+      popTraj <- medpopTraj
+      comb <- med.comb
+      runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+
+      popDat <- lowpopDat
+      popTraj <- lowpopTraj
+      comb <- low.comb
+      runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+    } else if (m == 2) {
+      popDat <- highpopDat
+      popTraj <- highpopTraj
+      comb <- high.comb
+      runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+
+      popDat <- medpopDat
+      popTraj <- medpopTraj
+      comb <- med.comb
+      runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+
+      popDat <- lowpopDat
+      popTraj <- lowpopTraj
+      comb <- low.comb
+      runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+    } else if (m == 3) {
+      popDat <- highpopDat
+      popTraj <- highpopTraj
+      comb <- high.comb
+      runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+
+      popDat <- medpopDat
+      popTraj <- medpopTraj
+      comb <- med.comb
+      runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+
+      popDat <- lowpopDat
+      popTraj <- lowpopTraj
+      comb <- low.comb
+      runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+    } else if (m == 4) {
+      popDat <- highpopDat
+      popTraj <- highpopTraj
+      comb <- high.comb
+      runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+
+      popDat <- medpopDat
+      popTraj <- medpopTraj
+      comb <- med.comb
+      runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+
+      popDat <- lowpopDat
+      popTraj <- lowpopTraj
+      comb <- low.comb
+      runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+    }
+  }
+}
+
+
+
+
+
+
 
 
 
@@ -64,13 +196,13 @@ const1 <- list(nyears = ncol(lowpopDat$ch),
 z.state <- state.data(lowpopDat$ch)
 
 inits1 <- list(
-               mean.phi = c(low.comb$phi1, low.comb$phiad),#c(detect.l, detect.l),
-               mean.p = detect.l,
-               p.surv = detect.l,
-               fec = low.comb$fec,#detect.l,
-               #mean.phi = runif(2,0,1),#c(detect.l, detect.l),
-               #mean.p = runif(1,0,1),#detect.l,
-               #fec = runif(1,0,5),#detect.l,
+               mean.phi = c(low.comb$phi1, low.comb$phiad),#c(detect.h, detect.h),
+               mean.p = detect.h,
+               p.surv = detect.h,
+               fec = low.comb$fec,#detect.h,
+               #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
+               #mean.p = runif(1,0,1),#detect.h,
+               #fec = runif(1,0,5),#detect.h,
                z=z.state,
                n1.start=lowpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
                nad.start=lowpopTraj$Nouts[2,1]
@@ -108,6 +240,10 @@ outIPM <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = init
 t.end <- Sys.time()
 (runTime <- t.end - t.start)
 beep(sound = 3)
+assign("test8", outIPM)
+
+saveRDS(test7, "test7.RDS")
+saveRDS(test8, "test8.RDS")
 
 ########HAS: if it doesnt run and there are slice sampler or other issues, use:
 Cmcmc1$mvSamples[["Ntot"]][[1]] # or any other parameters to help diagnose
