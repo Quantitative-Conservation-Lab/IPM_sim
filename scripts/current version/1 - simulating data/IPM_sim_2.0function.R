@@ -1,8 +1,13 @@
-simPopTrajectory <- function(n.years, n.data.types, age.init, 
+# n.years = n years to simulate, n.data.types = proportion observed for each dataset, 
+# age.init = starting age structure, phi.1 = juv survival,  phi.ad = adult survival,
+# f = fecundity
+simPopTrajectory <- function(n.years, n.data.types, age.init,
                              phi.1, phi.ad, f){
   
   #######
-  # HELPER FUNCTIONS
+  # review again
+  # HELPER FUNCTIONS -- transition matrices
+  # fate of juveniles
   oneyr_fatefn<-function(ind,time){
     indfates[3,time,ind]<-rpois(1,fec)
     zsurv1<-rbinom(1,1,phi.ad)
@@ -12,6 +17,7 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
     return(indfates[,time:(time+1),ind])
   }
   
+  # fate of adults
   adfatefn<-function(ind,time){
     indfates[3,time,ind]<-rpois(1,fec)
     zsurv1<-rbinom(1,1,phi.ad)
@@ -37,12 +43,12 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
   }
   ######
   
-  nmin1.years<-n.years-1
+  nmin1.years<-n.years-1 # review again - is this still being used?
   nplus1.years<-n.years+1
   
   #derive true fecundity from the parameters, for productivity use f
   #if(productivity==T){
-  fec <- f # AEB - do not divide by 2
+  fec <- f # AEB - do not divide by 2 -- review again: do we want to clean this up?
   #}else{
   #  fec<-1/2*mean.clutch.size*phi.nest^max.nest.age
   #}
@@ -53,9 +59,11 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
   lesmat<-matrix(nrow=2, ncol=2)
   lesmat[1,]<-c(phi.1*fec, phi.1*fec)
   lesmat[2,]<-c(phi.ad, phi.ad)
+  # populate Leslie matrix
   for(t in 1:n.years){
     N[,(t+1)]<-lesmat%*%N[,t]
   }
+  # give a warning if param values are outside of desired pop. growth rates
   el<-eigen(lesmat)$values[1]
   if(el<0.90 || el>1.10){
     print("Lambda is either too low or too high, revisit parameters")
@@ -64,7 +72,7 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
   #eigen(lesmat) #for lambda, if we need to check
   no.animals<-sum(N) #number of animals ever in the system at anytime
   no.ani.max<-round(no.animals*2.5) #include more for simulation of offspring
-  ####stable age distribution is:
+  ####stable age distribution is: # review again -- why use the last time step here?
   sad<-N[,nplus1.years]/sum(N[,nplus1.years]) # the proportion of the population that is in each age class
   #lambda from N, matches eigenvalue
   #nlam<-N[,nplus1.years]/N[,n.years]
@@ -99,6 +107,7 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
   #inpop[1]<-sum(age.init) alternative way to do it
   inpop[1]<-sum(age1+age2) #stable age distribution way to do it
   
+  # review again -- number of breeding birds at each time step?
   chickst<-numeric(n.years)
   tempstep<-matrix(nrow=no.ani.max, ncol=(n.years+1))
   for(t in 1:n.years){
@@ -161,7 +170,7 @@ simData <- function(indfates, n.years, n.data.types,
   ###################For output of data ##############
   # Three independent samples from the individuals we just simulated
   Ntot <- dim(indfates)[3]
-  xt1 <- matrix(data = seq(1:Ntot), ncol = 1)
+  xt1 <- matrix(data = seq(1:Ntot), ncol = 1) # individual ID
   resamp1 <- resamp2 <- resamp3 <- numeric()
   nds<-numeric(length(n.data.types))
   if(sum(n.data.types)>1){ # is n.data.types numbers
