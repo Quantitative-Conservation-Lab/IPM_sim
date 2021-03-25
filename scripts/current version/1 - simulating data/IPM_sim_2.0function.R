@@ -196,7 +196,7 @@ simData <- function(indfates, n.years, n.data.types,
   #HAS: Do we only want to mark adults? and never see 1year olds
   #Or do we want to be able to mark anyone we see? then we can get at 1yearoldSurv
   #We did just adults, but I added in an option for 
-  #also marking any 1 year oldss we see
+  #also marking any 1 year olds we see
   
   
   #Marking adults and 1 year olds, which will have the same
@@ -383,30 +383,30 @@ simData <- function(indfates, n.years, n.data.types,
   #n.sam is the number of times that the population was sampled in a year
   #Need to choose in the function argument which model to use, BinMod=T if binom, F if normal
   #HAS - should output the true count data for comparison
-  TRUE_Count<-matrix(nrow=2, ncol=n.years) #first row, number of YOY; second row is adults
+  TRUE_Count<-matrix(nrow=2, ncol=n.years) #first row, number of one year-olds; second row is adults
   SUR<-matrix(nrow=n.sam, ncol=n.years)#matrix for surveys by survey and year
   for(u in 1:n.years){
-    #Some discussion about should we include ?1yearolds
+    #Some discussion about should we include ?1yearolds # review again: need to standardize juvenile, 1yo...YOY?
     #if so, remove the next line
     TRUE_Count[1,u]<-sum(IND_Count[1,u,], na.rm = T)
     TRUE_Count[2,u]<-sum(IND_Count[2,u,], na.rm = T)
     if(BinMod==T){
-      SUR[,u]<-rbinom(n.sam, sum(TRUE_Count[,u]), p.count)
+      SUR[,u]<-rbinom(n.sam, sum(TRUE_Count[,u]), p.count) # review again: why one '<-' and one '~' ?
     }else{
-      SUR[,u]~rnorm(n.sam, TRUE_count[,u], sig)
+      SUR[,u]~rnorm(n.sam, TRUE_count[,u], sig) # review again: TRUE_Count or TRUE_count? 
     }
   }
   
   ######################################################
   # Create reproductive success data
   ######################################################
-  #if producivity is T, then this nest success model
+  #if productivity is T, then this nest success model
   #Abby can add in if we want to include it - AEB: let's omit for now
   #if F, then it is the below model
   #IND_Nest <- indfates[,,resamp3]
   TRUE_nestlings<-numeric(n.years)
   R_true<-R_obs <- numeric(n.years) # number of pairs whose productivity was observed 
-  OBS_nestlings <- numeric(n.years)  # total number of nestlings recoded in a year
+  OBS_nestlings <- numeric(n.years)  # total number of nestlings recorded in a year
   for(t in 1:n.years){
     #true number of nestlings
     TRUE_nestlings[t]<-sum(IND_Nest[3,t,], na.rm=T)
