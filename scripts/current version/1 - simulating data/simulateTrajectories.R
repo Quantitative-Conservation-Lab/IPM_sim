@@ -5,15 +5,15 @@ library(here)
 
 # load data
 scenarios <- readRDS(here("data", "scenarios.RDS"))
-low.lam.combos <- readRDS(here("data", "low.lam.combos.RDS"))
-med.lam.combos <- readRDS(here("data", "med.lam.combos.RDS"))
-high.lam.combos <- readRDS(here("data", "high.lam.combos.RDS"))
+low.lam.params <- readRDS(here("data", "low.lam.combos.RDS"))
+med.lam.params <- readRDS(here("data", "med.lam.combos.RDS"))
+high.lam.params <- readRDS(here("data", "high.lam.combos.RDS"))
 
 # functions
 source(here("scripts", "current version",
             "1 - simulating data", "IPM_sim_2.0function.R"))
 source(here("scripts", "current version",
-            "O - preparing scenarios", "compute_time_calc.R"))
+            "0 - preparing scenarios", "compute_time_calc.R"))
 
 # simulate populations
 
