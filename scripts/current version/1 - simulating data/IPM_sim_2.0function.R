@@ -5,11 +5,11 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
                              phi.1, phi.ad, f){
   
   #######
-  # review again
   # HELPER FUNCTIONS -- transition matrices
+  # states: [1yrolds, Adult, chicks, Dead]
   # fate of juveniles
   oneyr_fatefn<-function(ind,time){
-    indfates[3,time,ind]<-rpois(1,fec)
+    indfates[3,time,ind]<-rpois(1,fec) # number of chicks produced by ind. in current year
     zsurv1<-rbinom(1,1,phi.ad)
     indfates[2,time+1,ind]<-ifelse(zsurv1==1,1,NA) #do they survive?
     indfates[4,time+1,ind]<-ifelse(zsurv1==0, 1,NA) #or die?
@@ -19,7 +19,7 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
   
   # fate of adults
   adfatefn<-function(ind,time){
-    indfates[3,time,ind]<-rpois(1,fec)
+    indfates[3,time,ind]<-rpois(1,fec) # number of chicks produced by ind. in current year
     zsurv1<-rbinom(1,1,phi.ad)
     indfates[2,time+1,ind]<-ifelse(zsurv1==1,1,NA) #do they survive?
     indfates[4,time+1,ind]<-ifelse(zsurv1==0, 1,NA) #or die?
@@ -33,6 +33,7 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
     return(indfates[,(time+1),ind])
   }
   
+  # did the chicks produced above survive to the next time step?
   chickfatefn<-function(ind, time){
     zsurv1<-rbinom(1,1,phi.1)
     indfates[1,time+1,ind]<-ifelse(zsurv1==1,1,NA) #do they survive to become 1yrolds
@@ -43,12 +44,12 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
   }
   ######
   
-  nmin1.years<-n.years-1 # review again - is this still being used?
+  #nmin1.years<-n.years-1 # review again - is this still being used?
   nplus1.years<-n.years+1
   
   #derive true fecundity from the parameters, for productivity use f
   #if(productivity==T){
-  fec <- f # AEB - do not divide by 2 -- review again: do we want to clean this up?
+  fec <- f # AEB - do not divide by 2 
   #}else{
   #  fec<-1/2*mean.clutch.size*phi.nest^max.nest.age
   #}
@@ -72,7 +73,8 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
   #eigen(lesmat) #for lambda, if we need to check
   no.animals<-sum(N) #number of animals ever in the system at anytime
   no.ani.max<-round(no.animals*2.5) #include more for simulation of offspring
-  ####stable age distribution is: # review again -- why use the last time step here?
+  ####stable age distribution is: 
+  #only want to look at the end distribution
   sad<-N[,nplus1.years]/sum(N[,nplus1.years]) # the proportion of the population that is in each age class
   #lambda from N, matches eigenvalue
   #nlam<-N[,nplus1.years]/N[,n.years]
@@ -107,8 +109,8 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
   #inpop[1]<-sum(age.init) alternative way to do it
   inpop[1]<-sum(age1+age2) #stable age distribution way to do it
   
-  # review again -- number of breeding birds at each time step?
-  chickst<-numeric(n.years)
+  # simulate ind. trajectories with dem stochasticity  
+  chickst<-numeric(n.years) # tracking number of chicks produced each year
   tempstep<-matrix(nrow=no.ani.max, ncol=(n.years+1))
   for(t in 1:n.years){
     for(i in 1:inpop[t]){
@@ -174,14 +176,15 @@ simData <- function(indfates, n.years, n.data.types,
   resamp1 <- resamp2 <- resamp3 <- numeric()
   nds<-numeric(length(n.data.types))
   if(sum(n.data.types)>1){ # is n.data.types numbers
-    nds<-n.data.types
+    nds<-n.data.types # number of individuals we want in each independent dataset
   }else{ # or proportions
     nds<-Ntot*n.data.types
   }
   # Sample 1
   resamp1 <- sample(xt1, nds[1], replace = F)
   # Sample 2
-  resamp2 <- sample(xt1[-resamp1,], nds[2], replace = F)
+  #resamp2 <- sample(xt1[-resamp1,], nds[2], replace = F)
+  resamp2 <- xt1[,1] # observe all the individuals in the population
   
   resamp3<-sample(xt1[c(-resamp1,-resamp2),], nds[3], replace = F)
   
@@ -212,7 +215,7 @@ simData <- function(indfates, n.years, n.data.types,
     #so we have 2 classes, we care about in marking: 1year olds, and adults
     ind_mr<-IND_MR[c(1,2),1:n.years,]
     #ind_mr[1,,]<-NA #if not banding 1yearold/s, then remove
-    rm<-numeric(dim(ind_mr)[3])
+    rm<-numeric(dim(ind_mr)[3]) # remove dead individuals
     for(i in 1:dim(ind_mr)[3]){
       if(length(which(!is.na(ind_mr[1:2,,i])))==0){
         rm[i]<-1
@@ -225,14 +228,14 @@ simData <- function(indfates, n.years, n.data.types,
     }else{}
     
     
-    age<-first<-last<-numeric()
+    age<-first<-last<-numeric() # age, first and last encounters
     mr_t<-dim(ind_mr)[2]
     mr_ind<-dim(ind_mr)[3] 
     for(i in 1:mr_ind){
-      g <- which(!is.na(ind_mr[1:2,,i]), arr.ind = TRUE)
-      age[i] <- g[1,1] #at marking
-      first[i] <- g[1,2]
-      h <- which(ind_mr[1:2,,i]==1, arr.ind = TRUE)
+      g <- which(!is.na(ind_mr[1:2,,i]), arr.ind = TRUE) # ind that were seen
+      age[i] <- g[1,1] # age at marking
+      first[i] <- g[1,2] # first time seen
+      h <- which(ind_mr[1:2,,i]==1, arr.ind = TRUE) # last time seen
       last[i] <- max(h[,2])
     }  
     #remove those that we never banded as a chick
@@ -241,6 +244,7 @@ simData <- function(indfates, n.years, n.data.types,
       ch.true[i,first[i]:last[i]]<-1
     }  
     
+    #detection of true marked individuals:
     #since inital marking is constant prob
     #and resight is constant prob
     #phi.1 #probability you were marked as 1 year old
@@ -250,7 +254,7 @@ simData <- function(indfates, n.years, n.data.types,
       # if(age[i]==1){
       #   in.mark[i,first[i]]<-rbinom(1,1,p.1*ch.true[i,first[i]])
       # } else{
-      in.mark[i,first[i]]<-rbinom(1,1,p.ad*ch.true[i,first[i]])
+      in.mark[i,first[i]]<-rbinom(1,1,p.ad*ch.true[i,first[i]]) 
       #}
       if(first[i]==mr_t) next
       for(t in (first[i]+1):last[i]){
@@ -262,7 +266,7 @@ simData <- function(indfates, n.years, n.data.types,
       ch[i,]<-in.mark[i,]
     }
     
-    #code to track the ages, 1 is for chicks, 2 1years, 3 adults
+    #code to track the ages, 1 is for chicks, 2 1years, 3 adults (code not currently in use)
     add_age_chtrue<-age_ch<-matrix(0,nrow=mr_ind, ncol=mr_t)
     for(i in 1:mr_ind){
       for(x in (first[i]):last[i]){
@@ -270,7 +274,7 @@ simData <- function(indfates, n.years, n.data.types,
         age_ch[i,x]<-add_age_chtrue[i,x]*ch[i,x]
       }
     }
-    rm_2<-numeric(mr_ind)
+    rm_2<-numeric(mr_ind) # remove those we never saw
     for(i in 1:mr_ind){
       if(sum(ch[i,])==0){
         rm_2[i]<-1
@@ -283,14 +287,14 @@ simData <- function(indfates, n.years, n.data.types,
       ch<-ch[-(which(rm_2==1)),]
       age_ch<-age_ch[-(which(rm_2==1)),]
       add_age_chtrue[-(which(rm_2==1)),]
-    } else {}
+    } else {} 
     firstobs<-lastobs<-numeric(length(ch[,1]))
     for(i in 1:length(ch[,1])){
       firstobs[i]<-min(which(ch[i,]==1))
       lastobs[i]<-max(which(ch[i,]==1))
     }
     
-  }else{
+  }else{ 
     #if we mark chicks, 1 years, adults
     #!!
     #using the individual population array for MR data
@@ -386,15 +390,15 @@ simData <- function(indfates, n.years, n.data.types,
   TRUE_Count<-matrix(nrow=2, ncol=n.years) #first row, number of one year-olds; second row is adults
   SUR<-matrix(nrow=n.sam, ncol=n.years)#matrix for surveys by survey and year
   for(u in 1:n.years){
-    #Some discussion about should we include ?1yearolds # review again: need to standardize juvenile, 1yo...YOY?
+    #Some discussion about should we include 1yearolds 
     #if so, remove the next line
     TRUE_Count[1,u]<-sum(IND_Count[1,u,], na.rm = T)
     TRUE_Count[2,u]<-sum(IND_Count[2,u,], na.rm = T)
     if(BinMod==T){
-      SUR[,u]<-rbinom(n.sam, sum(TRUE_Count[,u]), p.count) # review again: why one '<-' and one '~' ?
+      SUR[,u]<-rbinom(n.sam, sum(TRUE_Count[,u]), p.count)
     }else{
-      SUR[,u]~rnorm(n.sam, TRUE_count[,u], sig) # review again: TRUE_Count or TRUE_count? 
-    }
+      SUR[,u]<-rnorm(n.sam, TRUE_Count[,u], sig) 
+      }
   }
   
   ######################################################
