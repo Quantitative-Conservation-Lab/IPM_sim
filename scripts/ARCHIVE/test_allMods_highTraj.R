@@ -1,21 +1,23 @@
 # load data
 scenarios <- readRDS(here("data", "scenarios.RDS"))
-med.lam.combos <- readRDS(here("data", "med.lam.combos.RDS"))
+high.lam.combos <- readRDS(here("data", "high.lam.combos.RDS"))
 
 # functions
 source(here("scripts", "current version",
             "1 - simulating data", "IPM_sim_2.0function.R"))
 source(here("scripts", "current version",
-            "2 - models", "IPMNimble_v2.0.R"))
+            "2 - models", "IPM_marray.R"))
+source(here("scripts", "current version",
+            "4 - run models", "run_scenarios_helperFns.R"))
 
-med.comb <- med.lam.combos[sample(1:5000, 1), 1:3]
+high.comb <- high.lam.combos[sample(1:5000, 1), 1:3]
 
-medpopTraj <- simPopTrajectory(n.years=15,
+highpopTraj <- simPopTrajectory(n.years=15,
                                n.data.types=c(0.25,0.25,0.25),
                                age.init=c(150,150),
-                               phi.1=as.numeric(med.comb[2]),
-                               phi.ad=as.numeric(med.comb[3]),
-                               f=as.numeric(med.comb[1]))
+                               phi.1=as.numeric(high.comb[2]),
+                               phi.ad=as.numeric(high.comb[3]),
+                               f=as.numeric(high.comb[1]))
 
 # simulate data
 
@@ -23,14 +25,14 @@ detect.l <- 0.3
 detect.m <- 0.5
 detect.h <- 0.8
 
-medpopDat <- simData (indfates = medpopTraj$indfates, #medpopTraj$indfates
+highpopDat <- simData (indfates = highpopTraj$indfates, #highpopTraj$indfates
                       n.years = 15,
                       n.data.types = c(0.25,0.25,0.25),
                       ADonly = T,
-                      p.1 = detect.m,
-                      p.ad = detect.m,
-                      p.count = detect.m,
-                      p.prod = detect.m,
+                      p.1 = detect.h,
+                      p.ad = detect.h,
+                      p.count = detect.h,
+                      p.prod = detect.h,
                       BinMod = T,
                       n.sam = 3,
                       sig = 0,
@@ -44,34 +46,34 @@ medpopDat <- simData (indfates = medpopTraj$indfates, #medpopTraj$indfates
 #########
 
 #### DATA ####
-dat1 <- list(y = medpopDat$SUR,
-             ch.y = medpopDat$ch,
-             OBS_nestlings = medpopDat$OBS_nestlings,
-             R_obs = medpopDat$R_obs
+dat1 <- list(y = highpopDat$SUR,
+             ch.y = highpopDat$ch,
+             OBS_nestlings = highpopDat$OBS_nestlings,
+             R_obs = highpopDat$R_obs
 )
 
 
 #### CONSTANTS ####
 
-const1 <- list(nyears = ncol(medpopDat$ch),
-               n.sam = nrow(medpopDat$SUR),
-               n.ind = nrow(medpopDat$ch),
-               first = medpopDat$firstobs)
+const1 <- list(nyears = ncol(highpopDat$ch),
+               n.sam = nrow(highpopDat$SUR),
+               n.ind = nrow(highpopDat$ch),
+               first = highpopDat$firstobs)
 
 #### INITIAL VALUES ####
-z.state <- state.data(medpopDat$ch)
+z.state <- state.data(highpopDat$ch)
 
 inits1 <- list(
-  mean.phi = c(med.comb$phi1, med.comb$phiad),#c(detect.m, detect.m),
-  mean.p = detect.m,
-  p.surv = detect.m,
-  fec = med.comb$fec,#detect.m,
-  #mean.phi = runif(2,0,1),#c(detect.m, detect.m),
-  #mean.p = runif(1,0,1),#detect.m,
-  #fec = runif(1,0,5),#detect.m,
+  mean.phi = c(high.comb$phi1, high.comb$phiad),#c(detect.h, detect.h),
+  mean.p = detect.h,
+  p.surv = detect.h,
+  fec = high.comb$fec,#detect.h,
+  #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
+  #mean.p = runif(1,0,1),#detect.h,
+  #fec = runif(1,0,5),#detect.h,
   z=z.state,
-  n1.start=medpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
-  nad.start=medpopTraj$Nouts[2,1]
+  n1.start=highpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
+  nad.start=highpopTraj$Nouts[2,1]
 )
 
 #### PARAMETERS TO MONITOR ####
@@ -119,7 +121,7 @@ library(coda)
 
 # check that results are unbiased
 summary(outIPM)
-med.comb
+high.comb
 
 # check model convergence
 
@@ -131,31 +133,31 @@ gelman.diag(outIPM)
 #########
 
 #### DATA ####
-dat1 <- list(y = medpopDat$SUR,
-             ch.y = medpopDat$ch
+dat1 <- list(y = highpopDat$SUR,
+             ch.y = highpopDat$ch
 )
 
 
 #### CONSTANTS ####
 
-const1 <- list(nyears = ncol(medpopDat$ch),
-               n.sam = nrow(medpopDat$SUR),
-               n.ind = nrow(medpopDat$ch),
-               first = medpopDat$firstobs)
+const1 <- list(nyears = ncol(highpopDat$ch),
+               n.sam = nrow(highpopDat$SUR),
+               n.ind = nrow(highpopDat$ch),
+               first = highpopDat$firstobs)
 
 #### INITIAL VALUES ####
-z.state <- state.data(medpopDat$ch)
+z.state <- state.data(highpopDat$ch)
 
-inits1 <- list(mean.phi = c(med.comb$phi1, med.comb$phiad),#c(detect.m, detect.m),
-               mean.p = detect.m,
-               p.surv = detect.m,
-               fec = med.comb$fec,#detect.m,
-               #mean.phi = runif(2,0,1),#c(detect.m, detect.m),
-               #mean.p = runif(1,0,1),#detect.m,
-               #fec = runif(1,0,5),#detect.m,
+inits1 <- list(mean.phi = c(high.comb$phi1, high.comb$phiad),#c(detect.h, detect.h),
+               mean.p = detect.h,
+               p.surv = detect.h,
+               fec = high.comb$fec,#detect.h,
+               #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
+               #mean.p = runif(1,0,1),#detect.h,
+               #fec = runif(1,0,5),#detect.h,
                z=z.state,
-               n1.start=medpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
-               nad.start=medpopTraj$Nouts[2,1]
+               n1.start=highpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
+               nad.start=highpopTraj$Nouts[2,1]
 )
 
 #### PARAMETERS TO MONITOR ####
@@ -204,7 +206,7 @@ library(coda)
 
 # check that results are unbiased
 summary(outnonests)
-med.comb
+high.comb
 
 # check model convergence
 
@@ -216,30 +218,30 @@ gelman.diag(outnonests)
 #########
 
 #### DATA ####
-dat1 <- list(y = medpopDat$SUR,
-             OBS_nestlings = medpopDat$OBS_nestlings,
-             R_obs = medpopDat$R_obs
+dat1 <- list(y = highpopDat$SUR,
+             OBS_nestlings = highpopDat$OBS_nestlings,
+             R_obs = highpopDat$R_obs
 )
 
 
 #### CONSTANTS ####
 
-const1 <- list(nyears = ncol(medpopDat$ch),
-               n.sam = nrow(medpopDat$SUR))
+const1 <- list(nyears = ncol(highpopDat$ch),
+               n.sam = nrow(highpopDat$SUR))
 
 #### INITIAL VALUES ####
-z.state <- state.data(medpopDat$ch)
+z.state <- state.data(highpopDat$ch)
 
-inits1 <- list(mean.phi = c(med.comb$phi1, med.comb$phiad),#c(detect.m, detect.m),
-               #mean.p = detect.m,
-               p.surv = detect.m,
-               fec = med.comb$fec,#detect.m,
-               #mean.phi = runif(2,0,1),#c(detect.m, detect.m),
-               #mean.p = runif(1,0,1),#detect.m,
-               #fec = runif(1,0,5),#detect.m,
+inits1 <- list(mean.phi = c(high.comb$phi1, high.comb$phiad),#c(detect.h, detect.h),
+               #mean.p = detect.h,
+               p.surv = detect.h,
+               fec = high.comb$fec,#detect.h,
+               #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
+               #mean.p = runif(1,0,1),#detect.h,
+               #fec = runif(1,0,5),#detect.h,
                #z=z.state,
-               n1.start=medpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
-               nad.start=medpopTraj$Nouts[2,1]
+               n1.start=highpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
+               nad.start=highpopTraj$Nouts[2,1]
 )
 
 #### PARAMETERS TO MONITOR ####
@@ -289,7 +291,7 @@ library(coda)
 
 # check that results are unbiased
 summary(outnomr)
-med.comb
+high.comb
 
 # check model convergence
 
@@ -301,28 +303,28 @@ gelman.diag(outnomr)
 #########
 
 #### DATA ####
-dat1 <- list(y = medpopDat$SUR
+dat1 <- list(y = highpopDat$SUR
 )
 
 
 #### CONSTANTS ####
 
-const1 <- list(nyears = ncol(medpopDat$ch),
-               n.sam = nrow(medpopDat$SUR))
+const1 <- list(nyears = ncol(highpopDat$ch),
+               n.sam = nrow(highpopDat$SUR))
 
 #### INITIAL VALUES ####
-z.state <- state.data(medpopDat$ch)
+z.state <- state.data(highpopDat$ch)
 
-inits1 <- list(mean.phi = c(med.comb$phi1, med.comb$phiad),#c(detect.m, detect.m),
-               #mean.p = detect.m,
-               p.surv = detect.m,
-               fec = med.comb$fec,#detect.m,
-               #mean.phi = runif(2,0,1),#c(detect.m, detect.m),
-               #mean.p = runif(1,0,1),#detect.m,
-               #fec = runif(1,0,5),#detect.m,
+inits1 <- list(mean.phi = c(high.comb$phi1, high.comb$phiad),#c(detect.h, detect.h),
+               #mean.p = detect.h,
+               p.surv = detect.h,
+               fec = high.comb$fec,#detect.h,
+               #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
+               #mean.p = runif(1,0,1),#detect.h,
+               #fec = runif(1,0,5),#detect.h,
                #z=z.state,
-               n1.start=medpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
-               nad.start=medpopTraj$Nouts[2,1]
+               n1.start=highpopTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
+               nad.start=highpopTraj$Nouts[2,1]
 )
 
 #### PARAMETERS TO MONITOR ####
@@ -373,7 +375,7 @@ library(coda)
 
 # check that results are unbiased
 summary(outabund)
-med.comb
+high.comb
 
 # check model convergence
 

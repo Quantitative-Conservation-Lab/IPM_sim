@@ -1,34 +1,9 @@
-# load libraries ####
-
-library(here)
-library(dplyr)
-library(tidyr)
-library(nimble)
-
-# source functions ####
-scenarios <- readRDS(here("data", "scenarios.RDS"))
-high.lam.combos <- readRDS(here("data", "high.lam.combos.RDS"))
-source(here("scripts", "current version",
-            "1 - simulating data", "IPM_sim_2.0function.R"))
-source(here("scripts", "current version",
-            "2 - models", "IPMNimble_v2.0.R"))
+# aeb
+# april 2, 2020
 
 # OUTLINE ####
-# loop over scenario number (1:44 in sections of 48, use 3 computers)
-  # loop over simulation number (1:25)
-    # load simulated trajectory
-    # simulate data
-    # TODO
-    # Make this decision with the group
-    # create parallel cluster????
-      # pro - tidier file structure
-      # con - no ability to check convergence
-    # loop over chains ????
-      # pro - ability to check convergence
-      # con - messy file structure
-    # run model for x number of iterations (incl if/else for model type)
-    # check to see if model has converged
-    # save output
+
+# can we write this more efficiently??
 
 # if m-array speeds things significantly
   # add more iterations to all
@@ -39,211 +14,280 @@ source(here("scripts", "current version",
 # add more iterations to models that we think should converge slowest
   # e.g. fewer datasets and low detection
 
-# ARCHIVE ####
-# for (s in 2:2) {
-#
-#   # THINGS THAT DO CHANGE
-#   phi.1 = scenarios[s, "Juv Surv"]
-#   p.ad = scenarios[s, "MR detection"]
-#   p.sur = scenarios[s, "Abund detection"]
-#   for (i in 1:sims.per) {
-#     print(paste("scenario: ", s, "; simulation number: ", i, sep = ""))
-#     if (scenarios[s, "MR Included"] == 1 & scenarios[s, "Nests Included"] == 1) {
-#       # simulate datasets
-#       df<-simIPMdata(n.years, n.data, init.age, phi.1, phi.ad, p.1, p.ad, p.sur,
-#                      max.nest.age, mean.clutch.size, phi.nest, n.sam)
-#       prod <- getNestDat()
-#       for (c in 1:3) {
-#         # abund data
-#         y <- df$SUR
-#         n.sam <- df$n.sam
-#         # Capture-recapture data (in m-array format, from years 1 to n.years)
-#         m <- df$ch
-#         first <- df$first
-#         age_ch <- df$age_ch
-#         # Nest data
-#         H <- prod$observed.nest.status
-#         Fledged <- prod$clutch.sizes
-#         first.nest <- prod$first.nest
-#         last.nest <- prod$last.nest
-#         max.nest.age <- prod$max.nest.age
-#         n.nests <- prod$N.nests.found
-#         n.succ.nests <- prod$N.nests.successful
-#         # initial values
-#         age<-ageunknown(age_ch)
-#         z.state <- state.data(m)
-#         Hinits <- getHinits(H)
-#
-#         datipm <- list(ch.y = m, y = y,
-#                        H = H,
-#                        Fledged = Fledged)
-#         constants<-list(nyears = ncol(m),
-#                         n.ind=nrow(m), first=first, age=age, n.sam=n.sam,
-#                         n.nests = n.nests,
-#                         n.succ.nests = n.succ.nests,
-#                         first.nest = first.nest,
-#                         last.nest = last.nest,
-#                         max.nest.age = max.nest.age)
-#         inits <- list(mean.phi=c(0.4, 0.77),
-#                       mean.p = 0.5,
-#                       #mean.fec = runif(1, 0, 10),
-#                       p.surv=0.9,
-#                       z=z.state,
-#                       n1.start=round(mean(y[,1]) * 1.5),#sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
-#                       nad.start=round(mean(y[,1]) * 1.5),#sample(1:30,1),
-#                       phi.nest = 0.975,
-#                       lambdaf = 2.5 ,
-#                       H = Hinits
-#         )
-#         # run full model
-#         # IPM
-#         # AEB note - weird stuff happening with p.surv
-#         parameters <- c("mean.phi", "mean.p", "fec", "p.surv", "phi.nest", "lambdaf", "lambda")
-#         modIPM<-nimbleModel(IPMmod, constants=constants, data=datipm, inits=inits)
-#         confIPM<-configureMCMC(modIPM)
-#         confIPM$addMonitors(parameters)
-#         RmcmcIPM<-buildMCMC(confIPM)
-#         CmodelIPM<-compileNimble(modIPM)
-#         CmcmcIPM<-compileNimble(RmcmcIPM, project=CmodelIPM)
-#         CmcmcIPM$run(thin=10, reset=T, niter=45000, nburnin=5000)
-#         out<-as.data.frame(as.matrix(CmcmcIPM$mvSamples))
-#
-#         # save results to file and to environment
-#         outcopy <- out
-#         assign(paste("out", s, "_",  i, "-", c, sep = ""), outcopy)
-#         saveRDS(out, here("data", paste("out", s, "_",  i, "-", c, ".Rdata", sep = "")))
-#         rm(out, outcopy)
-#       }
-#     } else if (scenarios[s, "MR Included"] == 1 & scenarios[s, "Nests Included"] == 0) {
-#       # simulate datasets
-#       df<-simIPMdata(n.years, n.data, init.age, phi.1, phi.ad, p.1, p.ad, p.sur,
-#                      max.nest.age, mean.clutch.size, phi.nest, n.sam)
-#       prod <- getNestDat()
-#       for (c in 1:3) {
-#         # abund data
-#         y <- df$SUR
-#         n.sam <- df$n.sam
-#         # Capture-recapture data (in m-array format, from years 1 to n.years)
-#         m <- df$ch
-#         first <- df$first
-#         age_ch <- df$age_ch
-#         # Nest data
-#         H <- prod$observed.nest.status
-#         Fledged <- prod$clutch.sizes
-#         first.nest <- prod$first.nest
-#         last.nest <- prod$last.nest
-#         max.nest.age <- prod$max.nest.age
-#         n.nests <- prod$N.nests.found
-#         n.succ.nests <- prod$N.nests.successful
-#         # initial values
-#         age<-ageunknown(age_ch)
-#         z.state <- state.data(m)
-#         Hinits <- getHinits(H)
-#
-#         datipm <- list(ch.y = m, y = y,
-#                        H = H,
-#                        Fledged = Fledged)
-#         constants<-list(nyears = ncol(m),
-#                         n.ind=nrow(m), first=first, age=age, n.sam=n.sam,
-#                         n.nests = n.nests,
-#                         n.succ.nests = n.succ.nests,
-#                         first.nest = first.nest,
-#                         last.nest = last.nest,
-#                         max.nest.age = max.nest.age)
-#         inits <- list(mean.phi=c(0.4, 0.77),
-#                       mean.p = 0.5,
-#                       #mean.fec = runif(1, 0, 10),
-#                       p.surv=0.9,
-#                       z=z.state,
-#                       n1.start=round(mean(y[,1]) * 1.5),#sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
-#                       nad.start=round(mean(y[,1]) * 1.5),#sample(1:30,1),
-#                       phi.nest = 0.975,
-#                       lambdaf = 2.5 ,
-#                       H = Hinits
-#         )
-#         # run no nest model
-#         # NO NEST
-#         parameters <- c("mean.phi", "mean.p", "fec", "p.surv", "phi.nest", "lambdaf", "lambda")
-#         modnonest<-nimbleModel(noNests, constants=constants, data=datipm, inits=inits)
-#         confnonest<-configureMCMC(modnonest)
-#         confnonest$addMonitors(parameters)
-#         Rmcmcnonest<-buildMCMC(confnonest)
-#         Cmodelnonest<-compileNimble(modnonest)
-#         Cmcmcnonest<-compileNimble(Rmcmcnonest, project=Cmodelnonest)
-#         Cmcmcnonest$run(thin=10, reset=T, niter=45000, nburnin=5000)
-#         out<-as.data.frame(as.matrix(Cmcmcnonest$mvSamples))
-#
-#         # save results to file and to environment
-#         outcopy <- out
-#         assign(paste("out", s, "_",  i, "-", c, sep = ""), outcopy)
-#         saveRDS(out, here("data", paste("out", s, "_",  i, "-", c, ".Rdata", sep = "")))
-#         rm(out, outcopy)
-#       }
-#     } else if (scenarios[s, "MR Included"] == 0 & scenarios[s, "Nests Included"] == 1) {
-#       # simulate datasets
-#       df<-simIPMdata(n.years, n.data, init.age, phi.1, phi.ad, p.1, p.ad, p.sur,
-#                      max.nest.age, mean.clutch.size, phi.nest, n.sam)
-#       prod <- getNestDat()
-#       for (c in 1:3) {
-#         # abund data
-#         y <- df$SUR
-#         n.sam <- df$n.sam
-#         # Capture-recapture data (in m-array format, from years 1 to n.years)
-#         m <- df$ch
-#         first <- df$first
-#         age_ch <- df$age_ch
-#         # Nest data
-#         H <- prod$observed.nest.status
-#         Fledged <- prod$clutch.sizes
-#         first.nest <- prod$first.nest
-#         last.nest <- prod$last.nest
-#         max.nest.age <- prod$max.nest.age
-#         n.nests <- prod$N.nests.found
-#         n.succ.nests <- prod$N.nests.successful
-#         # initial values
-#         age<-ageunknown(age_ch)
-#         z.state <- state.data(m)
-#         Hinits <- getHinits(H)
-#
-#         datipm <- list(ch.y = m, y = y,
-#                        H = H,
-#                        Fledged = Fledged)
-#         constants<-list(nyears = ncol(m),
-#                         n.ind=nrow(m), first=first, age=age, n.sam=n.sam,
-#                         n.nests = n.nests,
-#                         n.succ.nests = n.succ.nests,
-#                         first.nest = first.nest,
-#                         last.nest = last.nest,
-#                         max.nest.age = max.nest.age)
-#         inits <- list(mean.phi=c(0.4, 0.77),
-#                       mean.p = 0.5,
-#                       #mean.fec = runif(1, 0, 10),
-#                       p.surv=0.9,
-#                       z=z.state,
-#                       n1.start=round(mean(y[,1]) * 1.5),#sample(1:30,1),#super sensitive to these values, tried rpois(1,30) and it dodnt work
-#                       nad.start=round(mean(y[,1]) * 1.5),#sample(1:30,1),
-#                       phi.nest = 0.975,
-#                       lambdaf = 2.5 ,
-#                       H = Hinits
-#         )
-#         # NO MR
-#         parameters <- c("mean.phi", "fec", "p.surv", "phi.nest", "lambdaf", "lambda")
-#         modnoMR<-nimbleModel(noMR, constants=constants, data=datipm, inits=inits)
-#         confnoMR<-configureMCMC(modnoMR)
-#         confnoMR$addMonitors(parameters)
-#         RmcmcnoMR<-buildMCMC(confnoMR)
-#         CmodelnoMR<-compileNimble(modnoMR)
-#         CmcmcnoMR<-compileNimble(RmcmcnoMR, project=CmodelnoMR)
-#         CmcmcnoMR$run(thin=10, reset=T, niter=45000, nburnin=5000)
-#         out<-as.data.frame(as.matrix(CmcmcnoMR$mvSamples))
-#
-#         # save results to file and to environment
-#         outcopy <- out
-#         assign(paste("out", s, "_",  i, "-", c, sep = ""), outcopy)
-#         saveRDS(out, here("data", paste("out", s, "_",  i, "-", c, ".Rdata", sep = "")))
-#         rm(out, outcopy)
-#       }
-#     }
-#   }
-# }
-#
+library(tidyverse)
+library(here)
+library(nimble)
+library(foreach)
+library(doParallel)
+
+# load data
+scenarios <- readRDS(here("data", "scenarios.RDS"))
+low.lam.combos <- readRDS(here("data", "low.lam.params.RDS"))
+med.lam.combos <- readRDS(here("data", "med.lam.params.RDS"))
+high.lam.combos <- readRDS(here("data", "high.lam.params.RDS"))
+
+# functions
+source(here("scripts", "current version",
+            "0 - preparing scenarios", "compute_time_calc.R"))
+source(here("scripts", "current version",
+            "1 - simulating data", "IPM_sim_2.0function.R"))
+source(here("scripts", "current version",
+            "2 - models", "IPM_marray.R"))
+source(here("scripts", "current version",
+            "4 - run models", "run_scenarios_helperFns.R"))
+
+# simulate data
+detect.l <- 0.3
+detect.m <- 0.5
+detect.h <- 0.8
+
+detect <- c(detect.l, detect.m, detect.h)
+
+nb <- 100000#0 #burn-in
+ni <- nb + nb #total iterations
+nt <- 10  #thin
+nc <- 3  #chains
+
+cores=detectCores()
+cl <- makeCluster(cores-2, setup_strategy = "sequential") #not to overload your computer
+registerDoParallel(cl)
+
+foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
+  library(here)
+  library(nimble)
+  for (j in 1:sims.per) {
+    lowpopTraj <- readRDS(here("data", "lowTrajectories", paste("lowpopTraj", "-", i, "-", j, ".RDS", sep = "")))
+    medpopTraj <- readRDS(here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
+    highpopTraj <- readRDS(here("data", "highTrajectories", paste("highpopTraj", "-", i, "-", j, ".RDS", sep = "")))
+    for (d in 1:nrow(scenarios)) {
+      det.levels <- scenarios[d, 1:4]
+      det.numeric <- det.levels[1:3]
+      det.numeric[which(det.numeric == "L")] <- detect.l
+      det.numeric[which(det.numeric == "M")] <- detect.m
+      det.numeric[which(det.numeric== "H")] <- detect.h
+      if (is.na(det.levels[2]) & is.na(det.levels[3])) { # ABUNDANCE ONLY
+        if (det.levels[4] == "L") {
+          lowpopDat <- simData (indfates = lowpopTraj$indfates,
+                                n.years = 15,
+                                n.data.types = c(0.25,0.25,0.25),
+                                ADonly = T,
+                                p.1 = det.numeric[2], #
+                                p.ad = det.numeric[2], #
+                                p.count = det.numeric[1], #
+                                p.prod = det.numeric[3], #
+                                BinMod = T,
+                                n.sam = 3,
+                                sig = 0,
+                                productivity = T)
+          popDat <- lowpopDat
+          popTraj <- lowpopTraj
+          comb <- low.comb
+          lowout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+        } else if (det.levels[4] == "M") {
+          medpopDat <- simData (indfates = medpopTraj$indfates,
+                                n.years = 15,
+                                n.data.types = c(0.25,0.25,0.25),
+                                ADonly = T,
+                                p.1 = det.numeric[2], #
+                                p.ad = det.numeric[2], #
+                                p.count = det.numeric[1], #
+                                p.prod = det.numeric[3], #
+                                BinMod = T,
+                                n.sam = 3,
+                                sig = 0,
+                                productivity = T)
+          popDat <- medpopDat
+          popTraj <- medpopTraj
+          comb <- med.comb
+          medout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+        } else if (det.levels[4] == "H") {
+          highpopDat <- simData (indfates = highpopTraj$indfates,
+                                 n.years = 15,
+                                 n.data.types = c(0.25,0.25,0.25),
+                                 ADonly = T,
+                                 p.1 = det.numeric[2], #
+                                 p.ad = det.numeric[2], #
+                                 p.count = det.numeric[1], #
+                                 p.prod = det.numeric[3], #
+                                 BinMod = T,
+                                 n.sam = 3,
+                                 sig = 0,
+                                 productivity = T)
+          popDat <- highpopDat
+          popTraj <- highpopTraj
+          comb <- high.comb
+          highout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+        }
+      } else if (is.na(det.levels[2])) { # NO MARK RECAPTURE
+        if (det.levels[4] == "L") {
+          lowpopDat <- simData (indfates = lowpopTraj$indfates,
+                                n.years = 15,
+                                n.data.types = c(0.25,0.25,0.25),
+                                ADonly = T,
+                                p.1 = det.numeric[2], #
+                                p.ad = det.numeric[2], #
+                                p.count = det.numeric[1], #
+                                p.prod = det.numeric[3], #
+                                BinMod = T,
+                                n.sam = 3,
+                                sig = 0,
+                                productivity = T)
+          popDat <- lowpopDat
+          popTraj <- lowpopTraj
+          comb <- low.comb
+          lowout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+        } else if (det.levels[4] == "M") {
+          medpopDat <- simData (indfates = medpopTraj$indfates,
+                                n.years = 15,
+                                n.data.types = c(0.25,0.25,0.25),
+                                ADonly = T,
+                                p.1 = det.numeric[2], #
+                                p.ad = det.numeric[2], #
+                                p.count = det.numeric[1], #
+                                p.prod = det.numeric[3], #
+                                BinMod = T,
+                                n.sam = 3,
+                                sig = 0,
+                                productivity = T)
+          popDat <- medpopDat
+          popTraj <- medpopTraj
+          comb <- med.comb
+          medout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+        } else if (det.levels[4] == "H") {
+          highpopDat <- simData (indfates = highpopTraj$indfates,
+                                 n.years = 15,
+                                 n.data.types = c(0.25,0.25,0.25),
+                                 ADonly = T,
+                                 p.1 = det.numeric[2], #
+                                 p.ad = det.numeric[2], #
+                                 p.count = det.numeric[1], #
+                                 p.prod = det.numeric[3], #
+                                 BinMod = T,
+                                 n.sam = 3,
+                                 sig = 0,
+                                 productivity = T)
+          popDat <- highpopDat
+          popTraj <- highpopTraj
+          comb <- high.comb
+          highout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+        }
+      } else if (is.na(det.levels[3])) { # NO NEST SURVIVAL
+        if (det.levels[4] == "L") {
+          lowpopDat <- simData (indfates = lowpopTraj$indfates,
+                                n.years = 15,
+                                n.data.types = c(0.25,0.25,0.25),
+                                ADonly = T,
+                                p.1 = det.numeric[2], #
+                                p.ad = det.numeric[2], #
+                                p.count = det.numeric[1], #
+                                p.prod = det.numeric[3], #
+                                BinMod = T,
+                                n.sam = 3,
+                                sig = 0,
+                                productivity = T)
+          popDat <- lowpopDat
+          popTraj <- lowpopTraj
+          comb <- low.comb
+          lowout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+        } else if (det.levels[4] == "M") {
+          medpopDat <- simData (indfates = medpopTraj$indfates,
+                                n.years = 15,
+                                n.data.types = c(0.25,0.25,0.25),
+                                ADonly = T,
+                                p.1 = det.numeric[2], #
+                                p.ad = det.numeric[2], #
+                                p.count = det.numeric[1], #
+                                p.prod = det.numeric[3], #
+                                BinMod = T,
+                                n.sam = 3,
+                                sig = 0,
+                                productivity = T)
+          popDat <- medpopDat
+          popTraj <- medpopTraj
+          comb <- med.comb
+          medout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+        } else if (det.levels[4] == "H") {
+          highpopDat <- simData (indfates = highpopTraj$indfates,
+                                 n.years = 15,
+                                 n.data.types = c(0.25,0.25,0.25),
+                                 ADonly = T,
+                                 p.1 = det.numeric[2], #
+                                 p.ad = det.numeric[2], #
+                                 p.count = det.numeric[1], #
+                                 p.prod = det.numeric[3], #
+                                 BinMod = T,
+                                 n.sam = 3,
+                                 sig = 0,
+                                 productivity = T)
+          popDat <- highpopDat
+          popTraj <- highpopTraj
+          comb <- high.comb
+          highout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+        }
+      } else { # FULL IPM
+        if (det.levels[4] == "L") {
+          lowpopDat <- simData (indfates = lowpopTraj$indfates,
+                                n.years = 15,
+                                n.data.types = c(0.25,0.25,0.25),
+                                ADonly = T,
+                                p.1 = det.numeric[2], #
+                                p.ad = det.numeric[2], #
+                                p.count = det.numeric[1], #
+                                p.prod = det.numeric[3], #
+                                BinMod = T,
+                                n.sam = 3,
+                                sig = 0,
+                                productivity = T)
+          popDat <- lowpopDat
+          popTraj <- lowpopTraj
+          comb <- low.comb
+          lowout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+        } else if (det.levels[4] == "M") {
+          medpopDat <- simData (indfates = medpopTraj$indfates,
+                                n.years = 15,
+                                n.data.types = c(0.25,0.25,0.25),
+                                ADonly = T,
+                                p.1 = det.numeric[2], #
+                                p.ad = det.numeric[2], #
+                                p.count = det.numeric[1], #
+                                p.prod = det.numeric[3], #
+                                BinMod = T,
+                                n.sam = 3,
+                                sig = 0,
+                                productivity = T)
+          popDat <- medpopDat
+          popTraj <- medpopTraj
+          comb <- med.comb
+          medout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+        } else if (det.levels[4] == "H") {
+          highpopDat <- simData (indfates = highpopTraj$indfates,
+                                 n.years = 15,
+                                 n.data.types = c(0.25,0.25,0.25),
+                                 ADonly = T,
+                                 p.1 = det.numeric[2], #
+                                 p.ad = det.numeric[2], #
+                                 p.count = det.numeric[1], #
+                                 p.prod = det.numeric[3], #
+                                 BinMod = T,
+                                 n.sam = 3,
+                                 sig = 0,
+                                 productivity = T)
+          popDat <- highpopDat
+          popTraj <- highpopTraj
+          comb <- high.comb
+          highout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+        }
+      } # else
+      assign(paste("highout-",i,"-",j,"-",d, sep = ""), highout)
+      assign(paste("medout-",i,"-",j,"-",d, sep = ""), medout)
+      assign(paste("lowout-",i,"-",j,"-",d, sep = ""), lowout)
+
+      saveRDS(highout, paste("highout-",i,"-",j,"-",d,".RDS", sep = ""))
+      saveRDS(medout, paste("medout-",i,"-",j,"-",d,".RDS", sep = ""))
+      saveRDS(lowout, paste("lowout-",i,"-",j,"-",d,".RDS", sep = ""))
+
+      rm(list = c("highout", "medout", "lowout"))
+    } # scenarios row (d)
+  } # sims per (j)
+} # foreach - scenarios picked (i)
+
