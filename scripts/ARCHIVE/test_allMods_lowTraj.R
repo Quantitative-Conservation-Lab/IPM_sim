@@ -11,13 +11,11 @@ high.lam.combos <- readRDS(here("data", "high.lam.combos.RDS"))
 source(here("scripts", "current version",
             "1 - simulating data", "IPM_sim_2.0function.R"))
 source(here("scripts", "current version",
-            "2 - models", "IPMNimble_v2.0.R"))
+            "2 - models", "IPM_marray.R"))
 source(here("scripts", "current version",
             "4 - run models", "run_scenarios_helperFns.R"))
 
 low.comb <- low.lam.combos[sample(1:5000, 1), 1:3]
-med.comb <- med.lam.combos[sample(1:5000, 1), 1:3]
-high.comb <- high.lam.combos[sample(1:5000, 1), 1:3]
 
 lowpopTraj <- simPopTrajectory(n.years=15,
                                n.data.types=c(0.25,0.25,0.25),
@@ -25,20 +23,6 @@ lowpopTraj <- simPopTrajectory(n.years=15,
                                phi.1=as.numeric(low.comb[2]),
                                phi.ad=as.numeric(low.comb[3]),
                                f=as.numeric(low.comb[1]))
-
-medpopTraj <- simPopTrajectory(n.years=15,
-                               n.data.types=c(0.25,0.25,0.25),
-                               age.init=c(150,150),
-                               phi.1=as.numeric(med.comb[2]),
-                               phi.ad=as.numeric(med.comb[3]),
-                               f=as.numeric(med.comb[1]))
-
-highpopTraj <- simPopTrajectory(n.years=15,
-                               n.data.types=c(0.25,0.25,0.25),
-                               age.init=c(150,150),
-                               phi.1=as.numeric(high.comb[2]),
-                               phi.ad=as.numeric(high.comb[3]),
-                               f=as.numeric(high.comb[1]))
 
 # simulate data
 detect.l <- 0.3
