@@ -6,6 +6,7 @@ library(here)
 library(nimble)
 library(foreach)
 library(doParallel)
+library(beepr)
 
 # load data
 scenarios <- readRDS(here("data", "scenarios.RDS"))
@@ -58,6 +59,7 @@ ni <- nb + nb #total iterations
 nt <- 10  #thin
 nc <- 3  #chains
 
+beep(sound = 8)
 cores=detectCores()
 cl <- makeCluster(3, setup_strategy = "sequential") #not to overload your computer
 registerDoParallel(cl)
@@ -175,3 +177,22 @@ foreach(d = 1:3) %dopar% { # detection level
     rm(list = c("highout", "medout", "lowout"))
   }
 }
+stopCluster(cl)
+beep(sound = 8)
+
+# NOW PLAY WITH THE OUTPUT
+
+high.comb
+summary(`highout-1-1`)
+summary(`highout-1-2`)
+summary(`highout-1-3`)
+summary(`highout-1-4`)
+summary(`highout-1-1`)
+summary(`highout-2-1`)
+summary(`highout-2-2`)
+summary(`highout-2-3`)
+summary(`highout-2-4`)
+summary(`highout-3-1`)
+summary(`highout-3-2`)
+summary(`highout-3-3`)
+summary(`highout-3-4`)

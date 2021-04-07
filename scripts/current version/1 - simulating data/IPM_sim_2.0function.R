@@ -49,7 +49,7 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
 
   #derive true fecundity from the parameters, for productivity use f
   #if(productivity==T){
-  fec <- f # AEB - do not divide by 2 
+  fec <- f # AEB - do not divide by 2
   #}else{
   #  fec<-1/2*mean.clutch.size*phi.nest^max.nest.age
   #}
@@ -72,8 +72,8 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
   }
   #eigen(lesmat) #for lambda, if we need to check
   no.animals<-sum(N) #number of animals ever in the system at anytime
-  no.ani.max<-round(no.animals*2.5) #include more for simulation of offspring
-  ####stable age distribution is: 
+  no.ani.max<-round(no.animals*5) #include more for simulation of offspring
+  ####stable age distribution is:
   #only want to look at the end distribution
   sad<-N[,nplus1.years]/sum(N[,nplus1.years]) # the proportion of the population that is in each age class
   #lambda from N, matches eigenvalue
@@ -109,7 +109,7 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
   #inpop[1]<-sum(age.init) alternative way to do it
   inpop[1]<-sum(age1+age2) #stable age distribution way to do it
 
-  # simulate ind. trajectories with dem stochasticity  
+  # simulate ind. trajectories with dem stochasticity
   chickst<-numeric(n.years) # tracking number of chicks produced each year
   tempstep<-matrix(nrow=no.ani.max, ncol=(n.years+1))
   for(t in 1:n.years){
@@ -185,8 +185,9 @@ simData <- function(indfates, n.years, n.data.types,
   # Sample 2
   #resamp2 <- sample(xt1[-resamp1,], nds[2], replace = F)
   resamp2 <- xt1[,1] # observe all the individuals in the population
-  
-  resamp3<-sample(xt1[c(-resamp1,-resamp2),], nds[3], replace = F)
+
+  #resamp3<-sample(xt1[c(-resamp1,-resamp2),], nds[3], replace = F)
+  resamp3<-sample(xt1[c(-resamp1),], nds[3], replace = F)
 
   # Individuals selected for capture-recapture, survey and reproductive success data
   IND_MR <- indfates[,,resamp1]
@@ -227,7 +228,7 @@ simData <- function(indfates, n.years, n.data.types,
       ind_mr<-ind_mr[,,-which(rm==1)]
     }else{}
 
-    
+
     age<-first<-last<-numeric() # age, first and last encounters
     mr_t<-dim(ind_mr)[2]
     mr_ind<-dim(ind_mr)[3]
@@ -242,8 +243,8 @@ simData <- function(indfates, n.years, n.data.types,
     ch.true<-matrix(0,ncol=mr_t, nrow=mr_ind)
     for(i in 1:mr_ind){
       ch.true[i,first[i]:last[i]]<-1
-    }  
-    
+    }
+
     #detection of true marked individuals:
     #since inital marking is constant prob
     #and resight is constant prob
@@ -254,7 +255,7 @@ simData <- function(indfates, n.years, n.data.types,
       # if(age[i]==1){
       #   in.mark[i,first[i]]<-rbinom(1,1,p.1*ch.true[i,first[i]])
       # } else{
-      in.mark[i,first[i]]<-rbinom(1,1,p.ad*ch.true[i,first[i]]) 
+      in.mark[i,first[i]]<-rbinom(1,1,p.ad*ch.true[i,first[i]])
       #}
       if(first[i]==mr_t) next
       for(t in (first[i]+1):last[i]){
@@ -287,14 +288,14 @@ simData <- function(indfates, n.years, n.data.types,
       ch<-ch[-(which(rm_2==1)),]
       age_ch<-age_ch[-(which(rm_2==1)),]
       add_age_chtrue[-(which(rm_2==1)),]
-    } else {} 
+    } else {}
     firstobs<-lastobs<-numeric(length(ch[,1]))
     for(i in 1:length(ch[,1])){
       firstobs[i]<-min(which(ch[i,]==1))
       lastobs[i]<-max(which(ch[i,]==1))
     }
 
-  }else{ 
+  }else{
     #if we mark chicks, 1 years, adults
     #!!
     #using the individual population array for MR data
@@ -390,14 +391,14 @@ simData <- function(indfates, n.years, n.data.types,
   TRUE_Count<-matrix(nrow=2, ncol=n.years) #first row, number of one year-olds; second row is adults
   SUR<-matrix(nrow=n.sam, ncol=n.years)#matrix for surveys by survey and year
   for(u in 1:n.years){
-    #Some discussion about should we include 1yearolds 
+    #Some discussion about should we include 1yearolds
     #if so, remove the next line
     TRUE_Count[1,u]<-sum(IND_Count[1,u,], na.rm = T)
     TRUE_Count[2,u]<-sum(IND_Count[2,u,], na.rm = T)
     if(BinMod==T){
       SUR[,u]<-rbinom(n.sam, sum(TRUE_Count[,u]), p.count)
     }else{
-      SUR[,u]<-rnorm(n.sam, TRUE_Count[,u], sig) 
+      SUR[,u]<-rnorm(n.sam, TRUE_Count[,u], sig)
       }
 
   }
