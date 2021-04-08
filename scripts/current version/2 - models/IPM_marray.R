@@ -34,11 +34,11 @@ IPMmod<-nimbleCode({
   # seems reasonable to think that your survey detection would be between
   # approx 0.2 and 0.8, avoids boundary issue near 0
   #p.surv ~ T(dnorm(0.5, sd = 0.3), 0, Inf)
-  p.surv~dunif(0,5)
+  p.surv~dunif(0,1)
   for(n in 1:n.sam){
     for (t in 1:nyears){
-      y[n,t]~dnorm(Ntot[t],sd=p.surv)
-      #y[n,t] ~ dbin(p.surv,Ntot[t])
+      #y[n,t]~dnorm(Ntot[t],sd=p.surv)
+      y[n,t] ~ dbin(p.surv,Ntot[t])
     }
   }
 
@@ -122,8 +122,8 @@ nonests<-nimbleCode({
   # Observation process
 
   #prior for survey detection probability
-  p.surv ~ T(dnorm(0.5, sd = 0.3), 0, Inf)
-
+  #p.surv ~ T(dnorm(0.5, sd = 0.3), 0, Inf)
+  p.surv~dunif(0,1)
   for(n in 1:n.sam){
     for (t in 1:nyears){
       y[n,t] ~ dbin(p.surv,Ntot[t])
@@ -204,8 +204,8 @@ nomr<-nimbleCode({
   # Observation process
 
   #prior for survey detection probability
-  p.surv ~ T(dnorm(0.5, sd = 0.3), 0, Inf)
-
+  #p.surv ~ T(dnorm(0.5, sd = 0.3), 0, Inf)
+  p.surv~dunif(0,1)
   for(n in 1:n.sam){
     for (t in 1:nyears){
       y[n,t] ~ dbin(p.surv,Ntot[t])
@@ -267,8 +267,8 @@ abundonly<-nimbleCode({
   # Observation process
 
   #prior for survey detection probability
-  p.surv ~ T(dnorm(0.5, sd = 0.3), 0, Inf)
-
+  #p.surv ~ T(dnorm(0.5, sd = 0.3), 0, Inf)
+  p.surv~dunif(0,1)
   for(n in 1:n.sam){
     for (t in 1:nyears){
       y[n,t] ~ dbin(p.surv,Ntot[t])
