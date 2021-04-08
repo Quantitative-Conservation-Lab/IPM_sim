@@ -52,9 +52,7 @@ runIPMmod <- function(nb, ni, nt, nc,
   #### CONSTANTS ####
 
   const1 <- list(nyears = ncol(popDat$ch),
-                 n.sam = nrow(popDat$SUR)#,
-                 #first = popDat$firstobs
-                 )
+                 n.sam = nrow(popDat$SUR))
 
   #### INITIAL VALUES ####
   #z.state <- state.data(popDat$ch)
@@ -88,7 +86,7 @@ runIPMmod <- function(nb, ni, nt, nc,
   Cmcmc1 <- compileNimble(Rmcmc1, project = Rmodel1)
 
   #### RUN MCMC ####
-  outIPM <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,
+  outIPM <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1, 
                     setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE)
 
   return(outIPM)

@@ -22,9 +22,9 @@ library(doParallel)
 
 # load data
 scenarios <- readRDS(here("data", "scenarios.RDS"))
-low.lam.combos <- readRDS(here("data", "low.lam.params.RDS"))
-med.lam.combos <- readRDS(here("data", "med.lam.params.RDS"))
-high.lam.combos <- readRDS(here("data", "high.lam.params.RDS"))
+low.lam.combos <- readRDS(here("low.lam.params.RDS"))
+med.lam.combos <- readRDS(here("med.lam.params.RDS"))
+high.lam.combos <- readRDS(here("high.lam.params.RDS"))
 
 # functions
 source(here("scripts", "current version",
@@ -71,51 +71,51 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
                                 n.years = 15,
                                 n.data.types = c(0.25,0.25,0.25),
                                 ADonly = T,
-                                p.1 = det.numeric[2], #
-                                p.ad = det.numeric[2], #
-                                p.count = det.numeric[1], #
-                                p.prod = det.numeric[3], #
+                                p.1 = as.numeric(det.numeric[2]), #
+                                p.ad = as.numeric(det.numeric[2]), #
+                                p.count = as.numeric(det.numeric[1]), #
+                                p.prod = as.numeric(det.numeric[3]), #
                                 BinMod = T,
                                 n.sam = 3,
                                 sig = 0,
                                 productivity = T)
           popDat <- lowpopDat
           popTraj <- lowpopTraj
-          comb <- low.comb
+          comb <- low.lam.combos[i,]
           lowout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
         } else if (det.levels[4] == "M") {
           medpopDat <- simData (indfates = medpopTraj$indfates,
                                 n.years = 15,
                                 n.data.types = c(0.25,0.25,0.25),
                                 ADonly = T,
-                                p.1 = det.numeric[2], #
-                                p.ad = det.numeric[2], #
-                                p.count = det.numeric[1], #
-                                p.prod = det.numeric[3], #
+                                p.1 = as.numeric(det.numeric[2]), #
+                                p.ad = as.numeric(det.numeric[2]), #
+                                p.count = as.numeric(det.numeric[1]), #
+                                p.prod = as.numeric(det.numeric[3]), #
                                 BinMod = T,
                                 n.sam = 3,
                                 sig = 0,
                                 productivity = T)
           popDat <- medpopDat
           popTraj <- medpopTraj
-          comb <- med.comb
+          comb <- med.lam.combos[i,]
           medout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
         } else if (det.levels[4] == "H") {
           highpopDat <- simData (indfates = highpopTraj$indfates,
                                  n.years = 15,
                                  n.data.types = c(0.25,0.25,0.25),
                                  ADonly = T,
-                                 p.1 = det.numeric[2], #
-                                 p.ad = det.numeric[2], #
-                                 p.count = det.numeric[1], #
-                                 p.prod = det.numeric[3], #
+                                 p.1 = as.numeric(det.numeric[2]), #
+                                 p.ad = as.numeric(det.numeric[2]), #
+                                 p.count = as.numeric(det.numeric[1]), #
+                                 p.prod = as.numeric(det.numeric[3]), #
                                  BinMod = T,
                                  n.sam = 3,
                                  sig = 0,
                                  productivity = T)
           popDat <- highpopDat
           popTraj <- highpopTraj
-          comb <- high.comb
+          comb <- high.lam.combos[i,]
           highout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
         }
       } else if (is.na(det.levels[2])) { # NO MARK RECAPTURE
@@ -124,51 +124,51 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
                                 n.years = 15,
                                 n.data.types = c(0.25,0.25,0.25),
                                 ADonly = T,
-                                p.1 = det.numeric[2], #
-                                p.ad = det.numeric[2], #
-                                p.count = det.numeric[1], #
-                                p.prod = det.numeric[3], #
+                                p.1 = as.numeric(det.numeric[2]), #
+                                p.ad = as.numeric(det.numeric[2]), #
+                                p.count = as.numeric(det.numeric[1]), #
+                                p.prod = as.numeric(det.numeric[3]), #
                                 BinMod = T,
                                 n.sam = 3,
                                 sig = 0,
                                 productivity = T)
           popDat <- lowpopDat
           popTraj <- lowpopTraj
-          comb <- low.comb
+          comb <- low.lam.combos[i,]
           lowout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
         } else if (det.levels[4] == "M") {
           medpopDat <- simData (indfates = medpopTraj$indfates,
                                 n.years = 15,
                                 n.data.types = c(0.25,0.25,0.25),
                                 ADonly = T,
-                                p.1 = det.numeric[2], #
-                                p.ad = det.numeric[2], #
-                                p.count = det.numeric[1], #
-                                p.prod = det.numeric[3], #
+                                p.1 = as.numeric(det.numeric[2]), #
+                                p.ad = as.numeric(det.numeric[2]), #
+                                p.count = as.numeric(det.numeric[1]), #
+                                p.prod = as.numeric(det.numeric[3]), #
                                 BinMod = T,
                                 n.sam = 3,
                                 sig = 0,
                                 productivity = T)
           popDat <- medpopDat
           popTraj <- medpopTraj
-          comb <- med.comb
+          comb <- med.lam.combos[i,]
           medout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
         } else if (det.levels[4] == "H") {
           highpopDat <- simData (indfates = highpopTraj$indfates,
                                  n.years = 15,
                                  n.data.types = c(0.25,0.25,0.25),
                                  ADonly = T,
-                                 p.1 = det.numeric[2], #
-                                 p.ad = det.numeric[2], #
-                                 p.count = det.numeric[1], #
-                                 p.prod = det.numeric[3], #
+                                 p.1 = as.numeric(det.numeric[2]), #
+                                 p.ad = as.numeric(det.numeric[2]), #
+                                 p.count = as.numeric(det.numeric[1]), #
+                                 p.prod = as.numeric(det.numeric[3]), #
                                  BinMod = T,
                                  n.sam = 3,
                                  sig = 0,
                                  productivity = T)
           popDat <- highpopDat
           popTraj <- highpopTraj
-          comb <- high.comb
+          comb <- high.lam.combos[i,]
           highout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
         }
       } else if (is.na(det.levels[3])) { # NO NEST SURVIVAL
@@ -177,51 +177,51 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
                                 n.years = 15,
                                 n.data.types = c(0.25,0.25,0.25),
                                 ADonly = T,
-                                p.1 = det.numeric[2], #
-                                p.ad = det.numeric[2], #
-                                p.count = det.numeric[1], #
-                                p.prod = det.numeric[3], #
+                                p.1 = as.numeric(det.numeric[2]), #
+                                p.ad = as.numeric(det.numeric[2]), #
+                                p.count = as.numeric(det.numeric[1]), #
+                                p.prod = as.numeric(det.numeric[3]), #
                                 BinMod = T,
                                 n.sam = 3,
                                 sig = 0,
                                 productivity = T)
           popDat <- lowpopDat
           popTraj <- lowpopTraj
-          comb <- low.comb
+          comb <- low.lam.combos[i,]
           lowout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
         } else if (det.levels[4] == "M") {
           medpopDat <- simData (indfates = medpopTraj$indfates,
                                 n.years = 15,
                                 n.data.types = c(0.25,0.25,0.25),
                                 ADonly = T,
-                                p.1 = det.numeric[2], #
-                                p.ad = det.numeric[2], #
-                                p.count = det.numeric[1], #
-                                p.prod = det.numeric[3], #
+                                p.1 = as.numeric(det.numeric[2]), #
+                                p.ad = as.numeric(det.numeric[2]), #
+                                p.count = as.numeric(det.numeric[1]), #
+                                p.prod = as.numeric(det.numeric[3]), #
                                 BinMod = T,
                                 n.sam = 3,
                                 sig = 0,
                                 productivity = T)
           popDat <- medpopDat
           popTraj <- medpopTraj
-          comb <- med.comb
+          comb <- med.lam.combos[i,]
           medout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
         } else if (det.levels[4] == "H") {
           highpopDat <- simData (indfates = highpopTraj$indfates,
                                  n.years = 15,
                                  n.data.types = c(0.25,0.25,0.25),
                                  ADonly = T,
-                                 p.1 = det.numeric[2], #
-                                 p.ad = det.numeric[2], #
-                                 p.count = det.numeric[1], #
-                                 p.prod = det.numeric[3], #
+                                 p.1 = as.numeric(det.numeric[2]), #
+                                 p.ad = as.numeric(det.numeric[2]), #
+                                 p.count = as.numeric(det.numeric[1]), #
+                                 p.prod = as.numeric(det.numeric[3]), #
                                  BinMod = T,
                                  n.sam = 3,
                                  sig = 0,
                                  productivity = T)
           popDat <- highpopDat
           popTraj <- highpopTraj
-          comb <- high.comb
+          comb <- high.lam.combos[i,]
           highout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
         }
       } else { # FULL IPM
@@ -230,51 +230,51 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
                                 n.years = 15,
                                 n.data.types = c(0.25,0.25,0.25),
                                 ADonly = T,
-                                p.1 = det.numeric[2], #
-                                p.ad = det.numeric[2], #
-                                p.count = det.numeric[1], #
-                                p.prod = det.numeric[3], #
+                                p.1 = as.numeric(det.numeric[2]), #
+                                p.ad = as.numeric(det.numeric[2]), #
+                                p.count = as.numeric(det.numeric[1]), #
+                                p.prod = as.numeric(det.numeric[3]), #
                                 BinMod = T,
                                 n.sam = 3,
                                 sig = 0,
                                 productivity = T)
           popDat <- lowpopDat
           popTraj <- lowpopTraj
-          comb <- low.comb
+          comb <- low.lam.combos[i,]
           lowout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
         } else if (det.levels[4] == "M") {
           medpopDat <- simData (indfates = medpopTraj$indfates,
                                 n.years = 15,
                                 n.data.types = c(0.25,0.25,0.25),
                                 ADonly = T,
-                                p.1 = det.numeric[2], #
-                                p.ad = det.numeric[2], #
-                                p.count = det.numeric[1], #
-                                p.prod = det.numeric[3], #
+                                p.1 = as.numeric(det.numeric[2]), #
+                                p.ad = as.numeric(det.numeric[2]), #
+                                p.count = as.numeric(det.numeric[1]), #
+                                p.prod = as.numeric(det.numeric[3]), #
                                 BinMod = T,
                                 n.sam = 3,
                                 sig = 0,
                                 productivity = T)
           popDat <- medpopDat
           popTraj <- medpopTraj
-          comb <- med.comb
+          comb <- med.lam.combos[i,]
           medout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
         } else if (det.levels[4] == "H") {
           highpopDat <- simData (indfates = highpopTraj$indfates,
                                  n.years = 15,
                                  n.data.types = c(0.25,0.25,0.25),
                                  ADonly = T,
-                                 p.1 = det.numeric[2], #
-                                 p.ad = det.numeric[2], #
-                                 p.count = det.numeric[1], #
-                                 p.prod = det.numeric[3], #
+                                 p.1 = as.numeric(det.numeric[2]), #
+                                 p.ad = as.numeric(det.numeric[2]), #
+                                 p.count = as.numeric(det.numeric[1]), #
+                                 p.prod = as.numeric(det.numeric[3]), #
                                  BinMod = T,
                                  n.sam = 3,
                                  sig = 0,
                                  productivity = T)
           popDat <- highpopDat
           popTraj <- highpopTraj
-          comb <- high.comb
+          comb <- high.lam.combos[i,]
           highout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
         }
       } # else

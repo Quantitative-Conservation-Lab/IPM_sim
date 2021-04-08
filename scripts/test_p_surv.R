@@ -111,25 +111,6 @@ highpopDat <- simData (indfates = highpopTraj$indfates,
 #####
 
 #### DATA ####
-#testing each scenario, make data for the models
-# dat1l <- list(y = lowpopDat$SUR, 
-#              marr = marray(lowpopDat$ch), 
-#              R=rowSums(marray(lowpopDat$ch)),
-#              OBS_nestlings = lowpopDat$OBS_nestlings, 
-#              R_obs = lowpopDat$R_obs
-# )
-# dat1m <- list(y = medpopDat$SUR, 
-#               marr = marray(medpopDat$ch), 
-#               R=rowSums(marray(medpopDat$ch)),
-#               OBS_nestlings = medpopDat$OBS_nestlings, 
-#               R_obs = medpopDat$R_obs
-# )
-# dat1h <- list(y = highpopDat$SUR, 
-#               marr = marray(highpopDat$ch), 
-#               R=rowSums(marray(highpopDat$ch)),
-#               OBS_nestlings = highpopDat$OBS_nestlings, 
-#               R_obs = highpopDat$R_obs
-# )
 
 datfn<-function(popDat){
   datout<-list(
@@ -176,11 +157,10 @@ initshigh<-initsfn(highpopTraj$Nouts, d=detect.h, combo=high.lam.params[1,])
 
 
 #### PARAMETERS TO MONITOR ####
-params1 <- c("p.surv", "mean.phi","mean.p", "fec", "lambda") #,"Ntot","N1","Nad","f","rho")#0.3764911
-#dont need all of these later, but wanted to look at them now
+params1 <- c("p.surv", "mean.phi","mean.p", "fec", "lambda") 
 
 #### MCMC SETTINGS ####
-nb <- 100000 #burn-in
+nb <- 10000 #burn-in
 ni <- nb + nb #total iterations
 nt <- 10  #thin
 nc <- 1  #chains
@@ -200,10 +180,12 @@ summary(out_low$p.surv)
 summary(out_low)
 low.lam.params[1,]
 
-# runlow<-runIPMmod(nb=nb, ni=ni, nt=nt, nc=5, popDat = lowpopDat, 
-#                    popTraj = lowpopTraj, comb=low.lam.params[1,], detect=0.3)
-# summary(runlow[,19])
-# plot(runlow[,19])
+runlow<-runIPMmod(nb=nb, ni=ni, nt=nt, nc=5, popDat = lowpopDat,
+                   popTraj = lowpopTraj, comb=low.lam.params[1,], detect=0.3)
+summary(runlow[,19])
+plot(runlow[,19])
+hist(runlow[,19])
+low.lam.params[1,]
 
 #medium
 Rmodelmed <- nimbleModel(code = IPMmod, constants = const1m, data = dat1m, 
