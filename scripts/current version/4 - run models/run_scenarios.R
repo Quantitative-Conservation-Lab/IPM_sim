@@ -66,14 +66,14 @@ cores=detectCores()
 cl <- makeCluster(10, setup_strategy = "sequential") #not to overload your computer
 registerDoParallel(cl)
 
-foreach(i = 1:length(which.prio.1)) %dopar% { #scenarios picked
+foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
   library(here)
   library(nimble)
   for (j in 1:sims.per) {
     lowpopTraj <- readRDS(here("data", "lowTrajectories", paste("lowpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     medpopTraj <- readRDS(here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     highpopTraj <- readRDS(here("data", "highTrajectories", paste("highpopTraj", "-", i, "-", j, ".RDS", sep = "")))
-    for (d in 1:nrow(scenarios)) {
+    for (d in 1:length(which.prio.1)) { # simulation scenario
       det.levels <- scenarios[d, 1:4]
       det.numeric <- det.levels[1:3]
       det.numeric[which(det.numeric == "L")] <- detect.l
