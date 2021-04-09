@@ -86,7 +86,7 @@ runIPMmod <- function(nb, ni, nt, nc,
   Cmcmc1 <- compileNimble(Rmcmc1, project = Rmodel1)
 
   #### RUN MCMC ####
-  outIPM <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1, 
+  outIPM <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1, thin=nt,
                     setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE)
 
   return(outIPM)
@@ -145,7 +145,7 @@ runnonests <- function(nb, ni, nt, nc,
   #### RUN MCMC ####
   #sink("sad_output.txt")
   #changed to checking to just see a matrix, since it is working!
-  outnonests <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,
+  outnonests <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,thin=nt,
                         setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE)
 
   return(outnonests)
@@ -202,7 +202,7 @@ runnomr <- function(nb, ni, nt, nc,
 
   #### RUN MCMC ####
   #sink("sad_output.txt")
-  outnomr <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,
+  outnomr <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,thin=nt,
                      setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE)
 
   return(outnomr)
@@ -256,7 +256,7 @@ runabundonly <- function(nb, ni, nt, nc,
   Cmcmc1 <- compileNimble(Rmcmc1, project = Rmodel1)
 
   #### RUN MCMC ####
-  outabund <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,
+  outabund <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,thin=nt,
                       setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE)
 
   return(outabund)

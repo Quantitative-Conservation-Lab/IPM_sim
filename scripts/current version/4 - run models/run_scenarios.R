@@ -46,7 +46,9 @@ detect <- c(detect.l, detect.m, detect.h)
 nb <- 100000#0 #burn-in
 ni <- nb + nb #total iterations
 nt <- 10  #thin
-nc <- 3  #chains
+nc <- 2  #chains
+
+
 
 cores=detectCores()
 cl <- makeCluster(cores-2, setup_strategy = "sequential") #not to overload your computer
@@ -55,11 +57,11 @@ registerDoParallel(cl)
 foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
   library(here)
   library(nimble)
-  for (j in 1:sims.per) {
+  for (j in 1:10) {
     lowpopTraj <- readRDS(here("data", "lowTrajectories", paste("lowpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     medpopTraj <- readRDS(here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     highpopTraj <- readRDS(here("data", "highTrajectories", paste("highpopTraj", "-", i, "-", j, ".RDS", sep = "")))
-    for (d in 1:nrow(scenarios)) {
+    for (d in 1:1){#nrow(scenarios)) {
       det.levels <- scenarios[d, 1:4]
       det.numeric <- det.levels[1:3]
       det.numeric[which(det.numeric == "L")] <- detect.l
@@ -333,3 +335,13 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
   } # sims per (j)
 } # foreach - scenarios picked (i)
 stopCluster(cl)
+
+
+outarray<-array(dim=c(10,19,6))
+gl<-numeric(10)
+#colnames(outarray)<-c("mean","2.5","25","50","75","97.5")
+for(i in 1:10){
+  outarray[i,,1]<-summary(readRDS(here(paste("lowout-1-",i,"-1.RDS", sep=""))))[[1]][,1]
+  outarray[i,,2:6]<-summary(readRDS(here(paste("lowout-1-",i,"-1.RDS", sep=""))))[[2]]
+  gl[i]<-gelman.diag(readRDS(here(paste("lowout-1-",i,"-1.RDS", sep=""))))[[2]]
+}
