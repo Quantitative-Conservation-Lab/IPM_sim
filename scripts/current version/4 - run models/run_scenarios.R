@@ -83,6 +83,9 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- lowpopTraj
           comb <- low.lam.combos[i,]
           lowout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          assign(paste("lowout-",i,"-",j,"-",d, sep = ""), lowout)
+          saveRDS(lowout, paste("lowout-",i,"-",j,"-",d,".RDS", sep = ""))
+          rm(lowout)
         } else if (det.levels[4] == "M") {
           medpopDat <- simData (indfates = medpopTraj$indfates,
                                 n.years = 15,
@@ -100,6 +103,9 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- medpopTraj
           comb <- med.lam.combos[i,]
           medout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          assign(paste("medout-",i,"-",j,"-",d, sep = ""), medout)
+          saveRDS(medout, paste("medout-",i,"-",j,"-",d,".RDS", sep = ""))
+          rm(medout)
         } else if (det.levels[4] == "H") {
           highpopDat <- simData (indfates = highpopTraj$indfates,
                                  n.years = 15,
@@ -117,6 +123,9 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- highpopTraj
           comb <- high.lam.combos[i,]
           highout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          assign(paste("highout-",i,"-",j,"-",d, sep = ""), highout)
+          saveRDS(highout, paste("highout-",i,"-",j,"-",d,".RDS", sep = ""))
+          rm(highout)
         }
       } else if (is.na(det.levels[2])) { # NO MARK RECAPTURE
         if (det.levels[4] == "L") {
@@ -136,6 +145,9 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- lowpopTraj
           comb <- low.lam.combos[i,]
           lowout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          assign(paste("lowout-",i,"-",j,"-",d, sep = ""), lowout)
+          saveRDS(lowout, paste("lowout-",i,"-",j,"-",d,".RDS", sep = ""))
+          rm(lowout)
         } else if (det.levels[4] == "M") {
           medpopDat <- simData (indfates = medpopTraj$indfates,
                                 n.years = 15,
@@ -153,6 +165,9 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- medpopTraj
           comb <- med.lam.combos[i,]
           medout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          assign(paste("medout-",i,"-",j,"-",d, sep = ""), medout)
+          saveRDS(medout, paste("medout-",i,"-",j,"-",d,".RDS", sep = ""))
+          rm(medout)
         } else if (det.levels[4] == "H") {
           highpopDat <- simData (indfates = highpopTraj$indfates,
                                  n.years = 15,
@@ -170,6 +185,9 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- highpopTraj
           comb <- high.lam.combos[i,]
           highout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          assign(paste("highout-",i,"-",j,"-",d, sep = ""), highout)
+          saveRDS(highout, paste("highout-",i,"-",j,"-",d,".RDS", sep = ""))
+          rm(highout)
         }
       } else if (is.na(det.levels[3])) { # NO NEST SURVIVAL
         if (det.levels[4] == "L") {
@@ -189,6 +207,9 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- lowpopTraj
           comb <- low.lam.combos[i,]
           lowout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          assign(paste("lowout-",i,"-",j,"-",d, sep = ""), lowout)
+          saveRDS(lowout, paste("lowout-",i,"-",j,"-",d,".RDS", sep = ""))
+          rm(lowout)
         } else if (det.levels[4] == "M") {
           medpopDat <- simData (indfates = medpopTraj$indfates,
                                 n.years = 15,
@@ -206,6 +227,9 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- medpopTraj
           comb <- med.lam.combos[i,]
           medout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          assign(paste("medout-",i,"-",j,"-",d, sep = ""), medout)
+          saveRDS(medout, paste("medout-",i,"-",j,"-",d,".RDS", sep = ""))
+          rm(medout)
         } else if (det.levels[4] == "H") {
           highpopDat <- simData (indfates = highpopTraj$indfates,
                                  n.years = 15,
@@ -223,6 +247,9 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- highpopTraj
           comb <- high.lam.combos[i,]
           highout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          assign(paste("highout-",i,"-",j,"-",d, sep = ""), highout)
+          saveRDS(highout, paste("highout-",i,"-",j,"-",d,".RDS", sep = ""))
+          rm(highout)
         }
       } else { # FULL IPM
         if (det.levels[4] == "L") {
@@ -242,6 +269,9 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- lowpopTraj
           comb <- low.lam.combos[i,]
           lowout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          assign(paste("lowout-",i,"-",j,"-",d, sep = ""), lowout)
+          saveRDS(lowout, paste("lowout-",i,"-",j,"-",d,".RDS", sep = ""))
+          rm(lowout)
         } else if (det.levels[4] == "M") {
           medpopDat <- simData (indfates = medpopTraj$indfates,
                                 n.years = 15,
@@ -259,6 +289,9 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- medpopTraj
           comb <- med.lam.combos[i,]
           medout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          assign(paste("medout-",i,"-",j,"-",d, sep = ""), medout)
+          saveRDS(medout, paste("medout-",i,"-",j,"-",d,".RDS", sep = ""))
+          rm(medout)
         } else if (det.levels[4] == "H") {
           highpopDat <- simData (indfates = highpopTraj$indfates,
                                  n.years = 15,
@@ -276,18 +309,27 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- highpopTraj
           comb <- high.lam.combos[i,]
           highout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          assign(paste("highout-",i,"-",j,"-",d, sep = ""), highout)
+          saveRDS(highout, paste("highout-",i,"-",j,"-",d,".RDS", sep = ""))
+          rm(highout)
         }
       } # else
-      assign(paste("highout-",i,"-",j,"-",d, sep = ""), highout)
-      assign(paste("medout-",i,"-",j,"-",d, sep = ""), medout)
-      assign(paste("lowout-",i,"-",j,"-",d, sep = ""), lowout)
+      # assign(paste("highout-",i,"-",j,"-",d, sep = ""), highout)
+      # saveRDS(highout, paste("highout-",i,"-",j,"-",d,".RDS", sep = ""))
+      # rm(highout)
+      # assign(paste("medout-",i,"-",j,"-",d, sep = ""), medout)
+      # saveRDS(medout, paste("medout-",i,"-",j,"-",d,".RDS", sep = ""))
+      # rm(medout)
+      # assign(paste("lowout-",i,"-",j,"-",d, sep = ""), lowout)
+      # saveRDS(lowout, paste("lowout-",i,"-",j,"-",d,".RDS", sep = ""))
+      # rm(lowout)
 
-      saveRDS(highout, paste("highout-",i,"-",j,"-",d,".RDS", sep = ""))
-      saveRDS(medout, paste("medout-",i,"-",j,"-",d,".RDS", sep = ""))
-      saveRDS(lowout, paste("lowout-",i,"-",j,"-",d,".RDS", sep = ""))
+      # saveRDS(highout, paste("highout-",i,"-",j,"-",d,".RDS", sep = ""))
+      # saveRDS(medout, paste("medout-",i,"-",j,"-",d,".RDS", sep = ""))
+      # saveRDS(lowout, paste("lowout-",i,"-",j,"-",d,".RDS", sep = ""))
 
-      rm(list = c("highout", "medout", "lowout"))
+      #rm(list = c("highout", "medout", "lowout"))
     } # scenarios row (d)
   } # sims per (j)
 } # foreach - scenarios picked (i)
-
+stopCluster(cl)
