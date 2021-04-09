@@ -73,7 +73,7 @@ foreach(i = 1:length(which.prio.1)) %dopar% { #scenarios picked
     lowpopTraj <- readRDS(here("data", "lowTrajectories", paste("lowpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     medpopTraj <- readRDS(here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     highpopTraj <- readRDS(here("data", "highTrajectories", paste("highpopTraj", "-", i, "-", j, ".RDS", sep = "")))
-    for (d in 1:1){#nrow(scenarios)) {
+    for (d in 1:nrow(scenarios)) {
       det.levels <- scenarios[d, 1:4]
       det.numeric <- det.levels[1:3]
       det.numeric[which(det.numeric == "L")] <- detect.l
@@ -349,11 +349,12 @@ foreach(i = 1:length(which.prio.1)) %dopar% { #scenarios picked
 stopCluster(cl)
 
 
-outarray<-array(dim=c(10,19,6))
-gl<-numeric(10)
-#colnames(outarray)<-c("mean","2.5","25","50","75","97.5")
-for(i in 1:10){
-  outarray[i,,1]<-summary(readRDS(here(paste("lowout-1-",i,"-1.RDS", sep=""))))[[1]][,1]
-  outarray[i,,2:6]<-summary(readRDS(here(paste("lowout-1-",i,"-1.RDS", sep=""))))[[2]]
-  gl[i]<-gelman.diag(readRDS(here(paste("lowout-1-",i,"-1.RDS", sep=""))))[[2]]
-}
+#for testing
+# outarray<-array(dim=c(10,19,6))
+# gl<-numeric(10)
+# #colnames(outarray)<-c("mean","2.5","25","50","75","97.5")
+# for(i in 1:10){
+#   outarray[i,,1]<-summary(readRDS(here(paste("lowout-1-",i,"-1.RDS", sep=""))))[[1]][,1]
+#   outarray[i,,2:6]<-summary(readRDS(here(paste("lowout-1-",i,"-1.RDS", sep=""))))[[2]]
+#   gl[i]<-gelman.diag(readRDS(here(paste("lowout-1-",i,"-1.RDS", sep=""))))[[2]]
+# }
