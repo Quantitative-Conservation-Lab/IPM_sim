@@ -1,6 +1,30 @@
 # this should have a function for
 # running each model type
 
+# Function to create a m-array based on capture-histories (CH)
+marray <- function(CH){
+  nind <- dim(CH)[1]
+  n.occasions <- dim(CH)[2]
+  m.array <- matrix(data = 0, ncol = n.occasions+1, nrow = n.occasions)
+  # Calculate the number of released individuals at each time period
+  for (t in 1:n.occasions){
+    m.array[t,1] <- sum(CH[,t])
+  }
+  for (i in 1:nind){
+    pos <- which(CH[i,]!=0)
+    g <- length(pos)
+    for (z in 1:(g-1)){
+      m.array[pos[z],pos[z+1]] <- m.array[pos[z],pos[z+1]] + 1
+    } #z
+  } #i
+  # Calculate the number of individuals that is never recaptured
+  for (t in 1:n.occasions){
+    m.array[t,n.occasions+1] <- m.array[t,1] - sum(m.array[t,2:n.occasions])
+  }
+  out <- m.array[1:(n.occasions-1),2:(n.occasions+1)]
+  return(out)
+}
+
 #### IPM ####
 
 
@@ -18,7 +42,8 @@ runIPMmod <- function(nb, ni, nt, nc,
                       comb, detect) {
   #### DATA ####
   dat1 <- list(y = popDat$SUR,
-               ch.y = popDat$ch,
+               marr = marray(popDat$ch),
+               R = rowSums(marray(popDat$ch)),
                OBS_nestlings = popDat$OBS_nestlings,
                R_obs = popDat$R_obs
   )
@@ -27,12 +52,10 @@ runIPMmod <- function(nb, ni, nt, nc,
   #### CONSTANTS ####
 
   const1 <- list(nyears = ncol(popDat$ch),
-                 n.sam = nrow(popDat$SUR),
-                 n.ind = nrow(popDat$ch),
-                 first = popDat$firstobs)
+                 n.sam = nrow(popDat$SUR))
 
   #### INITIAL VALUES ####
-  z.state <- state.data(popDat$ch)
+  #z.state <- state.data(popDat$ch)
 
   inits1 <- list(
     mean.phi = c(comb$phi1, comb$phiad),#c(detect.h, detect.h),
@@ -42,7 +65,7 @@ runIPMmod <- function(nb, ni, nt, nc,
     #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
     #mean.p = runif(1,0,1),#detect.h,
     #fec = runif(1,0,5),#detect.h,
-    z=z.state,
+    #z=z.state,
     n1.start=popTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
     nad.start=popTraj$Nouts[2,1]
   )
@@ -63,7 +86,7 @@ runIPMmod <- function(nb, ni, nt, nc,
   Cmcmc1 <- compileNimble(Rmcmc1, project = Rmodel1)
 
   #### RUN MCMC ####
-  outIPM <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,
+  outIPM <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1, thin=nt,
                     setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE)
 
   return(outIPM)
@@ -76,19 +99,21 @@ runnonests <- function(nb, ni, nt, nc,
                       comb, detect) {
 
   dat1 <- list(y = popDat$SUR,
-               ch.y = popDat$ch
+               marr = marray(popDat$ch),
+               R = rowSums(marray(popDat$ch))
   )
 
 
   #### CONSTANTS ####
 
   const1 <- list(nyears = ncol(popDat$ch),
-                 n.sam = nrow(popDat$SUR),
-                 n.ind = nrow(popDat$ch),
-                 first = popDat$firstobs)
+                 n.sam = nrow(popDat$SUR)#,
+                 #n.ind = nrow(popDat$ch),
+                 #first = popDat$firstobs
+                 )
 
   #### INITIAL VALUES ####
-  z.state <- state.data(popDat$ch)
+  #z.state <- state.data(popDat$ch)
 
   inits1 <- list(mean.phi = c(comb$phi1, comb$phiad),#c(detect.h, detect.h),
                  mean.p = detect[1],
@@ -97,7 +122,7 @@ runnonests <- function(nb, ni, nt, nc,
                  #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
                  #mean.p = runif(1,0,1),#detect.h,
                  #fec = runif(1,0,5),#detect.h,
-                 z=z.state,
+                 #z=z.state,
                  n1.start=popTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
                  nad.start=popTraj$Nouts[2,1]
   )
@@ -120,7 +145,7 @@ runnonests <- function(nb, ni, nt, nc,
   #### RUN MCMC ####
   #sink("sad_output.txt")
   #changed to checking to just see a matrix, since it is working!
-  outnonests <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,
+  outnonests <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,thin=nt,
                         setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE)
 
   return(outnonests)
@@ -146,7 +171,7 @@ runnomr <- function(nb, ni, nt, nc,
                  n.sam = nrow(popDat$SUR))
 
   #### INITIAL VALUES ####
-  z.state <- state.data(popDat$ch)
+  #z.state <- state.data(popDat$ch)
 
   inits1 <- list(mean.phi = c(comb$phi1, comb$phiad),#c(detect.h, detect.h),
                  #mean.p = detect.h,
@@ -177,7 +202,7 @@ runnomr <- function(nb, ni, nt, nc,
 
   #### RUN MCMC ####
   #sink("sad_output.txt")
-  outnomr <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,
+  outnomr <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,thin=nt,
                      setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE)
 
   return(outnomr)
@@ -201,7 +226,7 @@ runabundonly <- function(nb, ni, nt, nc,
                  n.sam = nrow(popDat$SUR))
 
   #### INITIAL VALUES ####
-  z.state <- state.data(popDat$ch)
+  #z.state <- state.data(popDat$ch)
 
   inits1 <- list(mean.phi = c(comb$phi1, comb$phiad),#c(detect.h, detect.h),
                  #mean.p = detect.h,
@@ -231,7 +256,7 @@ runabundonly <- function(nb, ni, nt, nc,
   Cmcmc1 <- compileNimble(Rmcmc1, project = Rmodel1)
 
   #### RUN MCMC ####
-  outabund <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,
+  outabund <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,thin=nt,
                       setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE)
 
   return(outabund)
