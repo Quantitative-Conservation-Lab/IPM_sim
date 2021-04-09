@@ -22,9 +22,21 @@ library(doParallel)
 
 # load data
 scenarios <- readRDS(here("data", "scenarios.RDS"))
-low.lam.combos <- readRDS(here("low.lam.params.RDS"))
-med.lam.combos <- readRDS(here("med.lam.params.RDS"))
-high.lam.combos <- readRDS(here("high.lam.params.RDS"))
+low.lam.combos <- readRDS(here("data","low.lam.params.RDS"))
+med.lam.combos <- readRDS(here("data","med.lam.params.RDS"))
+high.lam.combos <- readRDS(here("data","high.lam.params.RDS"))
+
+# determine priority score for scenarios
+scenarios %>% mutate(priority = NA_integer_)
+for (i in 1:nrow(scenarios)) {
+  tmp <- scenarios[i, 1:3]
+  tmp <- tmp[!is.na(tmp)]
+  scenarios[i, "priority"] <- length(unique(tmp))
+}
+scenarios <- scenarios %>% arrange(priority) # save in prioritized order
+which.prio.1 <- which(scenarios$priority == 1)
+which.prio.2 <- which(scenarios$priority == 2)
+which.prio.3 <- which(scenarios$priority == 3)
 
 # functions
 source(here("scripts", "current version",
@@ -43,21 +55,21 @@ detect.h <- 0.8
 
 detect <- c(detect.l, detect.m, detect.h)
 
-nb <- 100000#0 #burn-in
+nb <- 200000#0 #burn-in
 ni <- nb + nb #total iterations
 nt <- 10  #thin
-nc <- 2  #chains
+nc <- 3  #chains
 
 
 
 cores=detectCores()
-cl <- makeCluster(cores-2, setup_strategy = "sequential") #not to overload your computer
+cl <- makeCluster(10, setup_strategy = "sequential") #not to overload your computer
 registerDoParallel(cl)
 
-foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
+foreach(i = 1:length(which.prio.1)) %dopar% { #scenarios picked
   library(here)
   library(nimble)
-  for (j in 1:10) {
+  for (j in 1:sims.per) {
     lowpopTraj <- readRDS(here("data", "lowTrajectories", paste("lowpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     medpopTraj <- readRDS(here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     highpopTraj <- readRDS(here("data", "highTrajectories", paste("highpopTraj", "-", i, "-", j, ".RDS", sep = "")))
@@ -85,8 +97,8 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- lowpopTraj
           comb <- low.lam.combos[i,]
           lowout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
-          assign(paste("lowout-",i,"-",j,"-",d, sep = ""), lowout)
-          saveRDS(lowout, paste("lowout-",i,"-",j,"-",d,".RDS", sep = ""))
+          #assign(paste("lowout-",i,"-",j,"-",d, sep = ""), lowout)
+          saveRDS(lowout, here("results",paste("lowout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(lowout)
         } else if (det.levels[4] == "M") {
           medpopDat <- simData (indfates = medpopTraj$indfates,
@@ -105,8 +117,8 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- medpopTraj
           comb <- med.lam.combos[i,]
           medout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
-          assign(paste("medout-",i,"-",j,"-",d, sep = ""), medout)
-          saveRDS(medout, paste("medout-",i,"-",j,"-",d,".RDS", sep = ""))
+          #assign(paste("medout-",i,"-",j,"-",d, sep = ""), medout)
+          saveRDS(medout, here("results", paste("medout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(medout)
         } else if (det.levels[4] == "H") {
           highpopDat <- simData (indfates = highpopTraj$indfates,
@@ -125,8 +137,8 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- highpopTraj
           comb <- high.lam.combos[i,]
           highout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
-          assign(paste("highout-",i,"-",j,"-",d, sep = ""), highout)
-          saveRDS(highout, paste("highout-",i,"-",j,"-",d,".RDS", sep = ""))
+          #assign(paste("highout-",i,"-",j,"-",d, sep = ""), highout)
+          saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(highout)
         }
       } else if (is.na(det.levels[2])) { # NO MARK RECAPTURE
@@ -147,8 +159,8 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- lowpopTraj
           comb <- low.lam.combos[i,]
           lowout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
-          assign(paste("lowout-",i,"-",j,"-",d, sep = ""), lowout)
-          saveRDS(lowout, paste("lowout-",i,"-",j,"-",d,".RDS", sep = ""))
+          #assign(paste("lowout-",i,"-",j,"-",d, sep = ""), lowout)
+          saveRDS(lowout, here("results", paste("lowout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(lowout)
         } else if (det.levels[4] == "M") {
           medpopDat <- simData (indfates = medpopTraj$indfates,
@@ -167,8 +179,8 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- medpopTraj
           comb <- med.lam.combos[i,]
           medout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
-          assign(paste("medout-",i,"-",j,"-",d, sep = ""), medout)
-          saveRDS(medout, paste("medout-",i,"-",j,"-",d,".RDS", sep = ""))
+          #assign(paste("medout-",i,"-",j,"-",d, sep = ""), medout)
+          saveRDS(medout, here("results", paste("medout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(medout)
         } else if (det.levels[4] == "H") {
           highpopDat <- simData (indfates = highpopTraj$indfates,
@@ -187,8 +199,8 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- highpopTraj
           comb <- high.lam.combos[i,]
           highout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
-          assign(paste("highout-",i,"-",j,"-",d, sep = ""), highout)
-          saveRDS(highout, paste("highout-",i,"-",j,"-",d,".RDS", sep = ""))
+          #assign(paste("highout-",i,"-",j,"-",d, sep = ""), highout)
+          saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(highout)
         }
       } else if (is.na(det.levels[3])) { # NO NEST SURVIVAL
@@ -209,8 +221,8 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- lowpopTraj
           comb <- low.lam.combos[i,]
           lowout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
-          assign(paste("lowout-",i,"-",j,"-",d, sep = ""), lowout)
-          saveRDS(lowout, paste("lowout-",i,"-",j,"-",d,".RDS", sep = ""))
+          #assign(paste("lowout-",i,"-",j,"-",d, sep = ""), lowout)
+          saveRDS(lowout, here("results", paste("lowout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(lowout)
         } else if (det.levels[4] == "M") {
           medpopDat <- simData (indfates = medpopTraj$indfates,
@@ -229,8 +241,8 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- medpopTraj
           comb <- med.lam.combos[i,]
           medout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
-          assign(paste("medout-",i,"-",j,"-",d, sep = ""), medout)
-          saveRDS(medout, paste("medout-",i,"-",j,"-",d,".RDS", sep = ""))
+          #assign(paste("medout-",i,"-",j,"-",d, sep = ""), medout)
+          saveRDS(medout, here("results", paste("medout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(medout)
         } else if (det.levels[4] == "H") {
           highpopDat <- simData (indfates = highpopTraj$indfates,
@@ -249,8 +261,8 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- highpopTraj
           comb <- high.lam.combos[i,]
           highout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
-          assign(paste("highout-",i,"-",j,"-",d, sep = ""), highout)
-          saveRDS(highout, paste("highout-",i,"-",j,"-",d,".RDS", sep = ""))
+          #assign(paste("highout-",i,"-",j,"-",d, sep = ""), highout)
+          saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(highout)
         }
       } else { # FULL IPM
@@ -271,8 +283,8 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- lowpopTraj
           comb <- low.lam.combos[i,]
           lowout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
-          assign(paste("lowout-",i,"-",j,"-",d, sep = ""), lowout)
-          saveRDS(lowout, paste("lowout-",i,"-",j,"-",d,".RDS", sep = ""))
+          #assign(paste("lowout-",i,"-",j,"-",d, sep = ""), lowout)
+          saveRDS(lowout, here("results", paste("lowout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(lowout)
         } else if (det.levels[4] == "M") {
           medpopDat <- simData (indfates = medpopTraj$indfates,
@@ -291,8 +303,8 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- medpopTraj
           comb <- med.lam.combos[i,]
           medout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
-          assign(paste("medout-",i,"-",j,"-",d, sep = ""), medout)
-          saveRDS(medout, paste("medout-",i,"-",j,"-",d,".RDS", sep = ""))
+          #assign(paste("medout-",i,"-",j,"-",d, sep = ""), medout)
+          saveRDS(medout, here("results", paste("medout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(medout)
         } else if (det.levels[4] == "H") {
           highpopDat <- simData (indfates = highpopTraj$indfates,
@@ -311,8 +323,8 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popTraj <- highpopTraj
           comb <- high.lam.combos[i,]
           highout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
-          assign(paste("highout-",i,"-",j,"-",d, sep = ""), highout)
-          saveRDS(highout, paste("highout-",i,"-",j,"-",d,".RDS", sep = ""))
+          #assign(paste("highout-",i,"-",j,"-",d, sep = ""), highout)
+          saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(highout)
         }
       } # else
