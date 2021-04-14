@@ -26,6 +26,16 @@ low.lam.combos <- readRDS(here("data","low.lam.params.RDS"))
 med.lam.combos <- readRDS(here("data","med.lam.params.RDS"))
 high.lam.combos <- readRDS(here("data","high.lam.params.RDS"))
 
+# functions
+source(here("scripts", "current version",
+            "0 - preparing scenarios", "compute_time_calc.R"))
+source(here("scripts", "current version",
+            "1 - simulating data", "IPM_sim_2.0function.R"))
+source(here("scripts", "current version",
+            "2 - models", "IPM_marray.R"))
+source(here("scripts", "current version",
+            "4 - run models", "run_scenarios_helperFns.R"))
+
 # determine priority score for scenarios
 scenarios %>% mutate(priority = NA_integer_)
 for (i in 1:nrow(scenarios)) {
@@ -37,16 +47,6 @@ scenarios <- scenarios %>% arrange(priority) # save in prioritized order
 which.prio.1 <- which(scenarios$priority == 1)
 which.prio.2 <- which(scenarios$priority == 2)
 which.prio.3 <- which(scenarios$priority == 3)
-
-# functions
-source(here("scripts", "current version",
-            "0 - preparing scenarios", "compute_time_calc.R"))
-source(here("scripts", "current version",
-            "1 - simulating data", "IPM_sim_2.0function.R"))
-source(here("scripts", "current version",
-            "2 - models", "IPM_marray.R"))
-source(here("scripts", "current version",
-            "4 - run models", "run_scenarios_helperFns.R"))
 
 # simulate data
 detect.l <- 0.3
@@ -69,7 +69,7 @@ registerDoParallel(cl)
 foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
   library(here)
   library(nimble)
-  for (j in 1:sims.per) {
+  for (j in 1:(sims.per)/2) {
     lowpopTraj <- readRDS(here("data", "lowTrajectories", paste("lowpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     medpopTraj <- readRDS(here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     highpopTraj <- readRDS(here("data", "highTrajectories", paste("highpopTraj", "-", i, "-", j, ".RDS", sep = "")))
