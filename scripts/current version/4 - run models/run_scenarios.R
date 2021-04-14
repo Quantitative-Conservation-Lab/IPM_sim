@@ -69,7 +69,7 @@ registerDoParallel(cl)
 foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
   library(here)
   library(nimble)
-  for (j in 1:(sims.per)/2) {
+  for (j in 1:(sims.per)/2) { # HALVED THIS FOR NOW
     lowpopTraj <- readRDS(here("data", "lowTrajectories", paste("lowpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     medpopTraj <- readRDS(here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     highpopTraj <- readRDS(here("data", "highTrajectories", paste("highpopTraj", "-", i, "-", j, ".RDS", sep = "")))
