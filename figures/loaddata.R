@@ -24,7 +24,10 @@ for (i in 1:10) { #scenarios picked
             collapse_chains() %>% 
             as.matrix() %>% 
             as.data.frame() %>% 
-            filter(row_number() %% 60 == 1)
+            filter(row_number() %% 60 == 1) %>% 
+            mutate(scenario= i) %>% 
+            mutate(sims = j) %>% 
+            mutate(simscenarios = k)
           assign(paste("lowout", "-", i, "-", j, "-", k, sep = ""), out)
         }
       } else if (k %in% 4:6) {
@@ -35,7 +38,10 @@ for (i in 1:10) { #scenarios picked
             collapse_chains() %>% 
             as.matrix() %>% 
             as.data.frame() %>% 
-            filter(row_number() %% 60 == 1)
+            filter(row_number() %% 60 == 1) %>% 
+            mutate(scenario= i) %>% 
+            mutate(sims = j) %>% 
+            mutate(simscenarios = k)
           assign(paste("medout", "-", i, "-", j, "-", k, sep = ""), out)
         }
       } else if (k %in% 7:9) {
@@ -46,7 +52,10 @@ for (i in 1:10) { #scenarios picked
             collapse_chains() %>% 
             as.matrix() %>% 
             as.data.frame() %>% 
-            filter(row_number() %% 60 == 1)
+            filter(row_number() %% 60 == 1) %>% 
+            mutate(scenario= i) %>% 
+            mutate(sims = j) %>% 
+            mutate(simscenarios = k)
           assign(paste("highout", "-", i, "-", j, "-", k, sep = ""), out)
         }
       }
@@ -60,11 +69,7 @@ for (i in 1:10) { #scenarios picked
 rm(list=grep("highout|medout|lowout",ls(),value=TRUE,invert=TRUE))
 save.image("processedIPMOutput.RData")
 
-# repeat this for case study
-# SAVE THIS AS RDATA
-setwd("/Users/aebratt/Desktop/IPMEURING")
-
-# LOAD data
+# repeat this for case study #####
 
 rm(list = ls())
 setwd("/Users/aebratt/Desktop/OOPSIPM")
@@ -81,15 +86,15 @@ for (i in 1:10) { #scenarios picked
             collapse_chains() %>% 
             as.matrix() %>% 
             as.data.frame() %>% 
-            filter(row_number() %% 60 == 1)
+            filter(row_number() %% 60 == 1) %>% 
+            mutate(scenario= i) %>% 
+            mutate(sims = j) %>% 
+            mutate(simscenarios = k)
           assign(paste("lowout", "-", i, "-", j, "-", k, sep = ""), out)
         }
     }
   }
 }
-
-# presumably all of these are good to go, so let's collapse the chains 
-# and thin the
 
 rm(list=grep("highout|medout|lowout",ls(),value=TRUE,invert=TRUE))
 save.image("processedIPMcasestudy.RData")

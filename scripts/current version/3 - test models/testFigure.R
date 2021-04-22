@@ -1,9 +1,15 @@
 #### Processing #######
 
-# 12 panel plot
-  # rows - low, med, high out
-  # columns - model type
-  # on each plot - 3 lines representing detection type
+library(ggplot2)
+library(gtable)
+library(RColorBrewer)
+library(wesanderson)
+
+pal <- rev(wes_palette("Zissou1", 3, type = "continuous"))
+
+# 9 panel plot
+  # rows - low, med, high lambda
+  # columns - low, med, high detection
 
 # row 1
 # declining population
@@ -62,17 +68,6 @@ toplot1 <- row1 %>%
   ))
 levels(toplot1$model) = c("Full IPM", "No nest data", "No mark recapture data", "Abundance data only")
 
-library(ggplot2)
-library(gtable)
-library(RColorBrewer)
-library(wesanderson)
-
-pal <- rev(wes_palette("Zissou1", 3, type = "continuous"))
-
-#pdf("IPMplotTrevor.pdf", width = 12, height = 8)
-
-#dev.off()
-
 # row 2
 # steady population
 
@@ -123,13 +118,6 @@ toplot2 <- row2 %>%
   mutate(model = as.factor(model),
          detection = as.factor(detection)) %>%
   mutate(high = if_else(high > 1.3, 1.299, high))
-
-
-library(ggplot2)
-library(gtable)
-library(RColorBrewer)
-#pdf("IPMplotTrevor.pdf", width = 12, height = 8)
-
 
 # row 3
 # increasing population
