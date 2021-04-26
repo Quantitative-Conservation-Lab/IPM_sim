@@ -1,0 +1,172 @@
+---
+title: "EuringPosterFigures"
+author: ""
+date: "4/26/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, results = 'asis', fig.width = 4, fig.height = 3.5)
+
+library(tidyr)
+library(dplyr)
+library(cowplot)
+library(ggplot2)
+library(coda)
+library(captioner)
+library(knitr)
+library(reshape2)
+library(here)
+
+```
+
+
+
+```{r data load}
+
+load(file = here::here('results', 'EuringPoster', 'processedIPMOutput.RData'))
+
+row.low <- do.call(rbind, lapply( ls(patt='lowout'), get) )
+row.med <- do.call(rbind, lapply( ls(patt='medout'), get) )
+row.high <- do.call(rbind, lapply( ls(patt='highout'), get) )
+rm(list=grep('highout|medout|lowout',ls(),value=TRUE,invert=FALSE))
+
+low <- row.low %>%
+  dplyr::rename(phi1 = `mean.phi[1]`, phiad = `mean.phi[2]`)
+
+low.params <- readRDS(file = here::here('data', 'low.lam.params.rds')) %>%
+  transform(scenario = 1:25)
+
+med <- row.med %>%
+  dplyr::rename(phi1 = `mean.phi[1]`, phiad = `mean.phi[2]`)
+
+med.params <- readRDS(file = here::here('data', 'med.lam.params.rds')) %>%
+  transform(scenario = 1:25)
+
+high <- row.high %>%
+  dplyr::rename(phi1 = `mean.phi[1]`, phiad = `mean.phi[2]`)
+
+high.params <- readRDS(file = here::here('data', 'high.lam.params.rds')) %>%
+  transform(scenario = 1:25)
+
+#combine to get true values integrated in results
+low.dat <- low %>%
+  inner_join(low.params, by = 'scenario', suffix = c('.obs', '.true')) %>%
+  transform(lambda.scenario = 'Decreasing')
+
+med.dat <- med %>%
+  inner_join(med.params, by = 'scenario', suffix = c('.obs', '.true')) %>%
+  transform(lambda.scenario = 'Stable')
+
+high.dat <- high %>%
+  inner_join(high.params, by = 'scenario', suffix = c('.obs', '.true')) %>%
+  transform(lambda.scenario = 'Increasing')
+
+all.dat <- bind_rows(low.dat, med.dat, high.dat)
+
+
+```
+
+```{r bias}
+
+#get posterior medians
+all.meds <- all.dat %>%
+  dplyr::select('phi1.obs', 'phi1.true', 'phiad.obs', 'phiad.true', 'fec.obs', 'fec.true',
+                            'sims', 'scenario', 'simscenarios', 'lambda.scenario') %>%
+  reshape2::melt(id.vars = c('lambda.scenario', 'sims', 'scenario', 'simscenarios')) %>%
+  group_by(lambda.scenario, scenario, simscenarios, variable) %>%
+  summarize(median = median(value), .groups = 'keep') %>%
+  reshape2::dcast(lambda.scenario + scenario + simscenarios ~ variable, value.var = 'median') 
+  
+
+#just bias
+rel.bias <- all.meds %>%
+  #calculate relative bias, mean across scenarios
+  transform(phi1.bias = (phi1.obs-phi1.true)/phi1.true,
+            phiad.bias = (phiad.obs-phiad.true)/phiad.true,
+            fec.bias = (fec.obs-fec.true)/fec.true) %>%
+  dplyr::select('lambda.scenario', 'scenario', 'simscenarios', 
+                'phi1.bias', 'phiad.bias', 'fec.bias') %>%
+  reshape2::melt(id.vars = c('lambda.scenario', 'scenario', 'simscenarios')) %>%
+  group_by(lambda.scenario, simscenarios, variable) %>%
+  dplyr::summarize(mean.rel.bias = mean(value), .groups = 'keep') %>%
+  transform(simscenarios = factor(simscenarios, levels = c(1:9), 
+                                  labels = rep(c('L', 'M', 'H'), 3)))
+
+ggplot(rel.bias, aes(x = factor(simscenarios), y = variable, fill = mean.rel.bias)) +
+  geom_tile() +
+  xlab('Detection level') + ylab('') +
+  facet_grid(~lambda.scenario, drop = T, scales = 'free_x') +
+  scale_fill_gradient2(name = "Relative bias",
+                      mid = "#FFFFFF", low = "#012345", high = "#012345", midpoint = 0) +
+  theme_bw() +
+  theme(legend.position = 'top',
+             strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"))
+
+
+```
+
+```{r rmse}
+
+#for the love of buddha, someone please check this calculation of rmse
+rmse.vals <- all.meds %>%
+  transform(rmse.fec = (fec.obs-fec.true)^2,
+            rmse.phiad = (phiad.obs-phiad.true)^2,
+            rmse.phi1 = (phi1.obs-phi1.true)^2) %>%
+  dplyr::select(lambda.scenario, scenario, simscenarios, rmse.fec, rmse.phiad, rmse.phi1) %>%
+  reshape2::melt(id.vars = c('lambda.scenario', 'scenario', 'simscenarios')) %>%
+  group_by(simscenarios, lambda.scenario, variable) %>%
+  dplyr::summarize(rmse = sqrt(mean(value)), .groups = 'keep') %>%
+  transform(simscenarios = factor(simscenarios, levels = c(1:9), 
+                                  labels = rep(c('L', 'M', 'H'), 3)))
+  
+#dunno about this - looks suspiciously similar across detection levels :(
+ggplot(rmse.vals, aes(x = factor(simscenarios), y = variable, fill = rmse)) +
+  geom_tile() +
+  xlab('Detection level') + ylab('') +
+  facet_grid(~lambda.scenario, drop = T, scales = 'free_x') +
+  scale_fill_gradient2(name = "RMSE",
+                      mid = "#FFFFFF", low = "#012345", high = "#012345", midpoint = 0) +
+  theme_bw() +
+  theme(legend.position = 'top',
+             strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"))
+
+
+```
+
+
+
+```{r not using but keep for now}
+
+### Keep to look at difference in bias across scenarios
+# #get posterior medians
+# low.meds <- low.dat %>%
+#   dplyr::select('phi1.obs', 'phi1.true', 'phiad.obs', 'phiad.true', 'fec.obs', 'fec.true',
+#                             'sims', 'scenario', 'simscenarios') %>%
+#   reshape2::melt(id.vars = c('sims', 'scenario', 'simscenarios')) %>%
+#   group_by(scenario, simscenarios, variable) %>%
+#   summarize(median = median(value)) %>%
+#   reshape2::dcast(scenario + simscenarios ~ variable, value.var = 'median') %>%
+#   #calculate relative bias
+#   transform(phi1.bias = (phi1.obs-phi1.true)/phi1.true, 
+#             phiad.bias = (phiad.obs-phiad.true)/phiad.true, 
+#             fec.bias = (fec.obs-fec.true)/fec.true)
+# 
+# #just bias
+# low.bias <- low.meds %>%
+#   dplyr::select('scenario', 'simscenarios', 'phi1.bias', 'phiad.bias', 'fec.bias') %>%
+#   reshape2::melt(id.vars = c('scenario', 'simscenarios')) %>%
+#   transform(simscenarios = factor(simscenarios, labels = c('lam = low; p=L', 'M', 'H')))
+# 
+# ggplot(low.bias, aes(x = factor(scenario), y = variable, fill = value)) +
+#   geom_tile() +
+#   xlab('Scenario') + ylab('Parameter') +
+#   facet_grid(~simscenarios, drop = T, scales = 'free_x') +
+#   scale_fill_gradient2(name = "Relative bias",
+#                       mid = "#FFFFFF", low = "#012345", high = "#012345", midpoint = 0) +
+#   theme_bw() +
+#   theme(legend.position = 'top',
+#              strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"))
+
+```
+

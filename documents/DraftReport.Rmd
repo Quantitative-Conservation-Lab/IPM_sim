@@ -171,9 +171,9 @@ bias_plot <- ggplot(bias_vals, aes(y = rel_bias, x = scenario, group = scenario)
 #rmse
 rmse_vals <- post_meds %>% 
   merge(true_vals %>% dplyr::select(scenario, variable, Truth), by = c('scenario', 'variable')) %>%
-  transform(rmse.temp = (value-Truth)^2) %>%
+  transform(rmse.temp = (value-Truth)^2) %>% #simulation level
   group_by(Data, scenario, variable) %>%
-  dplyr::summarize(rmse = sqrt(mean(rmse.temp)))
+  dplyr::summarize(rmse = sqrt(mean(rmse.temp))) #scenario level
 
 # rmse_plot <- ggplot(rmse_vals, aes(y = rmse, x = scenario, group = scenario)) +
 #   geom_boxplot(aes(color = Data)) +
