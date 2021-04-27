@@ -77,7 +77,6 @@ all.meds <- all.dat %>%
   group_by(lambda.scenario, scenario, simscenarios, variable) %>%
   summarize(median = median(value), .groups = 'keep') %>%
   reshape2::dcast(lambda.scenario + scenario + simscenarios ~ variable, value.var = 'median') 
-  
 
 #just bias
 rel.bias <- all.meds %>%
@@ -180,8 +179,9 @@ ggplot(rel.bias, aes(x = factor(scenario), y = variable, fill = value)) +
   geom_tile() +
   xlab('Scenario') + ylab('Parameter') +
   facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
-  scale_fill_gradient2(name = "Relative bias",
-                      mid = "#FFFFFF", low = "#012345", high = "#012345", midpoint = 0) +
+    scale_fill_gradient2(name = "Relative bias",
+                      mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
+                      breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2"))
   theme_bw() +
   theme(legend.position = 'top',
              strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"))
@@ -191,8 +191,9 @@ ggplot(rel.bias.vals, aes(x = factor(fec.true), y = variable, fill = value)) +
   geom_tile() +
   xlab('True fecundity') + ylab('Parameter') +
   facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
-  scale_fill_gradient2(name = "Relative bias",
-                      mid = "#FFFFFF", low = "#012345", high = "#012345", midpoint = 0) +
+    scale_fill_gradient2(name = "Relative bias",
+                      mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
+                      breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2")) +
   theme_bw() +
   theme(legend.position = 'top',
              strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
@@ -203,8 +204,9 @@ ggplot(rel.bias.vals, aes(x = factor(phiad.true), y = variable, fill = value)) +
   geom_tile() +
   xlab('True phi.ad') + ylab('Parameter') +
   facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
-  scale_fill_gradient2(name = "Relative bias",
-                      mid = "#FFFFFF", low = "#012345", high = "#012345", midpoint = 0) +
+    scale_fill_gradient2(name = "Relative bias",
+                      mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
+                      breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2")) +
   theme_bw() +
   theme(legend.position = 'top',
              strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
@@ -215,8 +217,9 @@ ggplot(rel.bias.vals, aes(x = factor(phi1.true), y = variable, fill = value)) +
   geom_tile() +
   xlab('True phi.1') + ylab('Parameter') +
   facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
-  scale_fill_gradient2(name = "Relative bias",
-                      mid = "#FFFFFF", low = "#012345", high = "#012345", midpoint = 0) +
+    scale_fill_gradient2(name = "Relative bias",
+                      mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
+                      breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2")) +
   theme_bw() +
   theme(legend.position = 'top',
              strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
