@@ -135,38 +135,86 @@ ggplot(rmse.vals, aes(x = factor(simscenarios), y = variable, fill = rmse)) +
 ```
 
 
+```{r bias across life history scenarios}
 
-```{r not using but keep for now}
+##Same as above but looking at the variability across data-generating true values for phiad, phi1, fec
 
-### Keep to look at difference in bias across scenarios
-# #get posterior medians
-# low.meds <- low.dat %>%
-#   dplyr::select('phi1.obs', 'phi1.true', 'phiad.obs', 'phiad.true', 'fec.obs', 'fec.true',
-#                             'sims', 'scenario', 'simscenarios') %>%
-#   reshape2::melt(id.vars = c('sims', 'scenario', 'simscenarios')) %>%
-#   group_by(scenario, simscenarios, variable) %>%
-#   summarize(median = median(value)) %>%
-#   reshape2::dcast(scenario + simscenarios ~ variable, value.var = 'median') %>%
-#   #calculate relative bias
-#   transform(phi1.bias = (phi1.obs-phi1.true)/phi1.true, 
-#             phiad.bias = (phiad.obs-phiad.true)/phiad.true, 
-#             fec.bias = (fec.obs-fec.true)/fec.true)
-# 
-# #just bias
-# low.bias <- low.meds %>%
-#   dplyr::select('scenario', 'simscenarios', 'phi1.bias', 'phiad.bias', 'fec.bias') %>%
-#   reshape2::melt(id.vars = c('scenario', 'simscenarios')) %>%
-#   transform(simscenarios = factor(simscenarios, labels = c('lam = low; p=L', 'M', 'H')))
-# 
-# ggplot(low.bias, aes(x = factor(scenario), y = variable, fill = value)) +
-#   geom_tile() +
-#   xlab('Scenario') + ylab('Parameter') +
-#   facet_grid(~simscenarios, drop = T, scales = 'free_x') +
-#   scale_fill_gradient2(name = "Relative bias",
-#                       mid = "#FFFFFF", low = "#012345", high = "#012345", midpoint = 0) +
-#   theme_bw() +
-#   theme(legend.position = 'top',
-#              strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"))
+#get posterior medians; same as above except keep 'scenario' in group_by
+all.meds <- all.dat %>%
+  dplyr::select('phi1.obs', 'phi1.true', 'phiad.obs', 'phiad.true', 'fec.obs', 'fec.true',
+                            'sims', 'scenario', 'simscenarios', 'lambda.scenario') %>%
+  reshape2::melt(id.vars = c('sims', 'scenario', 'simscenarios', 'lambda.scenario')) %>%
+  group_by(lambda.scenario, scenario, simscenarios, variable) %>%
+  summarize(median = median(value)) %>%
+  reshape2::dcast(lambda.scenario + scenario + simscenarios ~ variable, value.var = 'median') %>%
+  #calculate relative bias
+  transform(phi1.bias = (phi1.obs-phi1.true)/phi1.true,
+            phiad.bias = (phiad.obs-phiad.true)/phiad.true,
+            fec.bias = (fec.obs-fec.true)/fec.true)
+
+#just bias; same as above, keep 'scenario'
+rel.bias <- all.meds %>%
+  dplyr::select('lambda.scenario', 'scenario', 'simscenarios', 
+                'phi1.bias', 'phiad.bias', 'fec.bias') %>%
+  reshape2::melt(id.vars = c('lambda.scenario', 'scenario', 'simscenarios')) %>%
+  transform(simscenarios = factor(simscenarios, labels = rep(c('L', 'M', 'H'),3)))
+
+#grab true values from above
+true_vals <- all.dat %>%
+  distinct(lambda.scenario, scenario, phiad.true, fec.true, phi1.true) %>%
+  transform(phiad.true = round(phiad.true,1),
+            phi1.true = round(phi1.true,1), fec.true = round(fec.true,1))
+
+#merge back onto bias df so can have something to name/view the 'scenarios' 
+rel.bias.vals <- rel.bias %>%
+  merge(true_vals, by = c('lambda.scenario', 'scenario'))
+
+#scenario number -- not a useful view, but inspired this investigation
+ggplot(rel.bias, aes(x = factor(scenario), y = variable, fill = value)) +
+  geom_tile() +
+  xlab('Scenario') + ylab('Parameter') +
+  facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
+  scale_fill_gradient2(name = "Relative bias",
+                      mid = "#FFFFFF", low = "#012345", high = "#012345", midpoint = 0) +
+  theme_bw() +
+  theme(legend.position = 'top',
+             strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"))
+
+#view by fec.true
+ggplot(rel.bias.vals, aes(x = factor(fec.true), y = variable, fill = value)) +
+  geom_tile() +
+  xlab('True fecundity') + ylab('Parameter') +
+  facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
+  scale_fill_gradient2(name = "Relative bias",
+                      mid = "#FFFFFF", low = "#012345", high = "#012345", midpoint = 0) +
+  theme_bw() +
+  theme(legend.position = 'top',
+             strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+#view by phiad.true
+ggplot(rel.bias.vals, aes(x = factor(phiad.true), y = variable, fill = value)) +
+  geom_tile() +
+  xlab('True phi.ad') + ylab('Parameter') +
+  facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
+  scale_fill_gradient2(name = "Relative bias",
+                      mid = "#FFFFFF", low = "#012345", high = "#012345", midpoint = 0) +
+  theme_bw() +
+  theme(legend.position = 'top',
+             strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+#view by phi1.true
+ggplot(rel.bias.vals, aes(x = factor(phi1.true), y = variable, fill = value)) +
+  geom_tile() +
+  xlab('True phi.1') + ylab('Parameter') +
+  facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
+  scale_fill_gradient2(name = "Relative bias",
+                      mid = "#FFFFFF", low = "#012345", high = "#012345", midpoint = 0) +
+  theme_bw() +
+  theme(legend.position = 'top',
+             strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5))
 
 ```
 
