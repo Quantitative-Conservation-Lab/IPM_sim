@@ -17,7 +17,7 @@ library(captioner)
 library(knitr)
 library(reshape2)
 library(here)
-
+library(RColorBrewer)
 ```
 
 
@@ -93,13 +93,19 @@ rel.bias <- all.meds %>%
   transform(simscenarios = factor(simscenarios, levels = c(1:9), 
                                   labels = rep(c('L', 'M', 'H'), 3)))
 
+
+# set factor levels
+rel.bias$lambda.scenario <- factor(rel.bias$lambda.scenario, levels = c("Decreasing", "Stable", "Increasing"))
+
+# plot
 ggplot(rel.bias, aes(x = factor(simscenarios), y = variable, fill = mean.rel.bias)) +
   geom_tile() +
   xlab('Detection level') + ylab('') +
   facet_grid(~lambda.scenario, drop = T, scales = 'free_x') +
   scale_fill_gradient2(name = "Relative bias",
-                      mid = "#FFFFFF", low = "#012345", high = "#012345", midpoint = 0) +
-  theme_bw() +
+                      mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
+                      breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2")) +
+  theme_minimal() +
   theme(legend.position = 'top',
              strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"))
 
