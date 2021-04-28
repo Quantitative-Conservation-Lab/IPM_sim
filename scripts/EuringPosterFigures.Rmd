@@ -31,6 +31,10 @@ row.med <- do.call(rbind, lapply( ls(patt='medout'), get) )
 row.high <- do.call(rbind, lapply( ls(patt='highout'), get) )
 rm(list=grep('highout|medout|lowout',ls(),value=TRUE,invert=FALSE))
 
+```
+
+```{r process data}
+
 low <- row.low %>%
   dplyr::rename(phi1 = `mean.phi[1]`, phiad = `mean.phi[2]`)
 
@@ -90,19 +94,20 @@ rel.bias <- all.meds %>%
   group_by(lambda.scenario, simscenarios, variable) %>%
   dplyr::summarize(mean.rel.bias = mean(value), .groups = 'keep') %>%
   transform(simscenarios = factor(simscenarios, levels = c(1:9), 
-                                  labels = rep(c('L', 'M', 'H'), 3)))
-
-
-# set factor levels
-rel.bias$lambda.scenario <- factor(rel.bias$lambda.scenario, levels = c("Decreasing", "Stable", "Increasing"))
+                                  labels = rep(c('L', 'M', 'H'), 3))) %>%
+  transform(variable = factor(variable, levels = c('phiad.bias', 'phi1.bias', 'fec.bias'),
+                              labels = c('Adult survival', 'Juv survival', 'Fecundity'))) %>% 
+  transform(lambda.scenario = factor(lambda.scenario, 
+                                     levels = c("Decreasing", "Stable", "Increasing")))
 
 # plot
 ggplot(rel.bias, aes(x = factor(simscenarios), y = variable, fill = mean.rel.bias)) +
-  geom_tile() +
+  geom_tile(color = 'grey50') +
   xlab('Detection level') + ylab('') +
   facet_grid(~lambda.scenario, drop = T, scales = 'free_x') +
   scale_fill_gradient2(name = "Relative bias",
-                      mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
+                      # mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
+                     mid = "#f7f7f7", low = "royalblue4", high = "orange2", midpoint = 0,
                       breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2")) +
   theme_minimal() +
   theme(legend.position = 'top',
@@ -115,19 +120,23 @@ ggplot(rel.bias, aes(x = factor(simscenarios), y = variable, fill = mean.rel.bia
 
 #for the love of buddha, someone please check this calculation of rmse
 rmse.vals <- all.meds %>%
-  transform(rmse.fec = (fec.obs-fec.true)^2,
-            rmse.phiad = (phiad.obs-phiad.true)^2,
-            rmse.phi1 = (phi1.obs-phi1.true)^2) %>%
-  dplyr::select(lambda.scenario, scenario, simscenarios, rmse.fec, rmse.phiad, rmse.phi1) %>%
+  transform(fec.rmse = (fec.obs-fec.true)^2,
+            phiad.rmse = (phiad.obs-phiad.true)^2,
+            phi1.rmse = (phi1.obs-phi1.true)^2) %>%
+  dplyr::select(lambda.scenario, scenario, simscenarios, fec.rmse, phiad.rmse, phi1.rmse) %>%
   reshape2::melt(id.vars = c('lambda.scenario', 'scenario', 'simscenarios')) %>%
   group_by(simscenarios, lambda.scenario, variable) %>%
   dplyr::summarize(rmse = sqrt(mean(value)), .groups = 'keep') %>%
   transform(simscenarios = factor(simscenarios, levels = c(1:9), 
-                                  labels = rep(c('L', 'M', 'H'), 3)))
+                                  labels = rep(c('L', 'M', 'H'), 3))) %>%
+  transform(variable = factor(variable, levels = c('phiad.rmse', 'phi1.rmse', 'fec.rmse'),
+                              labels = c('Adult survival', 'Juv survival', 'Fecundity'))) %>% 
+  transform(lambda.scenario = factor(lambda.scenario, 
+                                     levels = c("Decreasing", "Stable", "Increasing")))
   
 #dunno about this - looks suspiciously similar across detection levels :(
 ggplot(rmse.vals, aes(x = factor(simscenarios), y = variable, fill = rmse)) +
-  geom_tile() +
+  geom_tile(color = 'grey50') +
   xlab('Detection level') + ylab('') +
   facet_grid(~lambda.scenario, drop = T, scales = 'free_x') +
   scale_fill_gradient2(name = "RMSE",
@@ -145,7 +154,7 @@ ggplot(rmse.vals, aes(x = factor(simscenarios), y = variable, fill = rmse)) +
 ##Same as above but looking at the variability across data-generating true values for phiad, phi1, fec
 
 #get posterior medians; same as above except keep 'scenario' in group_by
-all.meds <- all.dat %>%
+all.meds.sc <- all.dat %>%
   dplyr::select('phi1.obs', 'phi1.true', 'phiad.obs', 'phiad.true', 'fec.obs', 'fec.true',
                             'sims', 'scenario', 'simscenarios', 'lambda.scenario') %>%
   reshape2::melt(id.vars = c('sims', 'scenario', 'simscenarios', 'lambda.scenario')) %>%
@@ -158,11 +167,11 @@ all.meds <- all.dat %>%
             fec.bias = (fec.obs-fec.true)/fec.true)
 
 #just bias; same as above, keep 'scenario'
-rel.bias <- all.meds %>%
+rel.bias.sc <- all.meds.sc %>%
   dplyr::select('lambda.scenario', 'scenario', 'simscenarios', 
                 'phi1.bias', 'phiad.bias', 'fec.bias') %>%
   reshape2::melt(id.vars = c('lambda.scenario', 'scenario', 'simscenarios')) %>%
-  transform(simscenarios = factor(simscenarios, labels = rep(c('L', 'M', 'H'),3)))
+  transform(simscenarios = factor(simscenarios, labels = rep(c('L', 'M', 'H'),3))) 
 
 #grab true values from above
 true_vals <- all.dat %>%
@@ -170,30 +179,69 @@ true_vals <- all.dat %>%
   transform(phiad.true = round(phiad.true,1),
             phi1.true = round(phi1.true,1), fec.true = round(fec.true,1))
 
-#merge back onto bias df so can have something to name/view the 'scenarios' 
-rel.bias.vals <- rel.bias %>%
-  merge(true_vals, by = c('lambda.scenario', 'scenario'))
+#for categories: 
+fec_lims <- quantile(true_vals$fec.true, probs = c(0.33, 0.7), names = F)
+phiad_lims <- quantile(true_vals$phiad.true, probs = c(0.33, 0.7), names = F)
+phi1_lims <- quantile(true_vals$phi1.true, probs = c(0.33, 0.7), names = F)
 
-#scenario number -- not a useful view, but inspired this investigation
-ggplot(rel.bias, aes(x = factor(scenario), y = variable, fill = value)) +
-  geom_tile() +
+#merge back onto bias df so can have something to name/view the 'scenarios' 
+rel.bias.vals <- rel.bias.sc %>%
+  merge(true_vals, by = c('lambda.scenario', 'scenario')) %>%
+  transform(variable = factor(variable, levels = c('phiad.bias', 'phi1.bias', 'fec.bias'),
+                              labels = c('Adult survival', 'Juv survival', 'Fecundity'))) %>% 
+  transform(lambda.scenario = factor(lambda.scenario, 
+                                     levels = c("Decreasing", "Stable", "Increasing"))) %>%
+  transform(fec_cat = ifelse(fec.true < fec_lims[1], 'L', ifelse(fec.true > fec_lims[2], 'H', 'M')),
+            phiad_cat = ifelse(phiad.true < phiad_lims[1], 'L', ifelse(phiad.true > phiad_lims[2], 'H', 'M')),
+            phi1_cat = ifelse(phi1.true < phi1_lims[1], 'L', ifelse(phi1.true > phi1_lims[2], 'H', 'M'))) %>%
+  transform(fec_cat = factor(fec_cat, levels = c('L', 'M', 'H')),
+            phiad_cat = factor(phiad_cat, levels = c('L', 'M', 'H')),
+            phi1_cat = factor(phi1_cat, levels = c('L', 'M', 'H')))
+
+#scenario number -- not a very useful view, but inspired this investigation
+ggplot(rel.bias.sc, aes(x = factor(scenario), y = variable, fill = value)) +
+  geom_tile(color = 'grey50') +
   xlab('Scenario') + ylab('Parameter') +
   facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
     scale_fill_gradient2(name = "Relative bias",
-                      mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
-                      breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2"))
+                      # mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
+                      mid = "#f7f7f7", low = "royalblue4", high = "orange2", midpoint = 0,
+
+                      breaks = c(-0.5, -0.25, 0, 0.25, 0.5), n.breaks = 5, 
+                      labels = c('0.5', "-0.25", "0", "0.25", '0.5')) +
   theme_bw() +
   theme(legend.position = 'top',
              strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"))
 
-#view by fec.true
+#view by fec.true vals; 
 ggplot(rel.bias.vals, aes(x = factor(fec.true), y = variable, fill = value)) +
-  geom_tile() +
+  geom_tile(color = 'grey50') +
   xlab('True fecundity') + ylab('Parameter') +
   facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
     scale_fill_gradient2(name = "Relative bias",
-                      mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
-                      breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2")) +
+                      # mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
+                      mid = "#f7f7f7", low = "royalblue4", high = "orange2", midpoint = 0,
+                      breaks = c(-0.5, -0.25, 0, 0.25, 0.5), n.breaks = 5, 
+                      labels = c('0.5', "-0.25", "0", "0.25", '0.5')) +
+  theme_bw() +
+  theme(legend.position = 'top',
+             strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+#view by fec category: have to re-summarize to get mean across fec/phi ifelse categories
+fec.plot.vals <- rel.bias.vals %>%
+  group_by(lambda.scenario, simscenarios, variable, fec_cat) %>%
+  dplyr::summarize(value = mean(value), .groups = 'keep')
+  
+ggplot(fec.plot.vals, aes(x = factor(fec_cat), y = variable, fill = value)) +
+  geom_tile(color = 'grey50') +
+  xlab('True fecundity') + ylab('Parameter') +
+  facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
+    scale_fill_gradient2(name = "Relative bias",
+                      # mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
+                      mid = "#f7f7f7", low = "royalblue4", high = "orange2", midpoint = 0,
+                      breaks = c(-0.5, -0.25, 0, 0.25, 0.5), n.breaks = 5, 
+                      labels = c('0.5', "-0.25", "0", "0.25", '0.5')) +
   theme_bw() +
   theme(legend.position = 'top',
              strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
@@ -201,12 +249,46 @@ ggplot(rel.bias.vals, aes(x = factor(fec.true), y = variable, fill = value)) +
 
 #view by phiad.true
 ggplot(rel.bias.vals, aes(x = factor(phiad.true), y = variable, fill = value)) +
-  geom_tile() +
+  geom_tile(color = 'grey50') +
   xlab('True phi.ad') + ylab('Parameter') +
   facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
     scale_fill_gradient2(name = "Relative bias",
-                      mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
-                      breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2")) +
+                      mid = "#f7f7f7", low = "royalblue4", high = "orange2", midpoint = 0,
+                      breaks = c(-0.5, -0.25, 0, 0.25, 0.5), n.breaks = 5, 
+                      labels = c('0.5', "-0.25", "0", "0.25", '0.5')) +
+  theme_bw() +
+  theme(legend.position = 'top',
+             strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+#view by phiad category
+phiad.plot.vals <- rel.bias.vals %>%
+  group_by(lambda.scenario, simscenarios, variable, phiad_cat) %>%
+  dplyr::summarize(value = mean(value), .groups = 'keep')
+  
+ggplot(phiad.plot.vals, aes(x = factor(phiad_cat), y = variable, fill = value)) +
+  geom_tile(color = 'grey50') +
+  xlab('True Adult survival') + ylab('Parameter') +
+  facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
+    scale_fill_gradient2(name = "Relative bias",
+                      mid = "#f7f7f7", low = "royalblue4", high = "orange2", midpoint = 0,
+                      breaks = c(-0.5, -0.25, 0, 0.25, 0.5), n.breaks = 5, 
+                      labels = c('0.5', "-0.25", "0", "0.25", '0.5')) +
+  theme_bw() +
+  theme(legend.position = 'top',
+             strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+#filter to see that adult survival bias does in fact vary with L/M/H detection
+ggplot(phiad.plot.vals %>% filter(variable == 'Adult survival'), 
+       aes(x = factor(phiad_cat), y = variable, fill = value)) +
+  geom_tile(color = 'grey50') +
+  xlab('True Adult survival') + ylab('Parameter') +
+  facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
+    scale_fill_gradient2(name = "Relative bias",
+                      mid = "#f7f7f7", low = "royalblue4", high = "orange2", midpoint = 0,
+                      breaks = c(-0.5, -0.25, 0, 0.25, 0.5), n.breaks = 5, 
+                      labels = c('0.5', "-0.25", "0", "0.25", '0.5')) +
   theme_bw() +
   theme(legend.position = 'top',
              strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
@@ -214,16 +296,147 @@ ggplot(rel.bias.vals, aes(x = factor(phiad.true), y = variable, fill = value)) +
 
 #view by phi1.true
 ggplot(rel.bias.vals, aes(x = factor(phi1.true), y = variable, fill = value)) +
-  geom_tile() +
+  geom_tile(color = 'grey50') +
   xlab('True phi.1') + ylab('Parameter') +
   facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
     scale_fill_gradient2(name = "Relative bias",
-                      mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
-                      breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2")) +
+                      mid = "#f7f7f7", low = "royalblue4", high = "orange2", midpoint = 0,
+                      breaks = c(-0.5, -0.25, 0, 0.25, 0.5), n.breaks = 5, 
+                      labels = c('0.5', "-0.25", "0", "0.25", '0.5')) +
   theme_bw() +
   theme(legend.position = 'top',
              strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
         axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+#view by phi1 category
+phi1.plot.vals <- rel.bias.vals %>%
+  group_by(lambda.scenario, simscenarios, variable, phi1_cat) %>%
+  dplyr::summarize(value = mean(value), .groups = 'keep')
+  
+ggplot(phi1.plot.vals, aes(x = factor(phi1_cat), y = variable, fill = value)) +
+  geom_tile(color = 'grey50') +
+  xlab('True Juv survival') + ylab('Parameter') +
+  facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
+    scale_fill_gradient2(name = "Relative bias",
+                      mid = "#f7f7f7", low = "royalblue4", high = "orange2", midpoint = 0,
+                      breaks = c(-0.5, -0.25, 0, 0.25, 0.5), n.breaks = 5, 
+                      labels = c('0.5', "-0.25", "0", "0.25", '0.5')) +
+  theme_bw() +
+  theme(legend.position = 'top',
+             strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+```
+
+### Case study
+```{r load results from case study}
+
+load(file = here::here('results', 'EuringPoster', 'processedIPMcasestudy.RData'))
+
+#only decreasing population trend for now
+# unique(row.low.cs$sims) #sims = 1:25 (sim repetitions); 
+# unique(row.low.cs$scenario) #scenarios = 1:10 (phi/fec true vals);
+# unique(row.low.cs$simscenarios) #simscenarios = 1:9 (...?)
+row.low.cs <- do.call(rbind, lapply( ls(patt='lowout'), get) )
+#remove interim rds files
+rm(list=grep('highout|medout|lowout',ls(),value=TRUE,invert=FALSE))
+
+#list of survey detection scenarios
+scenarios.cs <- readRDS(file = here::here('data', 'scenarios.rds'))[1:9,]
+
+# rename and only take columns we need -- no lambdas here
+low.cs <- row.low.cs %>%
+  dplyr::rename(phi1 = `mean.phi[1]`, phiad = `mean.phi[2]`) %>%
+  dplyr::select(!starts_with('lambda'))
+
+#check; same as above for non-case study, right?
+#label scenarios 1:25, but only 10 taken below in inner_join()
+low.params.cs <- readRDS(file = here::here('data', 'low.lam.params.rds')) %>%
+  transform(scenario = 1:25)
+
+#add in simscenario numbering to merge below
+sim.scens.cs <- scenarios.cs %>%
+  transform(simscenarios = 1:9) %>%
+  dplyr::select(-c(lambda, n.viable.combinations))
+  
+#combine to get true values integrated in results; 
+#only scenarios 1:10 out of 1:25 will be taken with inner_join
+low.cs.dat <- low.cs %>%
+  inner_join(low.params.cs, by = 'scenario', suffix = c('.obs', '.true')) %>%
+  merge(sim.scens.cs) %>%
+  transform(lambda.scenario = 'Decreasing')
+
+```
+
+```{r case study bias}
+
+###case study for Euring poster:
+# only a decreasing population trend, only 'L' nest detection
+
+#get posterior medians
+cs.meds <- low.cs.dat %>%
+  dplyr::select('phi1.obs', 'phi1.true', 'phiad.obs', 'phiad.true', 'fec.obs', 'fec.true',
+                            'sims', 'scenario', 'simscenarios', 'lambda.scenario') %>%
+  reshape2::melt(id.vars = c('lambda.scenario', 'sims', 'scenario', 'simscenarios')) %>%
+  group_by(lambda.scenario, scenario, simscenarios, variable) %>%
+  summarize(median = median(value), .groups = 'keep') %>%
+  reshape2::dcast(lambda.scenario + scenario + simscenarios ~ variable, value.var = 'median') 
+
+# bias
+rel.bias.cs <- cs.meds %>%
+  #calculate relative bias, mean across scenarios
+  transform(phi1.bias = (phi1.obs-phi1.true)/phi1.true,
+            phiad.bias = (phiad.obs-phiad.true)/phiad.true,
+            fec.bias = (fec.obs-fec.true)/fec.true) %>%
+  dplyr::select('lambda.scenario', 'scenario', 'simscenarios', 
+                'phi1.bias', 'phiad.bias', 'fec.bias') %>%
+  reshape2::melt(id.vars = c('lambda.scenario', 'scenario', 'simscenarios')) %>%
+  group_by(lambda.scenario, simscenarios, variable) %>%
+  dplyr::summarize(mean.rel.bias = mean(value), .groups = 'keep') %>%
+  transform(variable = factor(variable, levels = c('phiad.bias', 'phi1.bias', 'fec.bias'),
+                              labels = c('Adult survival', 'Juv survival', 'Fecundity'))) %>% 
+  merge(sim.scens.cs, by = 'simscenarios') %>%
+  transform(det.abund = factor(det.abund, levels = c('L', 'M', 'H')),
+            det.MR = factor(det.MR, levels = c('L', 'M', 'H')))
+
+# plot; blrgh. Why don't these results change across detection levels?!
+ggplot(rel.bias.cs, aes(x = factor(det.MR), y = variable, fill = mean.rel.bias)) +
+  geom_tile(color = 'grey50') +
+  xlab('MR detection') + ylab('') +
+  facet_grid(~det.abund, drop = T, scales = 'free_x') +
+  scale_fill_gradient2(name = "Relative bias",
+                      mid = "#f7f7f7", low = "royalblue4", high = "orange1", midpoint = 0,
+                      breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2")) +
+  theme_minimal() +
+  theme(legend.position = 'top',
+             strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"))
+
+##hmmm.... adult survival on it's own scale looks like what I would expect
+ggplot(rel.bias.cs %>% filter(variable == 'Adult survival'), 
+       aes(x = factor(det.MR), y = variable, fill = mean.rel.bias)) +
+  geom_tile(color = 'grey50') +
+  xlab('MR detection') + ylab('') +
+  facet_grid(~det.abund, drop = T, scales = 'free_x') +
+  scale_fill_gradient2(name = "Relative bias",
+                      # mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
+                      mid = "#f7f7f7", low = "royalblue4", high = "orange2", midpoint = 0,
+                      breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2")) +
+  theme_minimal() +
+  theme(legend.position = 'top',
+             strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"))
+
+ggplot(rel.bias.cs %>% filter(variable == 'Juv survival'), 
+       aes(x = factor(det.MR), y = variable, fill = mean.rel.bias)) +
+  geom_tile(color = 'grey50') +
+  xlab('MR detection') + ylab('') +
+  facet_grid(~det.abund, drop = T, scales = 'free_x') +
+  scale_fill_gradient2(name = "Relative bias",
+                      # mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
+                      mid = "#f7f7f7", low = "royalblue4", high = "orange2", midpoint = 0,
+                      breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2")) +
+  theme_minimal() +
+  theme(legend.position = 'top',
+             strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"))
 
 ```
 
