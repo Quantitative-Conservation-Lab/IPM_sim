@@ -18,6 +18,7 @@ library(knitr)
 library(reshape2)
 library(here)
 library(RColorBrewer)
+library(colorspace)
 ```
 
 
@@ -349,7 +350,8 @@ phi1.plot.vals <- rel.bias.vals %>%
 ggplot(phi1.plot.vals, aes(x = factor(phi1_cat), y = variable, fill = value)) +
   geom_tile(color = 'grey50') +
   xlab('True Juv survival') + ylab('Parameter') +
-  facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
+  facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x',
+             labeller = ) +
     scale_fill_gradient2(name = "Relative bias",
                       mid = "#f7f7f7", low = "royalblue4", high = "orange2", midpoint = 0,
                       breaks = c(-0.5, -0.25, 0, 0.25, 0.5), n.breaks = 5, 
@@ -361,7 +363,105 @@ ggplot(phi1.plot.vals, aes(x = factor(phi1_cat), y = variable, fill = value)) +
 
 ```
 
+```{r phiad}
+pal1 <- diverging_hcl(n = 7, palette = "Blue-Yellow 3")
+phiad <- rel.bias.vals %>% filter(variable == 'Adult survival')
+summary(phiad$value)
 
+p1 <- ggplot(rel.bias.vals %>% filter(variable == 'Adult survival'), 
+             aes(x = factor(phiad.true), y = variable, fill = value)) +
+  geom_tile(color = 'grey50') +
+  xlab('True Adult Survival') + ylab("") +
+  facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
+    scale_fill_gradient2(name = "Relative\nbias",
+                      # mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
+                      mid = "white", low = "#9FA2FF", high = "#BAAE00", midpoint = 0,
+                      breaks = c(-0.15, -0.05, 0, 0.05), n.breaks = 4, labels = c("-0.15", "-0.05", "0", "0.05")) +
+  theme_light() +
+  theme(legend.position = 'right',
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        #strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
+        strip.text.x = element_text(face = "bold", color = "black"),
+        strip.background = element_rect(fill = NA),
+        axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  ggtitle("Adult Survival")
+p1
+```
+
+```{r phijuv}
+pal2 <- diverging_hcl(n = 7, palette = "Green-Orange")
+phi1 <- rel.bias.vals %>% filter(variable == 'Juv survival')
+summary(phi1$value)
+
+p2 <- ggplot(rel.bias.vals %>% filter(variable == 'Juv survival'), 
+             aes(x = factor(phi1.true), y = variable, fill = value)) +
+  geom_tile(color = 'grey50') +
+  xlab('True Juvenile Survival') + ylab("") +
+  facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
+    scale_fill_gradient2(name = "Relative\nbias",
+                      # mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
+                      mid = "white", low = "#11C638", high = "#EF9708", midpoint = 0,
+                      breaks = c(-0.2, 0, 0.2, 0.5, 0.8), n.breaks = 5, 
+                      labels = c("-0.2", "0", "0.2", "0.5", "0.8")) +
+  theme_light() +
+  theme(legend.position = 'right',
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        #strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
+        strip.text.x = element_text(face = "bold", color = "black"),
+        strip.background = element_rect(fill = NA),
+        axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  ggtitle("Juvenile Survival")
+p2
+```
+
+```{r fec}
+pal3 <- diverging_hcl(n = 7, palette = "Cyan-Magenta")
+fec <- rel.bias.vals %>% filter(variable == 'Fecundity')
+summary(fec$value)
+
+p3 <- ggplot(rel.bias.vals %>% filter(variable == 'Fecundity'), 
+             aes(x = factor(fec.true), y = variable, fill = value)) +
+  geom_tile(color = 'grey50') +
+  xlab('True Fecundity') + ylab("") +
+  facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
+    scale_fill_gradient2(name = "Relative\nbias",
+                      # mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
+                      mid = "white", low = "#0FCFC0", high = "#F79CD4", midpoint = 0,
+                      breaks = c(-0.4, -0.2, 0, 0.2), n.breaks = 4, 
+                      labels = c("-0.4", "-0.2", "0", "0.2")) +
+  theme_light() +
+  theme(legend.position = 'right',
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        #strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
+        strip.text.x = element_text(face = "bold", color = "black"),
+        strip.background = element_rect(fill = NA),
+        axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  ggtitle("Fecundity")
+p3
+```
+
+```{r combo}
+library(patchwork)
+plot1 <- p1 / p2 / p3
+plot1
+
+## export out
+pdf(here("figures", "params_bias.pdf"), width = 12, height = 8)
+plot_grid(p1, p2, p3, nrow = 3)
+dev.off()
+```
 
 ### Case study
 ```{r load results from case study}
