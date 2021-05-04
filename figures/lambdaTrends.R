@@ -61,6 +61,11 @@ for(i in 1:dim(row.high)[1]) {
 
 #saveRDS(row.low, "row.low.RDS")
 
+## load RDS
+row.low <- readRDS(file = here::here('data', 'EuringPosterReg', 'row.low.rds'))
+row.med <- readRDS(file = here::here('data', 'EuringPosterReg', 'row.med.rds'))
+row.high <- readRDS(file = here::here('data', 'EuringPosterReg', 'row.high.rds'))
+
 # MUST FIX THIS
 toplot1 <- row.low %>%
   select(contains("geomean"), scenario, sims, simscenarios) %>%

@@ -14,7 +14,8 @@ library(wesanderson)
 pal <- rev(wes_palette("Zissou1", 3, type = "continuous"))
 
 # AEB - idea for version two of this plot
-ggplot(toplot1, aes(x = Year, y = value)) +
+## row low
+g1 <- ggplot(toplot1, aes(x = Year, y = value)) +
  stat_pointinterval(aes(color = simscenarios, fill = simscenarios), alpha = 0.5, .width = c(0.5, 0.95)) +
  geom_hline(yintercept = 0.95, linetype = "dashed", color = "black") +
  geom_hline(yintercept = 1.00, linetype = "solid", color = "black") +
@@ -26,7 +27,7 @@ ggplot(toplot1, aes(x = Year, y = value)) +
         axis.text.x = element_blank(),
         #axis.title.x = element_blank(),
         strip.text = element_blank(),
-        legend.position = "top",
+        legend.position = "none", # turn off legend
         legend.text = element_text(size = 12),
         legend.title = element_text(size = 12),
         plot.title.position = "plot",
@@ -35,6 +36,61 @@ ggplot(toplot1, aes(x = Year, y = value)) +
   coord_cartesian(clip = "off") +
   scale_color_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))  +
   scale_fill_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))
+
+## row med
+g2 <- ggplot(toplot2, aes(x = Year, y = value)) +
+  stat_pointinterval(aes(color = simscenarios, fill = simscenarios), alpha = 0.5, .width = c(0.5, 0.95)) +
+  geom_hline(yintercept = 1.00, linetype = "dashed", color = "black") +
+  geom_hline(yintercept = 1.00, linetype = "solid", color = "black") +
+  facet_grid(.~simscenarios) +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text = element_text(size = 12),
+        axis.text.x = element_blank(),
+        #axis.title.x = element_blank(),
+        strip.text = element_blank(),
+        legend.position = "none", # turn off legend
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        plot.title.position = "plot",
+        axis.title=element_text(size=12)) +
+  scale_x_discrete(name="Year",breaks = seq(1, 14, by = 3)) +
+  coord_cartesian(clip = "off") +
+  scale_color_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))  +
+  scale_fill_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))
+
+## row high
+g3 <- ggplot(toplot3, aes(x = Year, y = value)) +
+  stat_pointinterval(aes(color = simscenarios, fill = simscenarios), alpha = 0.5, .width = c(0.5, 0.95)) +
+  geom_hline(yintercept = 1.05, linetype = "dashed", color = "black") +
+  geom_hline(yintercept = 1.00, linetype = "solid", color = "black") +
+  facet_grid(.~simscenarios) +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text = element_text(size = 12),
+        axis.text.x = element_blank(),
+        #axis.title.x = element_blank(),
+        strip.text = element_blank(),
+        legend.position = "bottom",
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        plot.title.position = "plot",
+        axis.title=element_text(size=12)) +
+  scale_x_discrete(name="Year", labels = seq(1, 14, by = 3), breaks = seq(1, 14, by = 3)) +
+  coord_cartesian(clip = "off") +
+  scale_color_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))  +
+  scale_fill_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))
+
+## combine all
+library(patchwork)
+library(cowplot)
+
+pdf(here("figures", "lambda_plot1.pdf"), width = 12, height = 8)
+plot_grid(g1, g2, g3, nrow = 3)
+dev.off()
+
 
 # AEB - old stuff ########
 p1 <- ggplot(transform(toplot1,
