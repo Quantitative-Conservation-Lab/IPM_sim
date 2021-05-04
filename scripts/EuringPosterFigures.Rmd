@@ -100,7 +100,7 @@ rel.bias <- all.meds %>%
   transform(lambda.scenario = factor(lambda.scenario, 
                                      levels = c("Decreasing", "Stable", "Increasing")))
 
-# plot
+# plot; use me - overview
 ggplot(rel.bias, aes(x = factor(simscenarios), y = variable, fill = mean.rel.bias)) +
   geom_tile(color = 'grey50') +
   xlab('Detection level') + ylab('') +
@@ -228,6 +228,21 @@ ggplot(rel.bias.vals, aes(x = factor(fec.true), y = variable, fill = value)) +
              strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
         axis.text.x = element_text(angle = 90, vjust = 0.5))
 
+#use me; just one parameter -- fec by fec
+ggplot(rel.bias.vals %>% filter(variable == 'Fecundity'), aes(x = factor(fec.true), y = variable, fill = value)) +
+  geom_tile(color = 'grey50') +
+  xlab('True fecundity') + ylab('Parameter') +
+  facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
+    scale_fill_gradient2(name = "Relative bias",
+                      # mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
+                      mid = "#f7f7f7", low = "royalblue4", high = "orange2", midpoint = 0,
+                      breaks = c(-0.5, -0.25, 0, 0.25, 0.5), n.breaks = 5,
+                      labels = c('0.5', "-0.25", "0", "0.25", '0.5')) +
+  theme_bw() +
+  theme(legend.position = 'top',
+             strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5))
+
 #view by fec category: have to re-summarize to get mean across fec/phi ifelse categories
 fec.plot.vals <- rel.bias.vals %>%
   group_by(lambda.scenario, simscenarios, variable, fec_cat) %>%
@@ -258,6 +273,24 @@ ggplot(rel.bias.vals, aes(x = factor(phiad.true), y = variable, fill = value)) +
                       labels = c('0.5', "-0.25", "0", "0.25", '0.5')) +
   theme_bw() +
   theme(legend.position = 'top',
+             strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5))
+
+#use me; just one parameter -- phi ad by phi ad
+ggplot(rel.bias.vals %>% filter(variable == 'Adult survival'), aes(x = factor(phiad.true), y = variable, fill = value)) +
+  geom_tile(color = 'grey50') +
+  xlab('True Adult survival') + ylab('Relative bias') +
+  facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
+    scale_fill_gradient2(name = "Adult survival",
+                      # mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
+                      mid = "#f7f7f7", low = "royalblue4", high = "orange2", midpoint = 0,
+                      breaks = c(-0.5,  0,0.5),
+                      n.breaks = 3,
+                      labels = c('Under estimate',  "0", 'overestimate')) +
+  theme_bw() +
+  theme(legend.position = 'top',
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
              strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
         axis.text.x = element_text(angle = 90, vjust = 0.5))
 
@@ -293,6 +326,21 @@ ggplot(rel.bias.vals, aes(x = factor(phi1.true), y = variable, fill = value)) +
              strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
         axis.text.x = element_text(angle = 90, vjust = 0.5))
 
+#use me; just one parameter -- phi1
+ggplot(rel.bias.vals %>% filter(variable == 'Juv survival'), aes(x = factor(phi1.true), y = variable, fill = value)) +
+  geom_tile(color = 'grey50') +
+  xlab('True Juv Survival') + ylab('Parameter') +
+  facet_grid(~lambda.scenario+simscenarios, drop = T, scales = 'free_x') +
+    scale_fill_gradient2(name = "Relative bias",
+                      # mid = "#f7f7f7", low = "#a1d76a", high = "#e9a3c9", midpoint = 0,
+                      mid = "#f7f7f7", low = "royalblue4", high = "orange2", midpoint = 0,
+                      breaks = c(-0.5, -0.25, 0, 0.25, 0.5), n.breaks = 5,
+                      labels = c('0.5', "-0.25", "0", "0.25", '0.5')) +
+  theme_bw() +
+  theme(legend.position = 'top',
+             strip.background = element_rect(fill = "#EEEEEE", color = "#FFFFFF"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5))
+
 #view by phi1 category
 phi1.plot.vals <- rel.bias.vals %>%
   group_by(lambda.scenario, simscenarios, variable, phi1_cat) %>%
@@ -312,6 +360,8 @@ ggplot(phi1.plot.vals, aes(x = factor(phi1_cat), y = variable, fill = value)) +
         axis.text.x = element_text(angle = 90, vjust = 0.5))
 
 ```
+
+
 
 ### Case study
 ```{r load results from case study}
