@@ -9,14 +9,14 @@ library(coda)
 
 pal <- rev(wes_palette("Zissou1", 3, type = "continuous"))
 
-row.low <- do.call(rbind, lapply( ls(patt="lowout"), get) ) %>%
-  select(contains("lambda") | contains("sims") | contains("scenario"))
-row.med <- do.call(rbind, lapply( ls(patt="medout"), get) ) %>%
-  select(contains("lambda") | contains("sims") | contains("scenario"))
-row.high <- do.call(rbind, lapply( ls(patt="highout"), get) ) %>%
-  select(contains("lambda") | contains("sims") | contains("scenario"))
-
-rm(list=grep("highout|medout|lowout",ls(),value=TRUE,invert=FALSE))
+# row.low <- do.call(rbind, lapply( ls(patt="lowout"), get) ) %>%
+#   select(contains("lambda") | contains("sims") | contains("scenario"))
+# row.med <- do.call(rbind, lapply( ls(patt="medout"), get) ) %>%
+#   select(contains("lambda") | contains("sims") | contains("scenario"))
+# row.high <- do.call(rbind, lapply( ls(patt="highout"), get) ) %>%
+#   select(contains("lambda") | contains("sims") | contains("scenario"))
+# 
+# rm(list=grep("highout|medout|lowout",ls(),value=TRUE,invert=FALSE))
 
 # TODO
 # generate geometric means
