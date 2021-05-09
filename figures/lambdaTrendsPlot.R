@@ -116,7 +116,10 @@ df <- rbind(df1, df2, df3)
 #                           ordered = TRUE, labels = c(expression(paste("low ", italic(p))), 
 #                                                      expression(paste("med ", italic(p))), 
 #                                                      expression(paste("high ", italic(p)))))
-df$Lambda <- factor(df$Lambda, levels = c("Decreasing", "Stable", "Increasing"))
+df$Lambda <- factor(df$Lambda, levels = c("Decreasing", "Stable", "Increasing"),
+                                        ordered = TRUE, labels = c(expression(paste("Decreasing ", lambda)), 
+                                                                   expression(paste("Stable ", lambda)), 
+                                                                   expression(paste("Increasing ", lambda))))
 
 
 # plotting
@@ -167,6 +170,93 @@ h2 <- ggplot(df) +
   scale_color_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))  +
   scale_fill_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High")) 
 h2
+
+# create plots for year 1, year 5, year 10 (need to re-factor lambda levels above)
+dfyr1 <- df %>% filter(Year == 1)
+dfyr5 <- df %>% filter(Year == 5)
+dfyr10 <- df %>% filter(Year == 10)
+
+## plotting
+j1 <- ggplot(dfyr1) +  
+  geom_violin(aes(x = simscenarios2, y = value, color = simscenarios2, fill = simscenarios2)) +
+  geom_hline(yintercept = 0.95, linetype = "dashed", color = "black", size = 0.25) +
+  geom_hline(yintercept = 1.00, linetype = "solid", color = "black", size = 0.25) +
+  geom_hline(yintercept = 1.05, linetype = "dashed", color = "black", size = 0.25) +
+  facet_grid(.~Lambda, labeller = label_parsed) +
+  ylim(c(0.75, 1.25)) + ylab("") +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text = element_text(size = 12),
+        axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        # strip.text = element_blank(),
+        legend.position = "none", 
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        plot.title.position = "plot",
+        axis.title=element_text(size=12)) +
+  coord_cartesian(clip = "off") +
+  scale_color_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))  +
+  scale_fill_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High")) +
+  ggtitle("Year 1")
+j1
+j2 <- ggplot(dfyr5) +  
+  geom_violin(aes(x = simscenarios2, y = value, color = simscenarios2, fill = simscenarios2)) +
+  geom_hline(yintercept = 0.95, linetype = "dashed", color = "black", size = 0.25) +
+  geom_hline(yintercept = 1.00, linetype = "solid", color = "black", size = 0.25) +
+  geom_hline(yintercept = 1.05, linetype = "dashed", color = "black", size = 0.25) +
+  facet_grid(.~Lambda, labeller = label_parsed) +
+  ylim(c(0.75, 1.25)) + ylab("") +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text = element_text(size = 12),
+        axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        strip.text = element_blank(),
+        legend.position = "none", 
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        plot.title.position = "plot",
+        axis.title=element_text(size=12)) +
+  coord_cartesian(clip = "off") +
+  scale_color_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))  +
+  scale_fill_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High")) +
+  ggtitle("Year 5")
+j2
+j3 <- ggplot(dfyr10) +  
+  geom_violin(aes(x = simscenarios2, y = value, color = simscenarios2, fill = simscenarios2)) +
+  geom_hline(yintercept = 0.95, linetype = "dashed", color = "black", size = 0.25) +
+  geom_hline(yintercept = 1.00, linetype = "solid", color = "black", size = 0.25) +
+  geom_hline(yintercept = 1.05, linetype = "dashed", color = "black", size = 0.25) +
+  facet_grid(.~Lambda, labeller = label_parsed) +
+  ylim(c(0.75, 1.25)) + ylab("") +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text = element_text(size = 12),
+        axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        strip.text = element_blank(),
+        legend.position = "bottom", 
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        plot.title.position = "plot",
+        axis.title=element_text(size=12)) +
+  coord_cartesian(clip = "off") +
+  scale_color_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))  +
+  scale_fill_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High")) +
+  ggtitle("Year 10")
+j3
+
+## combine
+library(patchwork)
+all <- j1/ j2 / j3
+all
+
+## export out
+ggsave(filename = here("figures", "lambda_plot3.pdf"), plot = all)
 
 # AEB - old stuff ########
 p1 <- ggplot(transform(toplot1,

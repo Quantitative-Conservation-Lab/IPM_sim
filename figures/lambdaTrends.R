@@ -24,42 +24,42 @@ rm(list=grep("highout|medout|lowout",ls(),value=TRUE,invert=FALSE))
 # row 1
 # declining population
 
-for (i in 1:14) {
-  row.low <- row.low %>%
-    mutate("geomean.{i}" :=  NA_real_)
-  row.med <- row.med %>%
-    mutate("geomean.{i}" :=  NA_real_)
-  row.high <- row.high %>%
-    mutate("geomean.{i}" :=  NA_real_)
-}
-
-# super slow
-for(i in 1:dim(row.low)[1]) {
-  print(paste("row", i))
-  for(j in 1:((ncol(row.low) - 3 )/2)) {
-    row.low[i, ((ncol(row.low)+3)/2 + j)] <- exp(mean(unlist(log(row.low[i, 1:j]))))
-  }
-}
-
-# super slow
-for(i in 1:dim(row.med)[1]) {
-  print(paste("row", i))
-  for(j in 1:((ncol(row.med) - 3 )/2)) {
-    row.med[i, ((ncol(row.med)+3)/2 + j)] <- exp(mean(unlist(log(row.med[i, 1:j]))))
-  }
-}
-
-# super slow
-for(i in 1:dim(row.high)[1]) {
-  print(paste("row", i))
-  for(j in 1:((ncol(row.high) - 3 )/2)) {
-    row.high[i, ((ncol(row.high) + 3)/2 + j)] <- exp(mean(unlist(log(row.high[i, 1:j]))))
-  }
-}
-
-# save objects
-
-#saveRDS(row.low, "row.low.RDS")
+# for (i in 1:14) {
+#   row.low <- row.low %>%
+#     mutate("geomean.{i}" :=  NA_real_)
+#   row.med <- row.med %>%
+#     mutate("geomean.{i}" :=  NA_real_)
+#   row.high <- row.high %>%
+#     mutate("geomean.{i}" :=  NA_real_)
+# }
+# 
+# # super slow
+# for(i in 1:dim(row.low)[1]) {
+#   print(paste("row", i))
+#   for(j in 1:((ncol(row.low) - 3 )/2)) {
+#     row.low[i, ((ncol(row.low)+3)/2 + j)] <- exp(mean(unlist(log(row.low[i, 1:j]))))
+#   }
+# }
+# 
+# # super slow
+# for(i in 1:dim(row.med)[1]) {
+#   print(paste("row", i))
+#   for(j in 1:((ncol(row.med) - 3 )/2)) {
+#     row.med[i, ((ncol(row.med)+3)/2 + j)] <- exp(mean(unlist(log(row.med[i, 1:j]))))
+#   }
+# }
+# 
+# # super slow
+# for(i in 1:dim(row.high)[1]) {
+#   print(paste("row", i))
+#   for(j in 1:((ncol(row.high) - 3 )/2)) {
+#     row.high[i, ((ncol(row.high) + 3)/2 + j)] <- exp(mean(unlist(log(row.high[i, 1:j]))))
+#   }
+# }
+# 
+# # save objects
+# 
+# #saveRDS(row.low, "row.low.RDS")
 
 ## load RDS
 row.low <- readRDS(file = here::here('data', 'EuringPosterReg', 'row.low.rds'))
