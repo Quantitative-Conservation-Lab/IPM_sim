@@ -91,6 +91,82 @@ pdf(here("figures", "lambda_plot1.pdf"), width = 12, height = 8)
 plot_grid(g1, g2, g3, nrow = 3)
 dev.off()
 
+## simplified version of above plot
+df1 <- toplot1 %>%
+  mutate(Lambda = c("Decreasing"),
+         simscenarios2 = ifelse(simscenarios == 1, "low", # check this
+                                ifelse(simscenarios == 2, "med",
+                                       ifelse(simscenarios == 3, "high", "")))) %>%
+  slice_sample(prop = .1) # remove due to memory issues
+df2 <- toplot2 %>%
+  mutate(Lambda = c("Stable"),
+         simscenarios2 = ifelse(simscenarios == 4, "low", # check this
+                                ifelse(simscenarios == 5, "med",
+                                       ifelse(simscenarios == 6, "high", "")))) %>%
+  slice_sample(prop = .1) # remove due to memory issues
+df3 <- toplot3 %>%
+  mutate(Lambda = c("Increasing"),
+         simscenarios2 = ifelse(simscenarios == 7, "low", # check this
+                                ifelse(simscenarios == 8, "med",
+                                       ifelse(simscenarios == 9, "high", "")))) %>%
+  slice_sample(prop = .1) # remove due to memory issues
+df <- rbind(df1, df2, df3)
+# # change factor levels
+# df$simscenarios <- factor(df$simscenarios, levels = c(1, 2, 3),
+#                           ordered = TRUE, labels = c(expression(paste("low ", italic(p))), 
+#                                                      expression(paste("med ", italic(p))), 
+#                                                      expression(paste("high ", italic(p)))))
+df$Lambda <- factor(df$Lambda, levels = c("Decreasing", "Stable", "Increasing"))
+
+
+# plotting
+# h1 <- ggplot(df, aes(x = Year, y = value)) +  
+#   stat_pointinterval(aes(color = simscenarios2, fill = simscenarios2), 
+#                      alpha = 0.5, .width = c(0.5, 0.95)) +
+#   geom_hline(yintercept = 0.95, linetype = "dashed", color = "black") +
+#   geom_hline(yintercept = 1.00, linetype = "solid", color = "black") +
+#   geom_hline(yintercept = 1.05, linetype = "dashed", color = "black") +
+#   facet_grid(.~Lambda) +
+#   theme_minimal() +
+#   theme(panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank(),
+#         axis.text = element_text(size = 12),
+#         # axis.text.x = element_blank(),
+#         # axis.title.x = element_blank(),
+#         # strip.text = element_blank(),
+#         legend.position = "bottom", 
+#         legend.text = element_text(size = 12),
+#         legend.title = element_text(size = 12),
+#         plot.title.position = "plot",
+#         axis.title=element_text(size=12)) +
+#   scale_x_discrete(name="Year", breaks = seq(1, 14, by = 3)) +
+#   coord_cartesian(clip = "off") +
+#   scale_color_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))  +
+#   scale_fill_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High")) 
+# h1
+h2 <- ggplot(df) +  
+ geom_violin(aes(x = Year, y = value, color = simscenarios2, fill = simscenarios2, group = Year)) +
+  geom_hline(yintercept = 0.95, linetype = "dashed", color = "black") +
+  geom_hline(yintercept = 1.00, linetype = "solid", color = "black") +
+  geom_hline(yintercept = 1.05, linetype = "dashed", color = "black") +
+  facet_grid(.~Lambda) +
+  theme_minimal() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text = element_text(size = 12),
+        # axis.text.x = element_blank(),
+        # axis.title.x = element_blank(),
+        # strip.text = element_blank(),
+        legend.position = "bottom", 
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        plot.title.position = "plot",
+        axis.title=element_text(size=12)) +
+  # scale_x_discrete(name="Year", breaks = seq(1, 14, by = 3)) +
+  coord_cartesian(clip = "off") +
+  scale_color_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))  +
+  scale_fill_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High")) 
+h2
 
 # AEB - old stuff ########
 p1 <- ggplot(transform(toplot1,
