@@ -182,7 +182,7 @@ j1 <- ggplot(dfyr1) +
   geom_hline(yintercept = 0.95, linetype = "dashed", color = "black", size = 0.25) +
   geom_hline(yintercept = 1.00, linetype = "solid", color = "black", size = 0.25) +
   geom_hline(yintercept = 1.05, linetype = "dashed", color = "black", size = 0.25) +
-  facet_grid(.~Lambda, labeller = label_parsed) +
+  facet_wrap(.~Lambda, labeller = label_parsed, nrow = 3) +
   ylim(c(0.75, 1.25)) + ylab("") +
   theme_minimal() +
   theme(panel.grid.major = element_blank(),
@@ -194,7 +194,8 @@ j1 <- ggplot(dfyr1) +
         legend.position = "none", 
         legend.text = element_text(size = 12),
         legend.title = element_text(size = 12),
-        plot.title.position = "plot",
+        # plot.title.position = "plot",
+        plot.title = element_text(hjust = 0.5),
         axis.title=element_text(size=12)) +
   coord_cartesian(clip = "off") +
   scale_color_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))  +
@@ -206,7 +207,8 @@ j2 <- ggplot(dfyr5) +
   geom_hline(yintercept = 0.95, linetype = "dashed", color = "black", size = 0.25) +
   geom_hline(yintercept = 1.00, linetype = "solid", color = "black", size = 0.25) +
   geom_hline(yintercept = 1.05, linetype = "dashed", color = "black", size = 0.25) +
-  facet_grid(.~Lambda, labeller = label_parsed) +
+  # facet_grid(.~Lambda, labeller = label_parsed) +
+  facet_wrap(.~Lambda, labeller = label_parsed, nrow = 3) +
   ylim(c(0.75, 1.25)) + ylab("") +
   theme_minimal() +
   theme(panel.grid.major = element_blank(),
@@ -214,11 +216,12 @@ j2 <- ggplot(dfyr5) +
         axis.text = element_text(size = 12),
         axis.text.x = element_blank(),
         axis.title.x = element_blank(),
-        strip.text = element_blank(),
-        legend.position = "none", 
+        # strip.text = element_blank(),
+        legend.position = "bottom", 
         legend.text = element_text(size = 12),
         legend.title = element_text(size = 12),
-        plot.title.position = "plot",
+        # plot.title.position = "plot",
+        plot.title = element_text(hjust = 0.5),
         axis.title=element_text(size=12)) +
   coord_cartesian(clip = "off") +
   scale_color_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))  +
@@ -230,7 +233,8 @@ j3 <- ggplot(dfyr10) +
   geom_hline(yintercept = 0.95, linetype = "dashed", color = "black", size = 0.25) +
   geom_hline(yintercept = 1.00, linetype = "solid", color = "black", size = 0.25) +
   geom_hline(yintercept = 1.05, linetype = "dashed", color = "black", size = 0.25) +
-  facet_grid(.~Lambda, labeller = label_parsed) +
+  # facet_grid(.~Lambda, labeller = label_parsed) +
+  facet_wrap(.~Lambda, labeller = label_parsed, nrow = 3) +
   ylim(c(0.75, 1.25)) + ylab("") +
   theme_minimal() +
   theme(panel.grid.major = element_blank(),
@@ -238,11 +242,12 @@ j3 <- ggplot(dfyr10) +
         axis.text = element_text(size = 12),
         axis.text.x = element_blank(),
         axis.title.x = element_blank(),
-        strip.text = element_blank(),
-        legend.position = "bottom", 
+        # strip.text = element_blank(),
+        legend.position = "none", 
         legend.text = element_text(size = 12),
         legend.title = element_text(size = 12),
-        plot.title.position = "plot",
+        # plot.title.position = "plot",
+        plot.title = element_text(hjust = 0.5),
         axis.title=element_text(size=12)) +
   coord_cartesian(clip = "off") +
   scale_color_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))  +
@@ -252,11 +257,21 @@ j3
 
 ## combine
 library(patchwork)
-all <- j1/ j2 / j3
+library(here)
+all <- j1 + j2 + j3
 all
 
 ## export out
-ggsave(filename = here("figures", "lambda_plot3.pdf"), plot = all)
+ggsave(filename = here("figures", "lambda_plot4.pdf"), plot = all)
+
+# ## try with cowplot
+# library(cowplot)
+# all2 <- align_plots(j1, j2, j3, align = "hv", axis = "tblr")
+# all2
+# 
+# pdf("lambda_plot4.pdf", width = 8, height = 6)
+# plot_grid(j1, j2, j3, ncol = 3)
+# dev.off()
 
 # AEB - old stuff ########
 p1 <- ggplot(transform(toplot1,
