@@ -215,6 +215,7 @@ j2 <- ggplot(dfyr5) +
         panel.grid.minor = element_blank(),
         axis.text = element_text(size = 12),
         axis.text.x = element_blank(),
+        axis.text.y = element_blank(), # turn off y-axis
         axis.title.x = element_blank(),
         # strip.text = element_blank(),
         legend.position = "bottom", 
@@ -241,6 +242,7 @@ j3 <- ggplot(dfyr10) +
         panel.grid.minor = element_blank(),
         axis.text = element_text(size = 12),
         axis.text.x = element_blank(),
+        axis.text.y = element_blank(), # turn off y axis
         axis.title.x = element_blank(),
         # strip.text = element_blank(),
         legend.position = "none", 
