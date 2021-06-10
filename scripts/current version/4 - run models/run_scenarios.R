@@ -14,6 +14,30 @@
 # add more iterations to models that we think should converge slowest
   # e.g. fewer datasets and low detection
 
+# NOTES ON WHAT HAS RUN AND WHERE IT IS LOCATED
+#### SET ####
+#     1-9  ## Run - IPMEURING on AEB computer and UDrive ( but double check )
+#   10-18  ## Running - 6/10 on Ursus
+#   19-27  ## 
+#   28-36  ##
+#   37-45  ##
+#   46-54  ##
+#   55-63  ##
+#   64-72  ##
+#   73-81  ##
+#   82-90  ##
+#   91-99  ##
+# 100-108  ##
+# 109-117  ##
+# 118-126  ##
+# 127-135  ##
+# 136-144  ##
+#############
+
+# PLAN OF ATTACK FOR MANUSCRIPT
+
+# run scenarios as set up below in chunks of 9 at a time
+
 library(tidyverse)
 library(here)
 library(nimble)
@@ -60,11 +84,13 @@ ni <- nb + nb #total iterations
 nt <- 10  #thin
 nc <- 3  #chains
 
-
-
 cores=detectCores()
-cl <- makeCluster(10, setup_strategy = "sequential") #not to overload your computer
+cl <- makeCluster(scenarios.picked, setup_strategy = "sequential") #not to overload your computer
 registerDoParallel(cl)
+
+# i is the unique trajectory (within trend)
+# j is replicate
+# d is scenario number
 
 foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
   library(here)
@@ -73,7 +99,7 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
     lowpopTraj <- readRDS(here("data", "lowTrajectories", paste("lowpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     medpopTraj <- readRDS(here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     highpopTraj <- readRDS(here("data", "highTrajectories", paste("highpopTraj", "-", i, "-", j, ".RDS", sep = "")))
-    for (d in 1:length(which.prio.1)) { # simulation scenario
+    for (d in 10:18) { # simulation scenario
       det.levels <- scenarios[d, 1:4]
       det.numeric <- det.levels[1:3]
       det.numeric[which(det.numeric == "L")] <- detect.l
