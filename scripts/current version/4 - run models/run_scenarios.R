@@ -15,7 +15,7 @@
   # e.g. fewer datasets and low detection
 
 # NOTES ON WHAT HAS RUN AND WHERE IT IS LOCATED
-#### SET ####
+#### d ####
 #     1-9  ## Run - IPMEURING on AEB computer and UDrive ( but double check )
 #   10-18  ## Running - 6/10 on Ursus
 #   19-27  ## 
@@ -95,7 +95,7 @@ registerDoParallel(cl)
 foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
   library(here)
   library(nimble)
-  for (j in 1:(sims.per)/2) { # HALVED THIS FOR NOW
+  for (j in 1:(sims.per/2)) { # HALVED THIS FOR NOW
     lowpopTraj <- readRDS(here("data", "lowTrajectories", paste("lowpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     medpopTraj <- readRDS(here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     highpopTraj <- readRDS(here("data", "highTrajectories", paste("highpopTraj", "-", i, "-", j, ".RDS", sep = "")))
