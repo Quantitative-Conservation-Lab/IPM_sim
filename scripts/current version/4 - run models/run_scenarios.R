@@ -105,7 +105,8 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
       det.numeric[which(det.numeric == "L")] <- detect.l
       det.numeric[which(det.numeric == "M")] <- detect.m
       det.numeric[which(det.numeric== "H")] <- detect.h
-      if (is.na(det.levels[2]) & is.na(det.levels[3])) { # ABUNDANCE ONLY
+      det.numeric[which(det.numeric== "NA")] <- NA
+      if (is.na(det.numeric[2]) & is.na(det.numeric[3])) { # ABUNDANCE ONLY
         if (det.levels[4] == "L") {
           lowpopDat <- simData (indfates = lowpopTraj$indfates,
                                 n.years = 15,
@@ -167,7 +168,7 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(highout)
         }
-      } else if (is.na(det.levels[2])) { # NO MARK RECAPTURE
+      } else if (is.na(det.numeric[2])) { # NO MARK RECAPTURE
         if (det.levels[4] == "L") {
           lowpopDat <- simData (indfates = lowpopTraj$indfates,
                                 n.years = 15,
@@ -229,7 +230,7 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(highout)
         }
-      } else if (is.na(det.levels[3])) { # NO NEST SURVIVAL
+      } else if (is.na(det.numeric[3])) { # NO NEST SURVIVAL
         if (det.levels[4] == "L") {
           lowpopDat <- simData (indfates = lowpopTraj$indfates,
                                 n.years = 15,

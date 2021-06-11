@@ -210,175 +210,182 @@ simData <- function(indfates, n.years, n.data.types,
   #for adults, 1 year olds and chicks
   #AD_only=F
 
-  if(ADonly==T){
-    #using the individual population array for MR data
-    mr_classes<-dim(IND_MR)[1] - 3 #since we wont see Dead and the reproduction doesnt matter
-    #so we have 2 classes, we care about in marking: 1year olds, and adults
-    ind_mr<-IND_MR[c(1,2),1:n.years,]
-    #ind_mr[1,,]<-NA #if not banding 1yearold/s, then remove
-    rm<-numeric(dim(ind_mr)[3]) # remove dead individuals
-    for(i in 1:dim(ind_mr)[3]){
-      if(length(which(!is.na(ind_mr[1:2,,i])))==0){
-        rm[i]<-1
-      }else{
-        rm[i]<-0
-      }
-    }
-    if(sum(rm>0)){
-      ind_mr<-ind_mr[,,-which(rm==1)]
-    }else{}
-
-
-    age<-first<-last<-numeric() # age, first and last encounters
-    mr_t<-dim(ind_mr)[2]
-    mr_ind<-dim(ind_mr)[3]
-    for(i in 1:mr_ind){
-      g <- which(!is.na(ind_mr[1:2,,i]), arr.ind = TRUE) # ind that were seen
-      age[i] <- g[1,1] # age at marking
-      first[i] <- g[1,2] # first time seen
-      h <- which(ind_mr[1:2,,i]==1, arr.ind = TRUE) # last time seen
-      last[i] <- max(h[,2])
-    }
-    #remove those that we never banded as a chick
-    ch.true<-matrix(0,ncol=mr_t, nrow=mr_ind)
-    for(i in 1:mr_ind){
-      ch.true[i,first[i]:last[i]]<-1
-    }
-
-    #detection of true marked individuals:
-    #since inital marking is constant prob
-    #and resight is constant prob
-    #phi.1 #probability you were marked as 1 year old
-    #p.ad #probability you were marked as adult
-    in.mark<-ch<-matrix(0,nrow=mr_ind, ncol=mr_t)
-    for(i in 1:mr_ind){
-      # if(age[i]==1){
-      #   in.mark[i,first[i]]<-rbinom(1,1,p.1*ch.true[i,first[i]])
-      # } else{
-      in.mark[i,first[i]]<-rbinom(1,1,p.ad*ch.true[i,first[i]])
-      #}
-      if(first[i]==mr_t) next
-      for(t in (first[i]+1):last[i]){
-        #if(age[i]==1){
-        #  in.mark[i,t]<-rbinom(1,1,p.1*ch.true[i,t])
-        #}
-        in.mark[i,t]<-rbinom(1,1,p.ad*ch.true[i,t])
-      }
-      ch[i,]<-in.mark[i,]
-    }
-
-    #code to track the ages, 1 is for chicks, 2 1years, 3 adults (code not currently in use)
-    add_age_chtrue<-age_ch<-matrix(0,nrow=mr_ind, ncol=mr_t)
-    for(i in 1:mr_ind){
-      for(x in (first[i]):last[i]){
-        add_age_chtrue[i,x]<-as.numeric(which(!is.na(ind_mr[,x,i])))
-        age_ch[i,x]<-add_age_chtrue[i,x]*ch[i,x]
-      }
-    }
-    rm_2<-numeric(mr_ind) # remove those we never saw
-    for(i in 1:mr_ind){
-      if(sum(ch[i,])==0){
-        rm_2[i]<-1
-      }else {
-        rm_2[i]<-0
-      }
-      #rm_2[i]<-sum(ch[i,])
-    }
-    if(sum(rm_2)>0){
-      ch<-ch[-(which(rm_2==1)),]
-      age_ch<-age_ch[-(which(rm_2==1)),]
-      add_age_chtrue[-(which(rm_2==1)),]
-    } else {}
-    firstobs<-lastobs<-numeric(length(ch[,1]))
-    for(i in 1:length(ch[,1])){
-      firstobs[i]<-min(which(ch[i,]==1))
-      lastobs[i]<-max(which(ch[i,]==1))
-    }
-
-  }else{
-    #if we mark chicks, 1 years, adults
-    #!!
-    #using the individual population array for MR data
-    #mr_classes<-dim(IND_MR)[1] - 3 #since we wont see Dead and the reproduction doesnt matter
-    #so we have 2 classes, we care about in marking: 1year olds, and adults
-    ind_mr<-IND_MR[c(1,2,3),1:n.years,]
-    #ind_mr[1,,]<-NA #if not banding 1yearold/s, then remove
-    rm<-numeric(dim(ind_mr)[3])
-    for(i in 1:dim(ind_mr)[3]){
-      if(length(which(!is.na(ind_mr[1:3,,i])))==0){
-        rm[i]<-1
-      }else{
-        rm[i]<-0
-      }
-    }
-    if(sum(rm>0)){
-      ind_mr<-ind_mr[,,-which(rm==1)]
-    }else{}
-
-
-    age<-first<-last<-numeric()
-    mr_t<-dim(ind_mr)[2]
-    mr_ind<-dim(ind_mr)[3]
-    for(i in 1:mr_ind){
-      g <- which(!is.na(ind_mr[1:3,,i]), arr.ind = TRUE)
-      age[i] <- g[1,1] #at marking
-      first[i] <- g[1,2]
-      h <- which(ind_mr[1:3,,i]==1, arr.ind = TRUE)
-      last[i] <- max(h[,2])
-    }
-    ch.true<-matrix(0,ncol=mr_t, nrow=mr_ind)
-    for(i in 1:mr_ind){
-      ch.true[i,first[i]:last[i]]<-1
-    }
-
-    #since inital marking is constant prob
-    #and resight is constant prob
-    #phi.1 #probability you were marked as 1 year old
-    #p.ad #probability you were marked as adult
-    in.mark<-ch<-matrix(0,nrow=mr_ind, ncol=mr_t)
-    for(i in 1:mr_ind){
-      if(age[i]==1){
-        in.mark[i,first[i]]<-rbinom(1,1,p.1*ch.true[i,first[i]])
-      } else{
-        in.mark[i,first[i]]<-rbinom(1,1,p.ad*ch.true[i,first[i]])
-      }
-      if(first[i]==mr_t) next
-      for(t in (first[i]+1):last[i]){
-        if(age[i]==1){
-          in.mark[i,t]<-rbinom(1,1,p.1*ch.true[i,t])
+  if(!is.na(p.1) & !is.na(p.ad)) {
+    if(ADonly==T){
+      #using the individual population array for MR data
+      mr_classes<-dim(IND_MR)[1] - 3 #since we wont see Dead and the reproduction doesnt matter
+      #so we have 2 classes, we care about in marking: 1year olds, and adults
+      ind_mr<-IND_MR[c(1,2),1:n.years,]
+      #ind_mr[1,,]<-NA #if not banding 1yearold/s, then remove
+      rm<-numeric(dim(ind_mr)[3]) # remove dead individuals
+      for(i in 1:dim(ind_mr)[3]){
+        if(length(which(!is.na(ind_mr[1:2,,i])))==0){
+          rm[i]<-1
+        }else{
+          rm[i]<-0
         }
-        in.mark[i,t]<-rbinom(1,1,p.ad*ch.true[i,t])
       }
-      ch[i,]<-in.mark[i,]
-    }
-
-    #code to track the ages, 1 is for chicks, 2 1years, 3 adults
-    add_age_chtrue<-age_ch<-matrix(0,nrow=mr_ind, ncol=mr_t)
-    for(i in 1:mr_ind){
-      for(x in (first[i]):last[i]){
-        add_age_chtrue[i,x]<-as.numeric(which(!is.na(ind_mr[,x,i])))[1]
-        age_ch[i,x]<-add_age_chtrue[i,x]*ch[i,x]
+      if(sum(rm>0)){
+        ind_mr<-ind_mr[,,-which(rm==1)]
+      }else{}
+      
+      
+      age<-first<-last<-numeric() # age, first and last encounters
+      mr_t<-dim(ind_mr)[2]
+      mr_ind<-dim(ind_mr)[3]
+      for(i in 1:mr_ind){
+        g <- which(!is.na(ind_mr[1:2,,i]), arr.ind = TRUE) # ind that were seen
+        age[i] <- g[1,1] # age at marking
+        first[i] <- g[1,2] # first time seen
+        h <- which(ind_mr[1:2,,i]==1, arr.ind = TRUE) # last time seen
+        last[i] <- max(h[,2])
       }
-    }#here 3 is chick, 1 is 1yearold, 2 is adult
-    rm_2<-numeric(mr_ind)
-    for(i in 1:mr_ind){
-      if(sum(ch[i,])==0){
-        rm_2[i]<-1
-      }else {
-        rm_2[i]<-0
+      #remove those that we never banded as a chick
+      ch.true<-matrix(0,ncol=mr_t, nrow=mr_ind)
+      for(i in 1:mr_ind){
+        ch.true[i,first[i]:last[i]]<-1
       }
-      #rm_2[i]<-sum(ch[i,])
-    }
-    if(sum(rm_2)>0){
-      ch<-ch[-(which(rm_2==1)),]
-      age_ch<-age_ch[-(which(rm_2==1)),]
-      add_age_chtrue[-(which(rm_2==1)),]
-    } else {}
-    firstobs<-lastobs<-numeric(length(ch[,1]))
-    for(i in 1:length(ch[,1])){
-      firstobs[i]<-min(which(ch[i,]==1))
-      lastobs[i]<-max(which(ch[i,]==1))
-    }
+      
+      #detection of true marked individuals:
+      #since inital marking is constant prob
+      #and resight is constant prob
+      #phi.1 #probability you were marked as 1 year old
+      #p.ad #probability you were marked as adult
+      in.mark<-ch<-matrix(0,nrow=mr_ind, ncol=mr_t)
+      for(i in 1:mr_ind){
+        # if(age[i]==1){
+        #   in.mark[i,first[i]]<-rbinom(1,1,p.1*ch.true[i,first[i]])
+        # } else{
+        in.mark[i,first[i]]<-rbinom(1,1,p.ad*ch.true[i,first[i]])
+        #}
+        if(first[i]==mr_t) next
+        for(t in (first[i]+1):last[i]){
+          #if(age[i]==1){
+          #  in.mark[i,t]<-rbinom(1,1,p.1*ch.true[i,t])
+          #}
+          in.mark[i,t]<-rbinom(1,1,p.ad*ch.true[i,t])
+        }
+        ch[i,]<-in.mark[i,]
+      }
+      
+      #code to track the ages, 1 is for chicks, 2 1years, 3 adults (code not currently in use)
+      add_age_chtrue<-age_ch<-matrix(0,nrow=mr_ind, ncol=mr_t)
+      for(i in 1:mr_ind){
+        for(x in (first[i]):last[i]){
+          add_age_chtrue[i,x]<-as.numeric(which(!is.na(ind_mr[,x,i])))
+          age_ch[i,x]<-add_age_chtrue[i,x]*ch[i,x]
+        }
+      }
+      rm_2<-numeric(mr_ind) # remove those we never saw
+      for(i in 1:mr_ind){
+        if(sum(ch[i,])==0){
+          rm_2[i]<-1
+        }else {
+          rm_2[i]<-0
+        }
+        #rm_2[i]<-sum(ch[i,])
+      }
+      if(sum(rm_2)>0){
+        ch<-ch[-(which(rm_2==1)),]
+        age_ch<-age_ch[-(which(rm_2==1)),]
+        add_age_chtrue[-(which(rm_2==1)),]
+      } else {}
+      firstobs<-lastobs<-numeric(length(ch[,1]))
+      for(i in 1:length(ch[,1])){
+        firstobs[i]<-min(which(ch[i,]==1))
+        lastobs[i]<-max(which(ch[i,]==1))
+      }
+      
+    }else{
+      #if we mark chicks, 1 years, adults
+      #!!
+      #using the individual population array for MR data
+      #mr_classes<-dim(IND_MR)[1] - 3 #since we wont see Dead and the reproduction doesnt matter
+      #so we have 2 classes, we care about in marking: 1year olds, and adults
+      ind_mr<-IND_MR[c(1,2,3),1:n.years,]
+      #ind_mr[1,,]<-NA #if not banding 1yearold/s, then remove
+      rm<-numeric(dim(ind_mr)[3])
+      for(i in 1:dim(ind_mr)[3]){
+        if(length(which(!is.na(ind_mr[1:3,,i])))==0){
+          rm[i]<-1
+        }else{
+          rm[i]<-0
+        }
+      }
+      if(sum(rm>0)){
+        ind_mr<-ind_mr[,,-which(rm==1)]
+      }else{}
+      
+      
+      age<-first<-last<-numeric()
+      mr_t<-dim(ind_mr)[2]
+      mr_ind<-dim(ind_mr)[3]
+      for(i in 1:mr_ind){
+        g <- which(!is.na(ind_mr[1:3,,i]), arr.ind = TRUE)
+        age[i] <- g[1,1] #at marking
+        first[i] <- g[1,2]
+        h <- which(ind_mr[1:3,,i]==1, arr.ind = TRUE)
+        last[i] <- max(h[,2])
+      }
+      ch.true<-matrix(0,ncol=mr_t, nrow=mr_ind)
+      for(i in 1:mr_ind){
+        ch.true[i,first[i]:last[i]]<-1
+      }
+      
+      #since inital marking is constant prob
+      #and resight is constant prob
+      #phi.1 #probability you were marked as 1 year old
+      #p.ad #probability you were marked as adult
+      in.mark<-ch<-matrix(0,nrow=mr_ind, ncol=mr_t)
+      for(i in 1:mr_ind){
+        if(age[i]==1){
+          in.mark[i,first[i]]<-rbinom(1,1,p.1*ch.true[i,first[i]])
+        } else{
+          in.mark[i,first[i]]<-rbinom(1,1,p.ad*ch.true[i,first[i]])
+        }
+        if(first[i]==mr_t) next
+        for(t in (first[i]+1):last[i]){
+          if(age[i]==1){
+            in.mark[i,t]<-rbinom(1,1,p.1*ch.true[i,t])
+          }
+          in.mark[i,t]<-rbinom(1,1,p.ad*ch.true[i,t])
+        }
+        ch[i,]<-in.mark[i,]
+      }
+      
+      #code to track the ages, 1 is for chicks, 2 1years, 3 adults
+      add_age_chtrue<-age_ch<-matrix(0,nrow=mr_ind, ncol=mr_t)
+      for(i in 1:mr_ind){
+        for(x in (first[i]):last[i]){
+          add_age_chtrue[i,x]<-as.numeric(which(!is.na(ind_mr[,x,i])))[1]
+          age_ch[i,x]<-add_age_chtrue[i,x]*ch[i,x]
+        }
+      }#here 3 is chick, 1 is 1yearold, 2 is adult
+      rm_2<-numeric(mr_ind)
+      for(i in 1:mr_ind){
+        if(sum(ch[i,])==0){
+          rm_2[i]<-1
+        }else {
+          rm_2[i]<-0
+        }
+        #rm_2[i]<-sum(ch[i,])
+      }
+      if(sum(rm_2)>0){
+        ch<-ch[-(which(rm_2==1)),]
+        age_ch<-age_ch[-(which(rm_2==1)),]
+        add_age_chtrue[-(which(rm_2==1)),]
+      } else {}
+      firstobs<-lastobs<-numeric(length(ch[,1]))
+      for(i in 1:length(ch[,1])){
+        firstobs[i]<-min(which(ch[i,]==1))
+        lastobs[i]<-max(which(ch[i,]==1))
+      }
+    } 
+  } else {
+    ch=NULL
+    age_ch=NULL
+    firstobs=NULL
+    lastobs=NULL
   }
 
 
@@ -419,16 +426,18 @@ simData <- function(indfates, n.years, n.data.types,
     #true number of reproducing females
     R_true[t]<-length(which(IND_Nest[3,t,]>0))
 
-    #observation, who dont we see and who do we see
-    #Assumes we can count the number of chicks perfectly if we see the nest
-    for(i in 1:length(IND_Nest[1,1,])){
-      if(!is.na(IND_Nest[3,t,i])){
-        obstemp<-rbinom(1,1,p.prod)
-        if(obstemp==1){
-          R_obs[t]<-R_obs[t]+1
-          OBS_nestlings[t]<-IND_Nest[3,t,i]+OBS_nestlings[t]
+    if(!is.na(p.prod)) {
+      #observation, who dont we see and who do we see
+      #Assumes we can count the number of chicks perfectly if we see the nest
+      for(i in 1:length(IND_Nest[1,1,])){
+        if(!is.na(IND_Nest[3,t,i])){
+          obstemp<-rbinom(1,1,p.prod)
+          if(obstemp==1){
+            R_obs[t]<-R_obs[t]+1
+            OBS_nestlings[t]<-IND_Nest[3,t,i]+OBS_nestlings[t]
+          }
         }
-      }
+      }  
     }
 
   }
