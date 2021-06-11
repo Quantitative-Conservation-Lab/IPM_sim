@@ -123,7 +123,7 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popDat <- lowpopDat
           popTraj <- lowpopTraj
           comb <- low.lam.combos[i,]
-          lowout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          lowout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           #assign(paste("lowout-",i,"-",j,"-",d, sep = ""), lowout)
           saveRDS(lowout, here("results",paste("lowout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(lowout)
@@ -143,7 +143,7 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popDat <- medpopDat
           popTraj <- medpopTraj
           comb <- med.lam.combos[i,]
-          medout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          medout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           #assign(paste("medout-",i,"-",j,"-",d, sep = ""), medout)
           saveRDS(medout, here("results", paste("medout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(medout)
@@ -163,7 +163,7 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popDat <- highpopDat
           popTraj <- highpopTraj
           comb <- high.lam.combos[i,]
-          highout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          highout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           #assign(paste("highout-",i,"-",j,"-",d, sep = ""), highout)
           saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(highout)
@@ -185,7 +185,7 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popDat <- lowpopDat
           popTraj <- lowpopTraj
           comb <- low.lam.combos[i,]
-          lowout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          lowout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           #assign(paste("lowout-",i,"-",j,"-",d, sep = ""), lowout)
           saveRDS(lowout, here("results", paste("lowout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(lowout)
@@ -205,7 +205,7 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popDat <- medpopDat
           popTraj <- medpopTraj
           comb <- med.lam.combos[i,]
-          medout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          medout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           #assign(paste("medout-",i,"-",j,"-",d, sep = ""), medout)
           saveRDS(medout, here("results", paste("medout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(medout)
@@ -225,7 +225,7 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popDat <- highpopDat
           popTraj <- highpopTraj
           comb <- high.lam.combos[i,]
-          highout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          highout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           #assign(paste("highout-",i,"-",j,"-",d, sep = ""), highout)
           saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(highout)
@@ -247,7 +247,7 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popDat <- lowpopDat
           popTraj <- lowpopTraj
           comb <- low.lam.combos[i,]
-          lowout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          lowout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           #assign(paste("lowout-",i,"-",j,"-",d, sep = ""), lowout)
           saveRDS(lowout, here("results", paste("lowout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(lowout)
@@ -267,7 +267,7 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popDat <- medpopDat
           popTraj <- medpopTraj
           comb <- med.lam.combos[i,]
-          medout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          medout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           #assign(paste("medout-",i,"-",j,"-",d, sep = ""), medout)
           saveRDS(medout, here("results", paste("medout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(medout)
@@ -287,7 +287,7 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popDat <- highpopDat
           popTraj <- highpopTraj
           comb <- high.lam.combos[i,]
-          highout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          highout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           #assign(paste("highout-",i,"-",j,"-",d, sep = ""), highout)
           saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(highout)
@@ -309,7 +309,7 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popDat <- lowpopDat
           popTraj <- lowpopTraj
           comb <- low.lam.combos[i,]
-          lowout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          lowout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           #assign(paste("lowout-",i,"-",j,"-",d, sep = ""), lowout)
           saveRDS(lowout, here("results", paste("lowout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(lowout)
@@ -329,7 +329,7 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popDat <- medpopDat
           popTraj <- medpopTraj
           comb <- med.lam.combos[i,]
-          medout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          medout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           #assign(paste("medout-",i,"-",j,"-",d, sep = ""), medout)
           saveRDS(medout, here("results", paste("medout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(medout)
@@ -349,7 +349,7 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
           popDat <- highpopDat
           popTraj <- highpopTraj
           comb <- high.lam.combos[i,]
-          highout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = rep(detect[d], 3))
+          highout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           #assign(paste("highout-",i,"-",j,"-",d, sep = ""), highout)
           saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(highout)

@@ -51,7 +51,7 @@ runIPMmod <- function(nb, ni, nt, nc,
 
   #### CONSTANTS ####
 
-  const1 <- list(nyears = ncol(popDat$ch),
+  const1 <- list(nyears = 15,
                  n.sam = nrow(popDat$SUR))
 
   #### INITIAL VALUES ####
@@ -59,8 +59,8 @@ runIPMmod <- function(nb, ni, nt, nc,
 
   inits1 <- list(
     mean.phi = c(comb$phi1, comb$phiad),#c(detect.h, detect.h),
-    mean.p = detect[1],
-    p.surv = detect[2],
+    mean.p = detect[2],
+    p.surv = detect[1],
     fec = comb$fec,#detect.h,
     #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
     #mean.p = runif(1,0,1),#detect.h,
@@ -106,7 +106,7 @@ runnonests <- function(nb, ni, nt, nc,
 
   #### CONSTANTS ####
 
-  const1 <- list(nyears = ncol(popDat$ch),
+  const1 <- list(nyears = 15,
                  n.sam = nrow(popDat$SUR)#,
                  #n.ind = nrow(popDat$ch),
                  #first = popDat$firstobs
@@ -116,8 +116,8 @@ runnonests <- function(nb, ni, nt, nc,
   #z.state <- state.data(popDat$ch)
 
   inits1 <- list(mean.phi = c(comb$phi1, comb$phiad),#c(detect.h, detect.h),
-                 mean.p = detect[1],
-                 p.surv = detect[2],
+                 mean.p = detect[2],
+                 p.surv = detect[1],
                  fec = comb$fec,#detect.h,
                  #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
                  #mean.p = runif(1,0,1),#detect.h,
@@ -167,7 +167,7 @@ runnomr <- function(nb, ni, nt, nc,
 
   #### CONSTANTS ####
 
-  const1 <- list(nyears = ncol(popDat$ch),
+  const1 <- list(nyears = 15,
                  n.sam = nrow(popDat$SUR))
 
   #### INITIAL VALUES ####
@@ -175,7 +175,7 @@ runnomr <- function(nb, ni, nt, nc,
 
   inits1 <- list(mean.phi = c(comb$phi1, comb$phiad),#c(detect.h, detect.h),
                  #mean.p = detect.h,
-                 p.surv = detect[2],
+                 p.surv = detect[1],
                  fec = comb$fec,#detect.h,
                  #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
                  #mean.p = runif(1,0,1),#detect.h,
@@ -222,7 +222,7 @@ runabundonly <- function(nb, ni, nt, nc,
 
   #### CONSTANTS ####
 
-  const1 <- list(nyears = ncol(popDat$ch),
+  const1 <- list(nyears = 15,
                  n.sam = nrow(popDat$SUR))
 
   #### INITIAL VALUES ####
@@ -230,7 +230,7 @@ runabundonly <- function(nb, ni, nt, nc,
 
   inits1 <- list(mean.phi = c(comb$phi1, comb$phiad),#c(detect.h, detect.h),
                  #mean.p = detect.h,
-                 p.surv = detect[2],
+                 p.surv = detect[1],
                  fec = comb$fec,#detect.h,
                  #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
                  #mean.p = runif(1,0,1),#detect.h,
