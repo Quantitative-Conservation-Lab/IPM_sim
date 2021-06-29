@@ -16,14 +16,23 @@
 
 # NOTES ON WHAT HAS RUN AND WHERE IT IS LOCATED
 #### d ####
-#     1-9  ## Run - IPMEURING on AEB computer and UDrive ( but double check )
-#   10-18  ## Running - 6/10 on Ursus
-#   19-27  ## 
-#   28-36  ##
-#   37-45  ##
-#   46-54  ##
-#   55-63  ##
-#   64-72  ##
+#     1-9  ## Run - IPMEURING on AEB UDrive COMPLETE
+#   10-18  ## Running - 6/10 on Ursus - COMPLETE
+#   19-27  ## first half running on Ursus - 6/17 COMPLETE
+           ## second half running on Ursus - 6/18 COMPLETE
+#   28-36  ## first half running on Ursus - 6/19 COMPLETE
+           ## second half running on Ursus - 6/20 COMPLETE
+#   37-45  ## first half running on Ursus - 6/21 COMPLETE
+           ## second half running on Ursus - 6/22 COMPLETE
+#   46-54  ## first half running on Ursus - 6/23 COMPLETE
+           ## second half running on Ursus - 6/25 COMPLETE
+#   55-63  ## first half running on Ursus - 6/26 COMPLETE
+           ## second half running on Ursus - 6/27 running
+#   64-72  ## first half running on Ursus - 6/28
+           ## second half running on Ursus - 6/29
+
+# HALFWAY  ## woohooooo - plan to back up simulations at this point
+
 #   73-81  ##
 #   82-90  ##
 #   91-99  ##
@@ -95,11 +104,11 @@ registerDoParallel(cl)
 foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
   library(here)
   library(nimble)
-  for (j in 1:(sims.per/2)) { # HALVED THIS FOR NOW
+  for (j in 14:25) { # HALVED THIS FOR NOW
     lowpopTraj <- readRDS(here("data", "lowTrajectories", paste("lowpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     medpopTraj <- readRDS(here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     highpopTraj <- readRDS(here("data", "highTrajectories", paste("highpopTraj", "-", i, "-", j, ".RDS", sep = "")))
-    for (d in 10:18) { # simulation scenario
+    for (d in 55:63) { # simulation scenario
       det.levels <- scenarios[d, 1:4]
       det.numeric <- det.levels[1:3]
       det.numeric[which(det.numeric == "L")] <- detect.l
