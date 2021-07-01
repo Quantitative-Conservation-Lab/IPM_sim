@@ -28,19 +28,27 @@
            ## second half running on Ursus - 6/25 COMPLETE
 #   55-63  ## first half running on Ursus - 6/26 COMPLETE
            ## second half running on Ursus - 6/27 running
-#   64-72  ## first half running on Ursus - 6/28
-           ## second half running on Ursus - 6/29
+#   64-72  ## first half running on Ursus - 6/28 
+           ## second half running on Ursus - 7/1 running (ajw)
 
 # HALFWAY  ## woohooooo - plan to back up simulations at this point
 
-#   73-81  ##
-#   82-90  ##
-#   91-99  ##
-# 100-108  ##
-# 109-117  ##
-# 118-126  ##
-# 127-135  ##
-# 136-144  ##
+#   73-81  ## first half running on Ursus -  
+           ## second half running on Ursus - 
+#   82-90  ## first half running on Ursus -  
+           ## second half running on Ursus -
+#   91-99  ## first half running on Ursus -  
+           ## second half running on Ursus -
+# 100-108  ## first half running on Ursus -  
+           ## second half running on Ursus -
+# 109-117  ## first half running on Ursus -  
+           ## second half running on Ursus -
+# 118-126  ## first half running on Ursus -  
+           ## second half running on Ursus -
+# 127-135  ## first half running on Ursus -  
+           ## second half running on Ursus -
+# 136-144  ## first half running on Ursus -  
+           ## second half running on Ursus -
 #############
 
 # PLAN OF ATTACK FOR MANUSCRIPT
@@ -104,11 +112,11 @@ registerDoParallel(cl)
 foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
   library(here)
   library(nimble)
-  for (j in 14:25) { # HALVED THIS FOR NOW
+  for (j in 14:25) { # HALVED THIS FOR NOW; 1-13 or 14-25
     lowpopTraj <- readRDS(here("data", "lowTrajectories", paste("lowpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     medpopTraj <- readRDS(here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     highpopTraj <- readRDS(here("data", "highTrajectories", paste("highpopTraj", "-", i, "-", j, ".RDS", sep = "")))
-    for (d in 55:63) { # simulation scenario
+    for (d in 64:72) { # simulation scenario
       det.levels <- scenarios[d, 1:4]
       det.numeric <- det.levels[1:3]
       det.numeric[which(det.numeric == "L")] <- detect.l
