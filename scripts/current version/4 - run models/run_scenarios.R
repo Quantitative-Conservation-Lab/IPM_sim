@@ -40,11 +40,11 @@
 #   91-99  ## first half running on Ursus - 7/7 COMPLETE (ajw)
            ## second half running on Ursus - 7/8 COMPLETE (ajw)
 # 100-108  ## first half running on Ursus - 7/9 COMPLETE (ajw)
-           ## second half running on Ursus - COMPLETE? unexpected ursus restart 7/10 (ajw)
+           ## second half running on Ursus - 7/10 COMPLETE? unexpected restart (ajw)
 # 109-117  ## first half running on Ursus -  7/11 COMPLETE (ajw)
-           ## second half running on Ursus - 7/12 running (ajw)
-# 118-126  ## first half running on Ursus -  7/13 (ajw)
-           ## second half running on Ursus - 7/14 (ajw)
+           ## second half running on Ursus - 7/12 COMPLETE (ajw)
+# 118-126  ## first half running on Ursus -  7/13 COMPLETE? unexpected restart (ajw)
+           ## second half running on Ursus - 7/14 running -- post results transfer (ajw)
 # 127-135  ## first half running on Ursus -  
            ## second half running on Ursus -
 # 136-144  ## first half running on Ursus -  
@@ -116,7 +116,7 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
     lowpopTraj <- readRDS(here("data", "lowTrajectories", paste("lowpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     medpopTraj <- readRDS(here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     highpopTraj <- readRDS(here("data", "highTrajectories", paste("highpopTraj", "-", i, "-", j, ".RDS", sep = "")))
-    for (d in 109:117) { # simulation scenario
+    for (d in 118:126) { # simulation scenario
       det.levels <- scenarios[d, 1:4]
       det.numeric <- det.levels[1:3]
       det.numeric[which(det.numeric == "L")] <- detect.l
