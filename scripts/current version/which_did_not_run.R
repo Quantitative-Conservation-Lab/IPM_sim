@@ -12,9 +12,9 @@ library(nlist)
 library(beepr)
 library(purrr)
 
-#setwd("D:/all_results")
+setwd("D:/all_results")
 
-#files <- list.files() 
+files <- list.files()
 
 files <- readRDS("~/Desktop/IPM_sim/scripts/current version/files.RDS")
 files <- files[str_detect(files, "RDS")] %>% 
