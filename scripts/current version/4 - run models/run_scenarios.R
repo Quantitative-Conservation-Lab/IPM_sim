@@ -48,8 +48,8 @@
            ## second half running on Ursus - 7/14 complete -- post results transfer (ajw)
 # 127-135  ## first half running on Ursus -  7/15 COMPLETE (aeb)
            ## second half running on Ursus - 7/16 COMPLETE (ajw)
-# 136-144  ## first half running on Ursus -  7/17 running (ajw)
-           ## second half running on Ursus -
+# 136-144  ## first half running on Ursus -  7/17 COMPLETE; 1-14 (ajw)
+           ## second half running on Ursus - 7/18 COMPLETE 15:25 (ajw)
 #############
 
 # PLAN OF ATTACK FOR MANUSCRIPT
@@ -113,7 +113,7 @@ registerDoParallel(cl)
 foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
   library(here)
   library(nimble)
-  for (j in 1:14) { # HALVED THIS FOR NOW; 1-13 or 14-25
+  for (j in 15:25) { # HALVED THIS FOR NOW; 1-13 or 14-25
     lowpopTraj <- readRDS(here("data", "lowTrajectories", paste("lowpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     medpopTraj <- readRDS(here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     highpopTraj <- readRDS(here("data", "highTrajectories", paste("highpopTraj", "-", i, "-", j, ".RDS", sep = "")))
