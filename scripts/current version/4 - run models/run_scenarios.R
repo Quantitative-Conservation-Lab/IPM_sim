@@ -28,19 +28,28 @@
            ## second half running on Ursus - 6/25 COMPLETE
 #   55-63  ## first half running on Ursus - 6/26 COMPLETE
            ## second half running on Ursus - 6/27 running
-#   64-72  ## first half running on Ursus - 6/28
-           ## second half running on Ursus - 6/29
+#   64-72  ## first half running on Ursus - 6/28 COMPLETE
+           ## second half running on Ursus - 7/1 COMPLETE (ajw)
 
 # HALFWAY  ## woohooooo - plan to back up simulations at this point
 
-#   73-81  ##
-#   82-90  ##
-#   91-99  ##
-# 100-108  ##
-# 109-117  ##
-# 118-126  ##
-# 127-135  ##
-# 136-144  ##
+#   73-81  ## first half running on Ursus -  7/2 COMPLETE (ajw)
+           ## second half running on Ursus - 7/3 COMPLETE (ajw)
+#   82-90  ## first half running on Ursus -  7/5 COMPLETE (ajw)
+           ## second half running on Ursus - 7/6 COMPLETE (ajw)
+#   91-99  ## first half running on Ursus - 7/7 COMPLETE (ajw)
+           ## second half running on Ursus - 7/8 COMPLETE (ajw)
+# 100-108  ## first half running on Ursus - 7/9 COMPLETE (ajw)
+           ## second half running on Ursus - 7/10 COMPLETE? unexpected restart (ajw)
+# 109-117  ## first half running on Ursus -  7/11 COMPLETE (ajw)
+           ## second half running on Ursus - 7/12 COMPLETE (ajw)
+           ## TODO - rerun this one
+# 118-126  ## first half running on Ursus -  7/13 COMPLETE? unexpected restart (ajw) 
+           ## second half running on Ursus - 7/14 complete -- post results transfer (ajw)
+# 127-135  ## first half running on Ursus -  7/15 COMPLETE (aeb)
+           ## second half running on Ursus - 7/16 COMPLETE (ajw)
+# 136-144  ## first half running on Ursus -  7/17 COMPLETE; 1-14 (ajw)
+           ## second half running on Ursus - 7/18 COMPLETE 15:25 (ajw)
 #############
 
 # PLAN OF ATTACK FOR MANUSCRIPT
@@ -104,11 +113,11 @@ registerDoParallel(cl)
 foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
   library(here)
   library(nimble)
-  for (j in 14:25) { # HALVED THIS FOR NOW
+  for (j in 15:25) { # HALVED THIS FOR NOW; 1-13 or 14-25
     lowpopTraj <- readRDS(here("data", "lowTrajectories", paste("lowpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     medpopTraj <- readRDS(here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     highpopTraj <- readRDS(here("data", "highTrajectories", paste("highpopTraj", "-", i, "-", j, ".RDS", sep = "")))
-    for (d in 55:63) { # simulation scenario
+    for (d in 136:144) { # simulation scenario
       det.levels <- scenarios[d, 1:4]
       det.numeric <- det.levels[1:3]
       det.numeric[which(det.numeric == "L")] <- detect.l
