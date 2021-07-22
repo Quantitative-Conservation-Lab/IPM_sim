@@ -12,9 +12,9 @@ library(nlist)
 library(beepr)
 library(purrr)
 
-setwd("D:/all_results")
-
-files <- list.files()
+# setwd("D:/all_results")
+# 
+# files <- list.files()
 
 files <- readRDS("~/Desktop/IPM_sim/scripts/current version/files.RDS")
 files <- files[str_detect(files, "RDS")] %>% 
@@ -47,13 +47,16 @@ rerun <- rows[which(!(rows %in% files))] %>%
   as.data.frame() %>% 
   arrange(c3, c2, c1)
 
+saveRDS(rerun, file = "toRerun.RDS")
+
 # aaaaa <- rerun %>% 
 #   filter((!c3 %in% c(1:9, 100:108, 118:126, 37:45, 46:54, 55:63)))
 
 bbb <- rerun %>% 
-  filter(c3 %in% 1:9)
+  filter(!(c3 %in% 1:9))
 
 # 1:9 - these are on loon - need to transfer over
+# 11-19
 
 # ONLY CERTAIN PARAM COMBINATIONS DID NOT CONVERGE - discuss this with the group
 # 3-9, 25
@@ -61,7 +64,5 @@ bbb <- rerun %>%
 # 46:54 - ALL
 # 55:63 - ALL
 
-# amanda noticed these got fucked up
-# 100:108 - 14:25
-# 118:126 - 1-13
-
+# which ones did not run
+# which ones did not converge
