@@ -3,57 +3,11 @@
 
 # OUTLINE ####
 
-# can we write this more efficiently??
-
-# if m-array speeds things significantly
-# add more iterations to all
-# create a flag for things that didn't converge -
-# could just rerun these, or restart chains
-
-# HAS idea
-# add more iterations to models that we think should converge slowest
-# e.g. fewer datasets and low detection
-
 # NOTES ON WHAT HAS RUN AND WHERE IT IS LOCATED
-#### d ####
-#     1-9  ## Run - IPMEURING on AEB UDrive COMPLETE
-#   10-18  ## Running - 6/10 on Ursus - COMPLETE
-#   19-27  ## first half running on Ursus - 6/17 COMPLETE
-## second half running on Ursus - 6/18 COMPLETE
-#   28-36  ## first half running on Ursus - 6/19 COMPLETE
-## second half running on Ursus - 6/20 COMPLETE
-#   37-45  ## first half running on Ursus - 6/21 COMPLETE
-## second half running on Ursus - 6/22 COMPLETE
-#   46-54  ## first half running on Ursus - 6/23 COMPLETE
-## second half running on Ursus - 6/25 COMPLETE
-#   55-63  ## first half running on Ursus - 6/26 COMPLETE
-## second half running on Ursus - 6/27 running
-#   64-72  ## first half running on Ursus - 6/28 COMPLETE
-## second half running on Ursus - 7/1 COMPLETE (ajw)
-
-# HALFWAY  ## woohooooo - plan to back up simulations at this point
-
-#   73-81  ## first half running on Ursus -  7/2 COMPLETE (ajw)
-## second half running on Ursus - 7/3 COMPLETE (ajw)
-#   82-90  ## first half running on Ursus -  7/5 COMPLETE (ajw)
-## second half running on Ursus - 7/6 COMPLETE (ajw)
-#   91-99  ## first half running on Ursus - 7/7 COMPLETE (ajw)
-## second half running on Ursus - 7/8 COMPLETE (ajw)
-# 100-108  ## first half running on Ursus - 7/9 COMPLETE (ajw)
-## second half running on Ursus - 7/10 rerun complete 7/21 unexpected restart (ajw)
-# 109-117  ## first half running on Ursus -  7/11 COMPLETE (ajw)
-## second half running on Ursus - 7/12 COMPLETE (ajw)
-# 118-126  ## first half running on Ursus -  7/13 rerun complete 7/20 unexpected restart (ajw) 
-## second half running on Ursus - 7/14 complete -- post results transfer (ajw)
-# 127-135  ## first half running on Ursus -  7/15 COMPLETE (aeb)
-## second half running on Ursus - 7/16 COMPLETE (ajw)
-# 136-144  ## first half running on Ursus -  7/17 COMPLETE; 1-14 (ajw)
-## second half running on Ursus - 7/18 COMPLETE 15:25 (ajw)
+#### ii ####
+# first half
+# second half
 #############
-
-# PLAN OF ATTACK FOR MANUSCRIPT
-
-# run scenarios as set up below in chunks of 9 at a time
 
 library(tidyverse)
 library(here)
@@ -110,9 +64,9 @@ registerDoParallel(cl)
 # d is scenario number
 
 
-toRerun <- readRDS("toRerun.RDS")
+toRerun <- readRDS(here("toRerun.RDS"))
 
-foreach(ii = 1:dim(rerun)[1]) %dopar% { #scenarios picked
+foreach(ii = 1:((dim(rerun)[1])/2)) %dopar% { #scenarios picked
   library(here)
   library(nimble)
   
