@@ -39,7 +39,7 @@ for (i in 1:scenarios.picked) { #scenarios picked
   for (j in 1:sims.per) { # sims per
     for (k in 1:scenario) { # simulation scenario
       print(paste(i, j, k), sep = " ")
-      if (k %in% 1:3) {
+      if (scenarios[k, "lambda"] == "L") {
         out <- readRDS(paste("lowout", "-", i, "-", j, "-", k, ".RDS", sep = ""))
         tmp <- max(gelman.diag(out, multivariate = FALSE)[[1]][, 1])
         if (!is.na(tmp) & tmp <= 1.2) {
@@ -53,7 +53,7 @@ for (i in 1:scenarios.picked) { #scenarios picked
             mutate(simscenarios = k)
           assign(paste("lowout", "-", i, "-", j, "-", k, sep = ""), out)
         }
-      } else if (k %in% 4:6) {
+      } else if (scenarios[k, "lambda"] == "M") {
         out <- readRDS(paste("medout", "-", i, "-", j, "-", k, ".RDS", sep = ""))
         tmp <- max(gelman.diag(out, multivariate = FALSE)[[1]][, 1])
         if (!is.na(tmp) & tmp <= 1.2) {
@@ -67,7 +67,7 @@ for (i in 1:scenarios.picked) { #scenarios picked
             mutate(simscenarios = k)
           assign(paste("medout", "-", i, "-", j, "-", k, sep = ""), out)
         }
-      } else if (k %in% 7:9) {
+      } else if (scenarios[k, "lambda"] == "H") {
         out <- readRDS(paste("highout", "-", i, "-", j, "-", k, ".RDS", sep = ""))
         tmp <- max(gelman.diag(out, multivariate = FALSE)[[1]][, 1])
         if (!is.na(tmp) & tmp <= 1.2) {
