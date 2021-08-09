@@ -6,17 +6,29 @@ library(gtable)
 library(RColorBrewer)
 library(wesanderson)
 library(coda)
+library(readr)
+library(here)
+
+highout <- read_csv(here("results", "highout.csv"))
+medout <- read_csv(here("results", "medout.csv"))
+lowout <- read_csv(here("results", "lowout.csv"))
 
 pal <- rev(wes_palette("Zissou1", 3, type = "continuous"))
 
-row.low <- do.call(rbind, lapply( ls(patt="lowout"), get) ) %>%
-  select(contains("lambda") | contains("sims") | contains("scenario"))
-row.med <- do.call(rbind, lapply( ls(patt="medout"), get) ) %>%
-  select(contains("lambda") | contains("sims") | contains("scenario"))
-row.high <- do.call(rbind, lapply( ls(patt="highout"), get) ) %>%
-  select(contains("lambda") | contains("sims") | contains("scenario"))
+row.low <- lowout %>%
+  select(contains("lambda") | contains("sims") | contains("scenario")) %>% 
+  group_by(sims, scenario, simscenarios) %>% 
+  summarise(across(everything(), median)) # TODO this might not be the best way to do this
+row.med <- medout %>%
+  select(contains("lambda") | contains("sims") | contains("scenario")) %>% 
+  group_by(sims, scenario, simscenarios) %>% 
+  summarise(across(everything(), median))
+row.high <- highout %>%
+  select(contains("lambda") | contains("sims") | contains("scenario")) %>% 
+  group_by(sims, scenario, simscenarios) %>% 
+  summarise(across(everything(), median))
 
-rm(list=grep("highout|medout|lowout",ls(),value=TRUE,invert=FALSE))
+#rm(list=grep("highout|medout|lowout",ls(),value=TRUE,invert=FALSE))
 
 for (i in 1:14) {
   row.low <- row.low %>%
@@ -32,15 +44,15 @@ for (i in 1:14) {
 for(i in 1:dim(row.low)[1]) {
   print(paste("row", i))
   for(j in 1:((ncol(row.low) - 3 )/2)) {
-    row.low[i, ((ncol(row.low)+3)/2 + j)] <- exp(mean(unlist(log(row.low[i, 1:j]))))
+    row.low[i, ((ncol(row.low)+3)/2 + j)] <- exp(mean(unlist(log(row.low[i, 3+ 1:j]))))
   }
 }
 
-# super slow
+#super slow
 for(i in 1:dim(row.med)[1]) {
   print(paste("row", i))
   for(j in 1:((ncol(row.med) - 3 )/2)) {
-    row.med[i, ((ncol(row.med)+3)/2 + j)] <- exp(mean(unlist(log(row.med[i, 1:j]))))
+    row.med[i, ((ncol(row.med)+3)/2 + j)] <- exp(mean(unlist(log(row.med[i, 3 + 1:j]))))
   }
 }
 
@@ -48,14 +60,14 @@ for(i in 1:dim(row.med)[1]) {
 for(i in 1:dim(row.high)[1]) {
   print(paste("row", i))
   for(j in 1:((ncol(row.high) - 3 )/2)) {
-    row.high[i, ((ncol(row.high) + 3)/2 + j)] <- exp(mean(unlist(log(row.high[i, 1:j]))))
+    row.high[i, ((ncol(row.high) + 3)/2 + j)] <- exp(mean(unlist(log(row.high[i, 3 + 1:j]))))
   }
 }
 
 # save objects
-saveRDS(row.low, "row.low.RDS")
-saveRDS(row.med, "row.med.RDS")
-saveRDS(row.high, "row.high.RDS")
+write_csv(row.low, here("results", "row_low.csv"))
+write_csv(row.med, here("results", "row_med.csv"))
+write_csv(row.high, here("results", "row_high.csv"))
 
 # load objects
 # TODO

@@ -38,6 +38,7 @@ scenario <- dim(scenarios)[1]
 for (i in 1:scenarios.picked) { #scenarios picked
   for (j in 1:sims.per) { # sims per
     for (k in 1:scenario) { # simulation scenario
+      if (i == 25 & j == 25 & k == 63) next
       print(paste(i, j, k), sep = " ")
       if (scenarios[k, "lambda"] == "L") {
         out <- readRDS(paste("lowout", "-", i, "-", j, "-", k, ".RDS", sep = ""))
@@ -87,5 +88,16 @@ for (i in 1:scenarios.picked) { #scenarios picked
 }
 
 rm(list=grep("highout|medout|lowout",ls(),value=TRUE,invert=TRUE))
-save.image("processedIPMOutput.RData")
+save.image("processedIPMOutput.RData") # doesn't work - stack overflow error
+
+row.low <- do.call(bind_rows, lapply( ls(patt="lowout"), get) )
+row.med <- do.call(bind_rows, lapply( ls(patt="medout"), get) )
+row.high <- do.call(bind_rows, lapply( ls(patt="highout"), get) )
+
+write.csv(row.high, file = "highout.csv")
+write.csv(row.med, file = "medout.csv")
+write.csv(row.low, file = "lowout.csv")
+
 rm(list = ls())
+#ls()
+#
