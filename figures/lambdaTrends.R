@@ -3,30 +3,80 @@
 library(tidyverse)
 library(ggplot2)
 library(gtable)
-library(RColorBrewer)
-library(wesanderson)
 library(coda)
 library(readr)
 library(here)
+library(purrr)
+library(beepr)
 
 highout <- read_csv(here("results", "highout.csv"))
 medout <- read_csv(here("results", "medout.csv"))
 lowout <- read_csv(here("results", "lowout.csv"))
 
-pal <- rev(wes_palette("Zissou1", 3, type = "continuous"))
+p <- c(0.025, 0.5, 0.975)
+p_names <- map_chr(p, ~paste0(.x*100, "%"))
+p_funs <- map(p, ~partial(quantile, probs = .x, na.rm = TRUE)) %>% 
+  set_names(nm = p_names)
+
+row.high <- highout %>%
+  select(contains("lambda") | contains("sims") | contains("scenario")) %>% 
+  group_by(sims, scenario, simscenarios) %>% 
+  summarise(across(everything(), funs(!!!p_funs))) %>% 
+  pivot_longer(
+    cols = contains("%"), 
+    names_to = "quantile",
+    values_to = "lambda",
+  ) %>% 
+  mutate(Year = str_extract(quantile, "\\[\\d+\\]")) %>% 
+  mutate(Year = str_extract(quantile, "\\d+")) %>% 
+  mutate(Quantile = str_extract(quantile, "\\d+\\.?\\d?%")) %>% 
+  select(-quantile) %>% 
+  select(c(1:3, 6, 5, 4)) %>% 
+  arrange(sims, scenario, simscenarios, Quantile, Year) %>% 
+  pivot_wider(names_from = Year, values_from = lambda, names_prefix = "Year_") %>% 
+  select(c(1:4, "Year_1", "Year_2", "Year_3", "Year_4", "Year_5", "Year_6", 
+                "Year_7", "Year_8", "Year_9", "Year_10", "Year_11", "Year_12", 
+                "Year_13", "Year_14"))
+
+row.med <- medout %>%
+  select(contains("lambda") | contains("sims") | contains("scenario")) %>% 
+  group_by(sims, scenario, simscenarios) %>% 
+  summarise(across(everything(), funs(!!!p_funs))) %>% 
+  pivot_longer(
+    cols = contains("%"), 
+    names_to = "quantile",
+    values_to = "lambda",
+  ) %>% 
+  mutate(Year = str_extract(quantile, "\\[\\d+\\]")) %>% 
+  mutate(Year = str_extract(quantile, "\\d+")) %>% 
+  mutate(Quantile = str_extract(quantile, "\\d+\\.?\\d?%")) %>% 
+  select(-quantile) %>% 
+  select(c(1:3, 6, 5, 4)) %>% 
+  arrange(sims, scenario, simscenarios, Quantile, Year) %>% 
+  pivot_wider(names_from = Year, values_from = lambda, names_prefix = "Year_") %>% 
+  select(c(1:4, "Year_1", "Year_2", "Year_3", "Year_4", "Year_5", "Year_6", 
+           "Year_7", "Year_8", "Year_9", "Year_10", "Year_11", "Year_12", 
+           "Year_13", "Year_14"))
 
 row.low <- lowout %>%
   select(contains("lambda") | contains("sims") | contains("scenario")) %>% 
   group_by(sims, scenario, simscenarios) %>% 
-  summarise(across(everything(), median)) # TODO this might not be the best way to do this
-row.med <- medout %>%
-  select(contains("lambda") | contains("sims") | contains("scenario")) %>% 
-  group_by(sims, scenario, simscenarios) %>% 
-  summarise(across(everything(), median))
-row.high <- highout %>%
-  select(contains("lambda") | contains("sims") | contains("scenario")) %>% 
-  group_by(sims, scenario, simscenarios) %>% 
-  summarise(across(everything(), median))
+  summarise(across(everything(), funs(!!!p_funs))) %>% 
+  pivot_longer(
+    cols = contains("%"), 
+    names_to = "quantile",
+    values_to = "lambda",
+  ) %>% 
+  mutate(Year = str_extract(quantile, "\\[\\d+\\]")) %>% 
+  mutate(Year = str_extract(quantile, "\\d+")) %>% 
+  mutate(Quantile = str_extract(quantile, "\\d+\\.?\\d?%")) %>% 
+  select(-quantile) %>% 
+  select(c(1:3, 6, 5, 4)) %>% 
+  arrange(sims, scenario, simscenarios, Quantile, Year) %>% 
+  pivot_wider(names_from = Year, values_from = lambda, names_prefix = "Year_") %>% 
+  select(c(1:4, "Year_1", "Year_2", "Year_3", "Year_4", "Year_5", "Year_6", 
+           "Year_7", "Year_8", "Year_9", "Year_10", "Year_11", "Year_12", 
+           "Year_13", "Year_14"))
 
 #rm(list=grep("highout|medout|lowout",ls(),value=TRUE,invert=FALSE))
 
@@ -39,28 +89,36 @@ for (i in 1:14) {
     mutate("geomean.{i}" :=  NA_real_)
 }
 
+write_csv(row.low, here("results", "row_low.csv"))
+write_csv(row.med, here("results", "row_med.csv"))
+write_csv(row.high, here("results", "row_high.csv"))
+beep(sound = 8)
+rm("highout", "medout", "lowout")
+
+# TODO
+# make sure you are grabbing the right columns
 
 # super slow
 for(i in 1:dim(row.low)[1]) {
   print(paste("row", i))
-  for(j in 1:((ncol(row.low) - 3 )/2)) {
-    row.low[i, ((ncol(row.low)+3)/2 + j)] <- exp(mean(unlist(log(row.low[i, 3+ 1:j]))))
+  for(j in 1:((ncol(row.low) - 4 )/2)) {
+    row.low[i, ((ncol(row.low) + 4)/2 + j)] <- exp(mean(unlist(log(row.low[i, 4 + 1:j]))))
   }
 }
 
 #super slow
 for(i in 1:dim(row.med)[1]) {
   print(paste("row", i))
-  for(j in 1:((ncol(row.med) - 3 )/2)) {
-    row.med[i, ((ncol(row.med)+3)/2 + j)] <- exp(mean(unlist(log(row.med[i, 3 + 1:j]))))
+  for(j in 1:((ncol(row.med) - 4 )/2)) {
+    row.med[i, ((ncol(row.med) + 4)/2 + j)] <- exp(mean(unlist(log(row.med[i, 4 + 1:j]))))
   }
 }
 
 # super slow
 for(i in 1:dim(row.high)[1]) {
   print(paste("row", i))
-  for(j in 1:((ncol(row.high) - 3 )/2)) {
-    row.high[i, ((ncol(row.high) + 3)/2 + j)] <- exp(mean(unlist(log(row.high[i, 3 + 1:j]))))
+  for(j in 1:((ncol(row.high) - 4 )/2)) {
+    row.high[i, ((ncol(row.high) + 4)/2 + j)] <- exp(mean(unlist(log(row.high[i, 4 + 1:j]))))
   }
 }
 
@@ -68,55 +126,3 @@ for(i in 1:dim(row.high)[1]) {
 write_csv(row.low, here("results", "row_low.csv"))
 write_csv(row.med, here("results", "row_med.csv"))
 write_csv(row.high, here("results", "row_high.csv"))
-
-# load objects
-# TODO
-
-# Reformat for plotting
-toplot1 <- row.low %>%
-  select(contains("geomean"), scenario, sims, simscenarios) %>%
-  #group_by(model, detection)
-  pivot_longer(cols = starts_with("geomean"), names_to = "Year") %>%
-  filter(!is.na(value)) %>%
-  mutate(Year = str_remove(Year, "geomean\\.")) %>%
-  mutate(Year = as.numeric(Year)) %>%
-  group_by(scenario, sims, simscenarios, Year) %>% # checked through here - TODO
-  # summarise(low = quantile(value, 0.025),
-  #           med = quantile(value, 0.5),
-  #           high = quantile(value, 0.975)) %>%
-  ungroup() %>%
-  mutate(scenario = as.factor(scenario),
-         sims = as.factor(sims), 
-         simscenarios = as.factor(simscenarios)) 
-
-toplot2 <- row.med %>%
-  select(contains("geomean"), scenario, sims, simscenarios) %>%
-  #group_by(model, detection)
-  pivot_longer(cols = starts_with("geomean"), names_to = "Year") %>%
-  filter(!is.na(value)) %>%
-  mutate(Year = str_remove(Year, "geomean\\.")) %>%
-  mutate(Year = as.numeric(Year)) %>%
-  group_by(scenario, sims, simscenarios, Year) %>% # checked through here - TODO
-  # summarise(low = quantile(value, 0.025),
-  #           med = quantile(value, 0.5),
-  #           high = quantile(value, 0.975)) %>%
-  ungroup() %>%
-  mutate(scenario = as.factor(scenario),
-         sims = as.factor(sims), 
-         simscenarios = as.factor(simscenarios))
-
-toplot3 <- row.high %>%
-  select(contains("geomean"), scenario, sims, simscenarios) %>%
-  #group_by(model, detection)
-  pivot_longer(cols = starts_with("geomean"), names_to = "Year") %>%
-  filter(!is.na(value)) %>%
-  mutate(Year = str_remove(Year, "geomean\\.")) %>%
-  mutate(Year = as.numeric(Year)) %>%
-  group_by(scenario, sims, simscenarios, Year) %>% # checked through here - TODO
-  # summarise(low = quantile(value, 0.025),
-  #           med = quantile(value, 0.5),
-  #           high = quantile(value, 0.975)) %>%
-  ungroup() %>%
-  mutate(scenario = as.factor(scenario),
-         sims = as.factor(sims), 
-         simscenarios = as.factor(simscenarios)) 
