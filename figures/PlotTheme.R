@@ -16,7 +16,7 @@ theme_ipmsim <- function(){
       
       #text elements
       plot.title = element_text(             #title
-        family = font, color = "black",           #set font family
+        family = font, color = "black",      #set font family
         size = 20,                #set font size
         face = 'bold',            #bold typeface
         hjust = 0,                #left align
@@ -34,7 +34,7 @@ theme_ipmsim <- function(){
       axis.ticks.y.left = element_line(colour = "grey20"), 
       
       axis.text = element_text(              #axis text
-        family = font, color = "black",           #axis famuly
+        family = font, color = "black",           #axis family
         size = 12),                #font size
       
       legend.title = element_text(             #axis titles
