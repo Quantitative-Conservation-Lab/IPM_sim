@@ -1,7 +1,10 @@
+# this file contains all of the model code for each combination of available datasets
+
+# load libraries
 library("here")
 library("nimble")
 
-# initial value functions
+# source initial value functions
 source(here("scripts", "current version", "2 - models", "IPMinitvalues.R"))
 
 ###### FULL IPM ######
@@ -10,8 +13,6 @@ IPMmod<-nimbleCode({
   # COUNTS #####
 
   # System process
-
-  # Initial population sizes
   n1.start ~ dunif(0, 500)
   nad.start ~ dunif(0, 500)
   N1[1] <- round(n1.start)
@@ -27,13 +28,6 @@ IPMmod<-nimbleCode({
   }
 
   # Observation process
-
-  #prior for survey detection probability
-  #p.surv~dunif(0,1)
-  # AEB - let's see if this helps the mixing on this parameter
-  # seems reasonable to think that your survey detection would be between
-  # approx 0.2 and 0.8, avoids boundary issue near 0
-  #p.surv ~ T(dnorm(0.5, sd = 0.3), 0, Inf)
   p.surv~dunif(0,1)
   for(n in 1:n.sam){
     for (t in 1:nyears){
@@ -43,6 +37,7 @@ IPMmod<-nimbleCode({
   }
 
   # CAPTURE RECAPTURE #####
+  
   #m-array, multinomial likelihood
   for(t in 1:(nyears-1)){
     marr[t,1:nyears]~dmulti(pr[t,1:nyears],R[t])
@@ -65,7 +60,7 @@ IPMmod<-nimbleCode({
     p[t]<-mean.p
   }
 
-  #priors for resight and adult or yoy survival
+  #priors for resight and adult or 1yo survival
   mean.phi[1]~dunif(0,1) #surv 1 year olds
   mean.phi[2]~dunif(0,1) #surv adults
   mean.p~dunif(0,1) #resight prob
@@ -130,7 +125,6 @@ nonests<-nimbleCode({
     }
   }
 
-  # CAPTURE RECAPTURE #####
   # CAPTURE RECAPTURE #####
   #m-array, multinomial likelihood
   for(t in 1:(nyears-1)){

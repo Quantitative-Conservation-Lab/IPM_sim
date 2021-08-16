@@ -8,12 +8,13 @@ low.lam.combos <- readRDS(here("data", "low.lam.combos.RDS"))
 med.lam.combos <- readRDS(here("data", "med.lam.combos.RDS"))
 high.lam.combos <- readRDS(here("data", "high.lam.combos.RDS"))
 
-# functions
+# load functions and namespace
 source(here("scripts", "current version",
             "1 - simulating data", "IPM_sim_2.0function.R"))
 source(here("scripts", "current version",
             "0 - preparing scenarios", "compute_time_calc.R"))
 
+# pick param combinations to generate population trajectories from
 set.seed(1234)
 low.rows <- sample(nrow(low.lam.combos), scenarios.picked, replace = FALSE)
 med.rows <- sample(nrow(med.lam.combos), scenarios.picked, replace = FALSE)
@@ -24,15 +25,12 @@ med.lam.params <- med.lam.combos[med.rows, ]
 high.lam.params <- high.lam.combos[high.rows, ]
 
 # simulate populations
-#setup parallel backend to use many processors
+# and save the trajectories in data files
 cores=detectCores()
-cl <- makeCluster(cores[1]-2, setup_strategy = "sequential") #not to overload your computer
+cl <- makeCluster(cores[1]-2, setup_strategy = "sequential") 
 registerDoParallel(cl)
 foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
   library(here)
-
-#for (i in 1:scenarios.picked) {
-
   for (j in 1:sims.per) { # sims per
     lowpopTraj <- simPopTrajectory(n.years=15,
                                    n.data.types=c(0.25,0.25,0.25),
@@ -67,8 +65,6 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
     saveRDS(highpopTraj, here("data", "highTrajectories", paste("highpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     rm(highpopTraj)
   } # sims per
-
-#} # scenarios picked
 
 } # foreach
 

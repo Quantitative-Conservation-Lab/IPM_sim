@@ -1,5 +1,3 @@
-# LOAD data
-
 library(tidyverse)
 library(here)
 library(nimble)
@@ -34,7 +32,7 @@ scenarios.picked <- 25
 sims.per <- 25
 scenario <- dim(scenarios)[1]
 
-# SLOW TO RUN BUT DOES RUN
+# SLOW TO RUN 
 for (i in 1:scenarios.picked) { #scenarios picked
   for (j in 1:sims.per) { # sims per
     for (k in 1:scenario) { # simulation scenario
@@ -48,7 +46,7 @@ for (i in 1:scenarios.picked) { #scenarios picked
             collapse_chains() %>% 
             as.matrix() %>% 
             as.data.frame() %>% 
-            filter(row_number() %% 60 == 1) %>% 
+            filter(row_number() %% 60 == 1) %>% # thin chains
             mutate(scenario= i) %>% 
             mutate(sims = j) %>% 
             mutate(simscenarios = k)
@@ -62,7 +60,7 @@ for (i in 1:scenarios.picked) { #scenarios picked
             collapse_chains() %>% 
             as.matrix() %>% 
             as.data.frame() %>% 
-            filter(row_number() %% 60 == 1) %>% 
+            filter(row_number() %% 60 == 1) %>% # thin chains
             mutate(scenario= i) %>% 
             mutate(sims = j) %>% 
             mutate(simscenarios = k)
@@ -76,7 +74,7 @@ for (i in 1:scenarios.picked) { #scenarios picked
             collapse_chains() %>% 
             as.matrix() %>% 
             as.data.frame() %>% 
-            filter(row_number() %% 60 == 1) %>% 
+            filter(row_number() %% 60 == 1) %>% # thin chains
             mutate(scenario= i) %>% 
             mutate(sims = j) %>% 
             mutate(simscenarios = k)
@@ -88,7 +86,7 @@ for (i in 1:scenarios.picked) { #scenarios picked
 }
 
 rm(list=grep("highout|medout|lowout",ls(),value=TRUE,invert=TRUE))
-save.image("processedIPMOutput.RData") # doesn't work - stack overflow error
+#save.image("processedIPMOutput.RData") # doesn't work - stack overflow error
 
 row.low <- do.call(bind_rows, lapply( ls(patt="lowout"), get) )
 row.med <- do.call(bind_rows, lapply( ls(patt="medout"), get) )
@@ -99,5 +97,3 @@ write.csv(row.med, file = "medout.csv")
 write.csv(row.low, file = "lowout.csv")
 
 rm(list = ls())
-#ls()
-#

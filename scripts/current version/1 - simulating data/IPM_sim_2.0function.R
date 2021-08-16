@@ -1,12 +1,19 @@
-# n.years = n years to simulate, n.data.types = proportion observed for each dataset,
-# age.init = starting age structure, phi.1 = juv survival,  phi.ad = adult survival,
+# function to simulate the trajectory of a population
+# adapted from Kery and Schaub, 2011
+
+# Definitions ####
+# n.years = n years to simulate,
+# n.data.types = proportion of pop observed for each dataset,
+# age.init = starting age structure, 
+# phi.1 = juv survival,  
+# phi.ad = adult survival,
 # f = fecundity
 simPopTrajectory <- function(n.years, n.data.types, age.init,
                              phi.1, phi.ad, f){
 
-  #######
-  # HELPER FUNCTIONS -- transition matrices
+  ####### HELPER FUNCTIONS  ####### 
   # states: [1yrolds, Adult, chicks, Dead]
+  
   # fate of juveniles
   oneyr_fatefn<-function(ind,time){
     indfates[3,time,ind]<-rpois(1,fec) # number of chicks produced by ind. in current year
@@ -27,6 +34,7 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
     return(indfates[,time:(time+1),ind])
   }
 
+  # if you are dead you stay dead
   deadfn<-function(ind,time){
     indfates[4,time+1,ind]<-1
     indfates[1:3,time+1,ind]<-NA
@@ -42,17 +50,11 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
     indfates[3,time+1,ind]<-NA
     return(indfates[,(time+1),ind])
   }
-  ######
+  
+  ####### END HELPER FUNCTIONS  ####### 
 
-  #nmin1.years<-n.years-1 # review again - is this still being used?
   nplus1.years<-n.years+1
-
-  #derive true fecundity from the parameters, for productivity use f
-  #if(productivity==T){
-  fec <- f # AEB - do not divide by 2
-  #}else{
-  #  fec<-1/2*mean.clutch.size*phi.nest^max.nest.age
-  #}
+  fec <- f 
 
   #Leslie matrix for population size
   N<-matrix(nrow=length(age.init), ncol=nplus1.years)
@@ -83,7 +85,7 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
 
 
   #simulate what happens to each individual:
-  if(N[1]==0 || N[2]==0){print("noindividuals!!!!!!!!!")}
+  if(N[1]==0 || N[2]==0){print("no individuals!!!!!!!!!")}
   #dont run if there arent any individuals given
 
   #make an array for each individual, for each year, what state it is in
@@ -151,7 +153,6 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
   mean(adj[2:10])
   #close *enough* to actual lambda, again demographic stochasticity is the cause!
 
-  #HAS:
   #we dont want to output the leslie matrix N, we want to output the N
   #from the indfates
   Nouts<-matrix(nrow=2,ncol=n.years)
@@ -165,11 +166,25 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
 
 }
 
+
+# Definitions ####
+# indfates = matrix of individual fates, generated using simPopTrajectory above
+# n.years = n years to simulate,
+# n.data.types = proportion of pop observed for each dataset,
+# ADonly = binary variable indicating whether only adults are marked or not
+# p.1 = detection of 1 year old birds
+# p.ad = detection of adult birds
+# BinMod = binary variable indicating whether to use a binomial observation model on repeated counts
+# n.sam = number of repeated counts to take
+# p.count = probability of detecting individuals on repeated counts
+# sig = used if BinMod = F, sd parameter for normal observation model on repeated counts
+# productivity = binary variable indicating whether or not to use a nest survival model. deprecated, always T. 
+# p.prod = probability of detection for productivity model
 simData <- function(indfates, n.years, n.data.types,
                     ADonly, p.1, p.ad,
                     BinMod, n.sam, p.count, sig, productivity, p.prod){
 
-  ###################For output of data ##############
+  ################### For output of data  ###################
   # Three independent samples from the individuals we just simulated
   Ntot <- dim(indfates)[3]
   xt1 <- matrix(data = seq(1:Ntot), ncol = 1) # individual ID
@@ -184,7 +199,9 @@ simData <- function(indfates, n.years, n.data.types,
   resamp1 <- sample(xt1, nds[1], replace = F)
   # Sample 2
   #resamp2 <- sample(xt1[-resamp1,], nds[2], replace = F)
-  resamp2 <- xt1[,1] # observe all the individuals in the population
+  resamp2 <- xt1[,1] # all the individuals in the population available fo detection for repeated counts
+  # Note this is not truly independent but also note IPMs are robust to this assumption
+  # more similar to on-the-ground data collection this way
 
   #resamp3<-sample(xt1[c(-resamp1,-resamp2),], nds[3], replace = F)
   resamp3<-sample(xt1[c(-resamp1),], nds[3], replace = F)
@@ -194,15 +211,8 @@ simData <- function(indfates, n.years, n.data.types,
   IND_Count <- indfates[,,resamp2]
   IND_Nest <- indfates[,,resamp3]
 
-  ######################################################
-  # Create Mark-Resight data
-  ######################################################
-  #HAS: Do we only want to mark adults? and never see 1year olds
-  #Or do we want to be able to mark anyone we see? then we can get at 1yearoldSurv
-  #We did just adults, but I added in an option for
-  #also marking any 1 year olds we see
-
-
+  ###################Create Mark-Resight data  ###################
+  
   #Marking adults and 1 year olds, which will have the same
   #for adults and 1yr olds only
   #AD_only=T
@@ -298,7 +308,6 @@ simData <- function(indfates, n.years, n.data.types,
       
     }else{
       #if we mark chicks, 1 years, adults
-      #!!
       #using the individual population array for MR data
       #mr_classes<-dim(IND_MR)[1] - 3 #since we wont see Dead and the reproduction doesnt matter
       #so we have 2 classes, we care about in marking: 1year olds, and adults
@@ -389,12 +398,9 @@ simData <- function(indfates, n.years, n.data.types,
   }
 
 
-  ######################################################
-  # Create population survey data
-  ######################################################
+  ################### Create population survey data ###################
   #n.sam is the number of times that the population was sampled in a year
   #Need to choose in the function argument which model to use, BinMod=T if binom, F if normal
-  #HAS - should output the true count data for comparison
   TRUE_Count<-matrix(nrow=2, ncol=n.years) #first row, number of one year-olds; second row is adults
   SUR<-matrix(nrow=n.sam, ncol=n.years)#matrix for surveys by survey and year
   for(u in 1:n.years){
@@ -410,13 +416,7 @@ simData <- function(indfates, n.years, n.data.types,
 
   }
 
-  ######################################################
-  # Create reproductive success data
-  ######################################################
-  #if productivity is T, then this nest success model
-  #Abby can add in if we want to include it - AEB: let's omit for now
-  #if F, then it is the below model
-  #IND_Nest <- indfates[,,resamp3]
+  ################### Create reproductive success data ###################
   TRUE_nestlings<-numeric(n.years)
   R_true<-R_obs <- numeric(n.years) # number of pairs whose productivity was observed
   OBS_nestlings <- numeric(n.years)  # total number of nestlings recorded in a year

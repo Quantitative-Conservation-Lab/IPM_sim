@@ -1,5 +1,4 @@
-# this should have a function for
-# running each model type
+# this file contains a function for running each model type
 
 # Function to create a m-array based on capture-histories (CH)
 marray <- function(CH){
@@ -25,17 +24,13 @@ marray <- function(CH){
   return(out)
 }
 
-#### IPM ####
-
-
 #### MCMC SETTINGS ####
 nb <- 100000#0 #burn-in
 ni <- nb + nb #total iterations
 nt <- 10  #thin
 nc <- 3  #chains
 
-# TODO
-#change sutff
+#### IPM ####
 
 runIPMmod <- function(nb, ni, nt, nc,
                       popDat, popTraj,
@@ -66,21 +61,18 @@ runIPMmod <- function(nb, ni, nt, nc,
     #mean.p = runif(1,0,1),#detect.h,
     #fec = runif(1,0,5),#detect.h,
     #z=z.state,
-    n1.start=popTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
+    n1.start=popTraj$Nouts[1,1], 
     nad.start=popTraj$Nouts[2,1]
   )
 
   #### PARAMETERS TO MONITOR ####
   params1 <- c("p.surv", "mean.phi","mean.p", "fec", "lambda") #,"Ntot","N1","Nad","f","rho")#0.3764911
-  #dont need all of these later, but wanted to look at them now
 
   #### COMPILE CONFIGURE AND BUILD ####
   Rmodel1 <- nimbleModel(code = IPMmod, constants = const1, data = dat1,
                          check = FALSE, calculate = FALSE, inits = inits1)
   conf1 <- configureMCMC(Rmodel1, monitors = params1)#, thin = nt,
   #control = list(maxContractions = 1000))
-  # lots of initial model checking you can do by exploring conf1
-  # if you wanted to change samplers this is where you would do that
   Rmcmc1 <- buildMCMC(conf1)
   Cmodel1 <- compileNimble(Rmodel1, showCompilerOutput = FALSE)
   Cmcmc1 <- compileNimble(Rmcmc1, project = Rmodel1)
@@ -123,28 +115,23 @@ runnonests <- function(nb, ni, nt, nc,
                  #mean.p = runif(1,0,1),#detect.h,
                  #fec = runif(1,0,5),#detect.h,
                  #z=z.state,
-                 n1.start=popTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
+                 n1.start=popTraj$Nouts[1,1],
                  nad.start=popTraj$Nouts[2,1]
   )
 
   #### PARAMETERS TO MONITOR ####
   params1 <- c("p.surv", "mean.phi","mean.p", "fec", "lambda") #,"Ntot","N1","Nad","f","rho")#0.3764911
-  #dont need all of these later, but wanted to look at them now
 
   #### COMPILE CONFIGURE AND BUILD ####
   Rmodel1 <- nimbleModel(code = nonests, constants = const1, data = dat1,
                          check = FALSE, calculate = FALSE, inits = inits1)
   conf1 <- configureMCMC(Rmodel1, monitors = params1)#, thin = nt,
   #control = list(maxContractions = 1000))
-  # lots of initial model checking you can do by exploring conf1
-  # if you wanted to change samplers this is where you would do that
   Rmcmc1 <- buildMCMC(conf1)
   Cmodel1 <- compileNimble(Rmodel1, showCompilerOutput = FALSE)
   Cmcmc1 <- compileNimble(Rmcmc1, project = Rmodel1)
 
   #### RUN MCMC ####
-  #sink("sad_output.txt")
-  #changed to checking to just see a matrix, since it is working!
   outnonests <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1,thin=nt,
                         setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE)
 
@@ -181,21 +168,18 @@ runnomr <- function(nb, ni, nt, nc,
                  #mean.p = runif(1,0,1),#detect.h,
                  #fec = runif(1,0,5),#detect.h,
                  #z=z.state,
-                 n1.start=popTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
+                 n1.start=popTraj$Nouts[1,1], 
                  nad.start=popTraj$Nouts[2,1]
   )
 
   #### PARAMETERS TO MONITOR ####
   params1 <- c("p.surv", "mean.phi", "fec", "lambda") #,"Ntot","N1","Nad","f","rho")#0.3764911
-  #dont need all of these later, but wanted to look at them now
 
   #### COMPILE CONFIGURE AND BUILD ####
   Rmodel1 <- nimbleModel(code = nomr, constants = const1, data = dat1,
                          check = FALSE, calculate = FALSE, inits = inits1)
   conf1 <- configureMCMC(Rmodel1, monitors = params1)#, thin = nt,
   #control = list(maxContractions = 1000))
-  # lots of initial model checking you can do by exploring conf1
-  # if you wanted to change samplers this is where you would do that
   Rmcmc1 <- buildMCMC(conf1)
   Cmodel1 <- compileNimble(Rmodel1, showCompilerOutput = FALSE)
   Cmcmc1 <- compileNimble(Rmcmc1, project = Rmodel1)
@@ -236,21 +220,18 @@ runabundonly <- function(nb, ni, nt, nc,
                  #mean.p = runif(1,0,1),#detect.h,
                  #fec = runif(1,0,5),#detect.h,
                  #z=z.state,
-                 n1.start=popTraj$Nouts[1,1], #HAS changed this to just pull from popTraj
+                 n1.start=popTraj$Nouts[1,1],
                  nad.start=popTraj$Nouts[2,1]
   )
 
   #### PARAMETERS TO MONITOR ####
   params1 <- c("p.surv", "mean.phi", "fec", "lambda") #,"Ntot","N1","Nad","f","rho")#0.3764911
-  #dont need all of these later, but wanted to look at them now
 
   #### COMPILE CONFIGURE AND BUILD ####
   Rmodel1 <- nimbleModel(code = abundonly, constants = const1, data = dat1,
                          check = FALSE, calculate = FALSE, inits = inits1)
   conf1 <- configureMCMC(Rmodel1, monitors = params1)#, thin = nt,
   #control = list(maxContractions = 1000))
-  # lots of initial model checking you can do by exploring conf1
-  # if you wanted to change samplers this is where you would do that
   Rmcmc1 <- buildMCMC(conf1)
   Cmodel1 <- compileNimble(Rmodel1, showCompilerOutput = FALSE)
   Cmcmc1 <- compileNimble(Rmcmc1, project = Rmodel1)

@@ -10,8 +10,62 @@
 library(tidybayes)
 library(ggplot2)
 library(wesanderson)
+library(here)
 
 pal <- rev(wes_palette("Zissou1", 3, type = "continuous"))
+
+row.low <- read_csv(here("results", "row_low.csv"))
+row.med <- read_csv(here("results", "row_med.csv"))
+row.high <- read_csv(here("results", "row_high.csv"))
+
+# Reformat for plotting
+toplot1 <- row.low %>%
+  select(contains("geomean"), scenario, sims, simscenarios) %>%
+  #group_by(model, detection)
+  pivot_longer(cols = starts_with("geomean"), names_to = "Year") %>%
+  filter(!is.na(value)) %>%
+  mutate(Year = str_remove(Year, "geomean\\.")) %>%
+  mutate(Year = as.numeric(Year)) %>%
+  group_by(scenario, sims, simscenarios, Year) %>% # checked through here - TODO
+  # summarise(low = quantile(value, 0.025),
+  #           med = quantile(value, 0.5),
+  #           high = quantile(value, 0.975)) %>%
+  ungroup() %>%
+  mutate(scenario = as.factor(scenario),
+         sims = as.factor(sims), 
+         simscenarios = as.factor(simscenarios)) 
+
+toplot2 <- row.med %>%
+  select(contains("geomean"), scenario, sims, simscenarios) %>%
+  #group_by(model, detection)
+  pivot_longer(cols = starts_with("geomean"), names_to = "Year") %>%
+  filter(!is.na(value)) %>%
+  mutate(Year = str_remove(Year, "geomean\\.")) %>%
+  mutate(Year = as.numeric(Year)) %>%
+  group_by(scenario, sims, simscenarios, Year) %>% # checked through here - TODO
+  # summarise(low = quantile(value, 0.025),
+  #           med = quantile(value, 0.5),
+  #           high = quantile(value, 0.975)) %>%
+  ungroup() %>%
+  mutate(scenario = as.factor(scenario),
+         sims = as.factor(sims), 
+         simscenarios = as.factor(simscenarios))
+
+toplot3 <- row.high %>%
+  select(contains("geomean"), scenario, sims, simscenarios) %>%
+  #group_by(model, detection)
+  pivot_longer(cols = starts_with("geomean"), names_to = "Year") %>%
+  filter(!is.na(value)) %>%
+  mutate(Year = str_remove(Year, "geomean\\.")) %>%
+  mutate(Year = as.numeric(Year)) %>%
+  group_by(scenario, sims, simscenarios, Year) %>% # checked through here - TODO
+  # summarise(low = quantile(value, 0.025),
+  #           med = quantile(value, 0.5),
+  #           high = quantile(value, 0.975)) %>%
+  ungroup() %>%
+  mutate(scenario = as.factor(scenario),
+         sims = as.factor(sims), 
+         simscenarios = as.factor(simscenarios)) 
 
 # AEB - idea for version two of this plot
 ## row low
