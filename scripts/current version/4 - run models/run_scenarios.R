@@ -84,7 +84,11 @@ for (i in 1:nrow(scenarios)) {
   tmp <- tmp[!is.na(tmp)]
   scenarios[i, "priority"] <- length(unique(tmp))
 }
-scenarios <- scenarios %>% arrange(priority) # save in prioritized order
+scenarios <- scenarios %>% arrange(priority) %>% # save in prioritized order
+  transform(simscenarios = 1:144)
+
+write.csv(scenarios, here::here('data', 'scenario_ID.csv'), row.names = F)
+
 which.prio.1 <- which(scenarios$priority == 1)
 which.prio.2 <- which(scenarios$priority == 2)
 which.prio.3 <- which(scenarios$priority == 3)
