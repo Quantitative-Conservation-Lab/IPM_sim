@@ -79,6 +79,7 @@ all.dat <- bind_rows(low.dat, med.dat, high.dat)
 #get posterior medians
 # all.meds <- all.dat %>%
 #   dplyr::select('phi1.obs', 'phi1.true', 'phiad.obs', 'phiad.true', 'fec.obs', 'fec.true',
+#                 'p.surv', 'mean.p',
 #                             'sims', 'scenario', 'simscenarios', 'lambda.scenario') %>%
 #   reshape2::melt(id.vars = c('lambda.scenario', 'sims', 'scenario', 'simscenarios')) %>%
 #   group_by(lambda.scenario, scenario, simscenarios, variable) %>%
@@ -87,24 +88,32 @@ all.dat <- bind_rows(low.dat, med.dat, high.dat)
 #   merge(scenarios %>% dplyr::select(-c(n.viable.combinations, priority)), by = c('simscenarios'))
 # 
 # 
-# write.csv(all.meds, here::here('results', 'Processed csvs', 'all.meds.csv'), row.names = F)
+# write.csv(all.meds, here::here('figures', 'Processed csvs', 'all.meds.csv'), row.names = F)
 
-all.meds <- read.csv(file = here::here('results', 'Processed csvs', 'all.meds.csv'), 
+all.meds <- read.csv(file = here::here('figures', 'Processed csvs', 'all.meds.csv'), 
                      header = T, stringsAsFactors = F)
 
-# #just bias
+##bias
 rel.bias <- all.meds %>%
+  transform(p.surv.true = ifelse(det.abund == 'L', 0.3, 
+            ifelse(det.abund == 'M', 0.5, 
+                   ifelse(det.abund == 'H', 0.8, NA)))) %>%
+  transform(mean.p.true = ifelse(det.MR == 'L', 0.3, 
+            ifelse(det.MR == 'M', 0.5, 
+                   ifelse(det.MR == 'H', 0.8, NA)))) %>%
   #calculate relative bias, mean across scenarios
   transform(phi1.bias = (phi1.obs-phi1.true)/phi1.true,
             phiad.bias = (phiad.obs-phiad.true)/phiad.true,
-            fec.bias = (fec.obs-fec.true)/fec.true) %>%
+            fec.bias = (fec.obs-fec.true)/fec.true,
+            p.surv.bias = (p.surv-p.surv.true)/p.surv.true,
+            mean.p.bias = (mean.p-mean.p.true)/mean.p.true) %>%
   dplyr::select('lambda.scenario', 'scenario',
-                'phi1.bias', 'phiad.bias', 'fec.bias', 'det.MR', 'det.abund', 'det.prod') %>%
+                'phi1.bias', 'phiad.bias', 'fec.bias', 'det.MR', 'det.abund', 'det.prod', 'mean.p.bias', 'p.surv.bias') %>%
   reshape2::melt(id.vars = c('lambda.scenario', 'scenario', 'det.MR', 'det.abund', 'det.prod')) %>%
   group_by(lambda.scenario, det.MR, det.abund, det.prod, variable) %>%
   dplyr::summarize(bias = mean(value), .groups = 'keep') %>%
-  transform(variable = factor(variable, levels = c('phiad.bias', 'phi1.bias', 'fec.bias'),
-                              labels = c('Adult survival', 'Juv survival', 'Fecundity'))) %>%
+  transform(variable = factor(variable, levels = c('phiad.bias', 'phi1.bias', 'fec.bias', 'p.surv.bias', 'mean.p.bias'),
+                              labels = c('Adult survival', 'Juv survival', 'Fecundity', 'Count detection', 'Resight detection'))) %>%
   transform(lambda.scenario = factor(lambda.scenario,
                                      levels = c("Decreasing", "Stable", "Increasing"))) %>%
   transform(det.MR = factor(det.MR, levels = c('L', 'M', 'H'))) %>%
@@ -161,6 +170,7 @@ ggplot(rel.bias, aes(x = factor(det.abund), y = variable, fill = bias)) +
   
 
 ###average over two layers of detection (det.MR and det.prod)
+obs.pars <- c('Resight detection', 'Count detection')
 rel.bias.few <- rel.bias %>%
   group_by(variable, det.abund, lambda.scenario, dataset) %>%
   dplyr::summarize(bias = mean(bias), .groups = 'keep') %>%
@@ -170,31 +180,32 @@ rel.bias.few <- rel.bias %>%
   transform(dataset = factor(dataset, levels = c('Full', 'Counts+Prod', 'Counts+MR', 'Counts'),
                              labels = c('Full', 'Counts+Prod', 'Counts+MR', 'Counts')))
 
-#use me fig 1
-ggplot(rel.bias.few, aes(x = factor(det.abund), y = variable, fill = bias)) +
-  geom_tile(color = 'grey50') +
-  xlab('Count detection') + ylab('') +
-  facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_parsed) +
-  scale_fill_gradient2(name = "Relative bias",
-                     # mid = "white", low = "#0FCFC0", high = "#F79CD4", midpoint = 0) +
-                       mid = "white", low = rainbow2[2], high = rainbow2[6], midpoint = 0) +
-                      # breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2")) +
- # scale_x_discrete(labels = c(expression(paste("low ", italic(p))), 
- #                             expression(paste("med ", italic(p))), 
- #                             expression(paste("high ", italic(p))))) +
-  theme_light() +
-  theme(legend.position = 'top',
-        # axis.text.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        strip.text = element_text(face = "bold", color = "black"),
-        strip.background = element_rect(fill = NA, color = "black"),
-        axis.text.x = element_text(angle = 0, vjust = 1.5),
-        # ggh4x.facet.nestline = element_line(size = 0.5), #what does this line do?
-        panel.border = element_rect(color = "black", fill = NA),  
-        panel.spacing.x = unit(0.75, "line"))
+#heat tiles
+# ggplot(rel.bias.few %>% filter(variable %nin% obs.pars), 
+#        aes(x = factor(det.abund), y = variable, fill = bias)) +
+#   geom_tile(color = 'grey50') +
+#   xlab('Count detection') + ylab('') +
+#   facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_parsed) +
+#   scale_fill_gradient2(name = "Relative bias",
+#                      # mid = "white", low = "#0FCFC0", high = "#F79CD4", midpoint = 0) +
+#                        mid = "white", low = rainbow2[2], high = rainbow2[6], midpoint = 0) +
+#                       # breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2")) +
+#  # scale_x_discrete(labels = c(expression(paste("low ", italic(p))), 
+#  #                             expression(paste("med ", italic(p))), 
+#  #                             expression(paste("high ", italic(p))))) +
+#   theme_light() +
+#   theme(legend.position = 'top',
+#         # axis.text.y = element_blank(),
+#         axis.ticks.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank(),
+#         strip.text = element_text(face = "bold", color = "black"),
+#         strip.background = element_rect(fill = NA, color = "black"),
+#         axis.text.x = element_text(angle = 0, vjust = 1.5),
+#         # ggh4x.facet.nestline = element_line(size = 0.5), #what does this line do?
+#         panel.border = element_rect(color = "black", fill = NA),  
+#         panel.spacing.x = unit(0.75, "line"))
 
 ## dot plot
 # ggplot(rel.bias.few, aes(x = det.abund, y = bias, col = factor(dataset), group = factor(dataset))) +
@@ -207,7 +218,11 @@ ggplot(rel.bias.few, aes(x = factor(det.abund), y = variable, fill = bias)) +
 #              plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1)) +
 #   scale_color_manual(values = rainbow2[-c(1,4)], name = '')
 
-ggplot(rel.bias.few, aes(x = det.abund, y = bias, col = factor(variable), group = factor(variable))) +
+
+#use me fig 1a
+pdf(here("figures", "bias.lambda.ecol.pdf"), width = 8, height = 12)
+ggplot(rel.bias.few  %>% filter(variable %nin% obs.pars), 
+       aes(x = det.abund, y = bias, col = factor(variable), group = factor(variable))) +
   geom_point() + geom_line() +
   geom_hline(aes(yintercept = 0), linetype = 'dotted') +
   xlab('Count detection') + ylab('Relative bias') +
@@ -216,6 +231,21 @@ ggplot(rel.bias.few, aes(x = det.abund, y = bias, col = factor(variable), group 
   theme(legend.position = 'top',
              plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1)) +
   scale_color_manual(values = rainbow2[-c(1,4)], name = '')
+dev.off()
+
+#use me fig 1b
+pdf(here("figures", "bias.lambda.obs.pdf"), width = 8, height = 12)
+ggplot(rel.bias.few  %>% filter(variable %in% obs.pars), 
+       aes(x = det.abund, y = bias, col = factor(variable), group = factor(variable))) +
+  geom_point() + geom_line() +
+  geom_hline(aes(yintercept = 0), linetype = 'dotted') +
+  xlab('Count detection') + ylab('Relative bias') +
+  facet_grid(dataset~lambda.scenario, scales = 'free_x') +
+  theme_bw() +
+  theme(legend.position = 'top',
+             plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1)) +
+  scale_color_manual(values = rainbow2[-c(1,4)], name = '')
+dev.off()
 
 
 ```
@@ -331,16 +361,8 @@ ggplot(plot.vals, aes(x = factor(fec_cat), y = variable, fill = value)) +
         panel.spacing.x = unit(0.75, "line"))
 
 ## dot plot
-# ggplot(plot.vals, aes(x = fec_cat, y = value, col = factor(dataset), group = factor(dataset))) +
-#   geom_point() + geom_line() +
-#   geom_hline(aes(yintercept = 0), linetype = 'dotted') +
-#   xlab('True fecundity') + ylab('Relative bias') +
-#   facet_grid(variable~phi1_cat, scales = 'free') +
-#   theme_bw() +
-#   theme(legend.position = 'top',
-#              plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1)) +
-#   scale_color_manual(values = rainbow2[-c(1,4)], name = '')
-
+#use me figure 2
+pdf(here("figures", "bias.dem.ecol.pdf"), width = 8, height = 12)
 ggplot(plot.vals, aes(x = fec_cat, y = value, col = factor(variable), group = factor(variable))) +
   geom_point() + geom_line() +
   geom_hline(aes(yintercept = 0), linetype = 'dotted') +
@@ -350,6 +372,7 @@ ggplot(plot.vals, aes(x = fec_cat, y = value, col = factor(variable), group = fa
   theme(legend.position = 'top',
              plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1)) +
   scale_color_manual(values = rainbow2[-c(1,4)], name = '')
+dev.off()
 
 
 ```
@@ -360,16 +383,26 @@ ggplot(plot.vals, aes(x = fec_cat, y = value, col = factor(variable), group = fa
 
 #for the love of buddha, someone please check this calculation of rmse
 rmse.vals <- all.meds %>%
+  transform(p.surv.true = ifelse(det.abund == 'L', 0.3, 
+            ifelse(det.abund == 'M', 0.5, 
+                   ifelse(det.abund == 'H', 0.8, NA)))) %>%
+  transform(mean.p.true = ifelse(det.MR == 'L', 0.3, 
+            ifelse(det.MR == 'M', 0.5, 
+                   ifelse(det.MR == 'H', 0.8, NA)))) %>%
   transform(fec.rmse = (fec.obs-fec.true)^2,
             phiad.rmse = (phiad.obs-phiad.true)^2,
-            phi1.rmse = (phi1.obs-phi1.true)^2) %>%
-  dplyr::select(lambda.scenario, scenario, fec.rmse, phiad.rmse, phi1.rmse, 
+            phi1.rmse = (phi1.obs-phi1.true)^2,
+            mean.p.rmse = (mean.p-mean.p.true)^2,
+            p.surv.rmse = (p.surv-p.surv.true)^2) %>%
+  dplyr::select(lambda.scenario, scenario, fec.rmse, phiad.rmse, phi1.rmse, p.surv.rmse, mean.p.rmse,
                 det.MR, det.abund, det.prod) %>%
   reshape2::melt(id.vars = c('lambda.scenario', 'scenario', 'det.MR', 'det.abund', 'det.prod')) %>%
   group_by(lambda.scenario, det.MR, det.abund, det.prod, variable) %>%
   dplyr::summarize(mean.rmse = mean(value), .groups = 'keep') %>%
-  transform(variable = factor(variable, levels = c('phiad.rmse', 'phi1.rmse', 'fec.rmse'),
-                              labels = c('Adult survival', 'Juv survival', 'Fecundity'))) %>%
+  transform(variable = factor(variable, levels = c('phiad.rmse', 'phi1.rmse', 'fec.rmse', 
+                                                   'p.surv.rmse', 'mean.p.rmse'),
+                              labels = c('Adult survival', 'Juv survival', 'Fecundity',
+                                         'Count detection', 'Resight detection'))) %>%
   transform(lambda.scenario = factor(lambda.scenario,
                                      levels = c("Decreasing", "Stable", "Increasing"))) %>%
   transform(det.MR = factor(det.MR, levels = c('L', 'M', 'H'))) %>%
@@ -416,7 +449,8 @@ rmse.few <- rmse.vals %>%
                              labels = c('Full', 'Counts+Prod', 'Counts+MR', 'Counts')))
 
 #use me fig 3
-ggplot(rmse.few, aes(x = factor(det.abund), y = variable, fill = rmse)) +
+pdf(here("figures", "rmse.lambda.ecol.pdf"), width = 8, height = 12)
+ggplot(rmse.few %>% filter(variable %nin% obs.pars), aes(x = factor(det.abund), y = variable, fill = rmse)) +
   geom_tile(color = 'grey50') +
   xlab('Count detection') + ylab('') +
   facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_parsed) +
@@ -439,6 +473,33 @@ ggplot(rmse.few, aes(x = factor(det.abund), y = variable, fill = rmse)) +
         # ggh4x.facet.nestline = element_line(size = 0.5), #what does this line do?
         panel.border = element_rect(color = "black", fill = NA),  
         panel.spacing.x = unit(0.75, "line"))
+dev.off()
+
+pdf(here("figures", "rmse.lambda.obs.pdf"), width = 8, height = 12)
+ggplot(rmse.few %>% filter(variable %in% obs.pars), aes(x = factor(det.abund), y = variable, fill = rmse)) +
+  geom_tile(color = 'grey50') +
+  xlab('Count detection') + ylab('') +
+  facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_parsed) +
+  scale_fill_gradient2(name = "RMSE",
+                       mid = "white", high = rainbow2[2], midpoint = 0) +
+                      # breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2")) +
+ # scale_x_discrete(labels = c(expression(paste("low ", italic(p))), 
+ #                             expression(paste("med ", italic(p))), 
+ #                             expression(paste("high ", italic(p))))) +
+  theme_light() +
+  theme(legend.position = 'top',
+        # axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.text = element_text(face = "bold", color = "black"),
+        strip.background = element_rect(fill = NA, color = "black"),
+        axis.text.x = element_text(angle = 0, vjust = 1.5),
+        # ggh4x.facet.nestline = element_line(size = 0.5), #what does this line do?
+        panel.border = element_rect(color = "black", fill = NA),  
+        panel.spacing.x = unit(0.75, "line"))
+dev.off()
 
 ## dot plot
 # ggplot(rmse.few, aes(x = det.abund, y = bias, col = factor(dataset), group = factor(dataset))) +
@@ -451,7 +512,17 @@ ggplot(rmse.few, aes(x = factor(det.abund), y = variable, fill = rmse)) +
 #              plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1)) +
 #   scale_color_manual(values = rainbow2[-c(1,4)], name = '')
 
-ggplot(rmse.few, aes(x = det.abund, y = rmse, col = factor(variable), group = factor(variable))) +
+ggplot(rmse.few %>% filter(variable %nin% obs.pars), aes(x = det.abund, y = rmse, col = factor(variable), group = factor(variable))) +
+  geom_point() + geom_line() +
+  geom_hline(aes(yintercept = 0), linetype = 'dotted') +
+  xlab('Count detection') + ylab('RMSE') +
+  facet_grid(dataset~lambda.scenario, scales = 'free') +
+  theme_bw() +
+  theme(legend.position = 'top',
+             plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1)) +
+  scale_color_manual(values = rainbow2[-c(1,4)], name = '')
+
+ggplot(rmse.few %>% filter(variable %in% obs.pars), aes(x = det.abund, y = rmse, col = factor(variable), group = factor(variable))) +
   geom_point() + geom_line() +
   geom_hline(aes(yintercept = 0), linetype = 'dotted') +
   xlab('Count detection') + ylab('RMSE') +
@@ -508,6 +579,7 @@ plot.vals.rmse <- rmse.dem %>%
   dplyr::summarize(value = mean(mean.rmse), .groups = 'keep')
 
 #use me fig 3
+pdf(here("figures", "rmse.dem.ecol.pdf"), width = 8, height = 12)
 ggplot(plot.vals.rmse, aes(x = factor(fec_cat), y = factor(variable), fill = value)) +
   geom_tile(color = 'grey50') +
   xlab('True fecundity') + ylab('') +
@@ -529,6 +601,7 @@ ggplot(plot.vals.rmse, aes(x = factor(fec_cat), y = factor(variable), fill = val
         # ggh4x.facet.nestline = element_line(size = 0.5), #what does this line do?
         panel.border = element_rect(color = "black", fill = NA),  
         panel.spacing.x = unit(0.75, "line"))
+dev.off()
 
 ## dot plot
 ggplot(plot.vals.rmse, aes(x = fec_cat, y = value, col = factor(variable), group = factor(variable))) +
