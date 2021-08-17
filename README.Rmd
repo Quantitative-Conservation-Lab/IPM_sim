@@ -16,7 +16,8 @@ Something here about background?
 # Scripts, current version
 ## 0 - preparing scenarios
 ### compute_time_calc.R
-Code for approximating the total run time, given number of simulated datasets, number of parameter scenarios, computer cores, and estimated run time. 
+Code for approximating the total run time, given number of simulated datasets, number of parameter scenarios, computer cores, and estimated run time for each model. 
+
 ### generate_scenarios.R
 Function 'getNviable' for finding the combinations of parameters that give a population growth rate ($\lambda$) within certain bounds, using the eigenvalue from the Leslie matrix. The output from this function produced the parameter scenarios used to simulate population trajectories, observation data from the trajectories, and fit the the IPM models. 
 
