@@ -91,7 +91,8 @@ toplot <- bind_rows(toplot1, toplot2, toplot3) %>%
   mutate(Quantile = str_remove(Quantile, "\\%")) %>% 
   mutate(Quantile = paste("X", Quantile, sep = "")) %>% 
   reshape2::dcast(dataset + Year +  det.MR + det.prod + det.abund   + lambda ~ Quantile, value.var = "value") %>% 
-  filter(Year %in% c(1:5, 10)) %>% 
+  mutate(Year = Year + 1) %>% 
+  filter(Year %in% c(2:6, 15)) %>% 
   mutate(Year = factor(Year)) %>% 
   mutate(det.abund = factor(det.abund, levels = c("L", "M", "H"))) %>% 
   mutate(det.prod = factor(det.prod, levels = c("L", "M", "H"))) %>% 
@@ -99,7 +100,11 @@ toplot <- bind_rows(toplot1, toplot2, toplot3) %>%
   transform(lambda = factor(lambda, levels = c("L", "M", "H"), 
                             labels = c("Decreasing", "Stable", "Increasing"))) %>%
   transform(dataset = factor(dataset, levels = c('Full', 'Counts+Prod', 'Counts+MR', 'Counts'),
-                             labels = c('Full', 'Counts+Prod', 'Counts+MR', 'Counts')))
+                             labels = c('Full', 'Counts+Prod', 'Counts+MR', 'Counts'))) %>% 
+  mutate(intercept = case_when(
+    lambda == "Decreasing" ~ 0.95, 
+    lambda == "Stable" ~ 1,
+    lambda == "Increasing" ~ 1.05))
 
 
 pdf(here("figures", "lambdaTrends.pdf"), width = 12, height = 8)
@@ -108,8 +113,8 @@ ggplot(toplot) +
   geom_point(aes(x = Year, y = X50, col = det.abund, group = det.abund), position = position_dodge(width = 0.5)) +
   #geom_linerange(aes(ymin = X2.5, ymax = X97.5, x = Year), position = position_dodge(width = 0.5)) +
   #geom_hline(aes(yintercept = 1.0), linetype = 'dotted') +
-  xlab('Year') + ylab('Lambda') + 
-  ylim(0.87, 1.14) +
+  xlab('Years') + ylab('Lambda') + 
+  #ylim(0.87, 1.14) +
   facet_grid(dataset ~ lambda, scales = 'free') +
   theme_bw() +
   theme(legend.position = 'top',
@@ -117,10 +122,11 @@ ggplot(toplot) +
   scale_color_manual(values = rainbow2[-c(1,4)], name = 'Abundance detection level') + 
   geom_rect(aes(ymin=-Inf,
                 ymax=Inf,
-                xmin=which(levels(Year) == "10")-0.65,
-                xmax=which(levels(Year) == "10")+0.65),
+                xmin=which(levels(Year) == "15")-0.65,
+                xmax=which(levels(Year) == "15")+0.65),
             fill="grey85", alpha=0.25, col = NA) +
-  geom_hline(aes(yintercept = 1.0), linetype = 'dotted') +
+  geom_hline(aes(yintercept = intercept), linetype = 'dotted') +
+  geom_hline(aes(yintercept = 1.0), linetype = 'solid') +
   geom_linerange(aes(ymin = X2.5, ymax = X97.5, x = Year, col = det.abund, group = det.abund), position = position_dodge(width = 0.5)) +
   geom_point(aes(x = Year, y = X50, col = det.abund, group = det.abund), position = position_dodge(width = 0.5))
 dev.off()
