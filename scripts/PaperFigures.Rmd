@@ -79,6 +79,7 @@ all.dat <- bind_rows(low.dat, med.dat, high.dat)
 #get posterior medians
 # all.meds <- all.dat %>%
 #   dplyr::select('phi1.obs', 'phi1.true', 'phiad.obs', 'phiad.true', 'fec.obs', 'fec.true',
+#                 'p.surv', 'mean.p',
 #                             'sims', 'scenario', 'simscenarios', 'lambda.scenario') %>%
 #   reshape2::melt(id.vars = c('lambda.scenario', 'sims', 'scenario', 'simscenarios')) %>%
 #   group_by(lambda.scenario, scenario, simscenarios, variable) %>%
@@ -87,13 +88,14 @@ all.dat <- bind_rows(low.dat, med.dat, high.dat)
 #   merge(scenarios %>% dplyr::select(-c(n.viable.combinations, priority)), by = c('simscenarios'))
 # 
 # 
-# write.csv(all.meds, here::here('results', 'Processed csvs', 'all.meds.csv'), row.names = F)
+# write.csv(all.meds, here::here('figures', 'Processed csvs', 'all.meds.csv'), row.names = F)
 
 all.meds <- read.csv(file = here::here('results', 'Processed csvs', 'all.meds.csv'), 
                      header = T, stringsAsFactors = F)
 
-# #just bias
+##bias
 rel.bias <- all.meds %>%
+  transform(p.surv.true = ifelse(det.abund == 'L', 0.3))
   #calculate relative bias, mean across scenarios
   transform(phi1.bias = (phi1.obs-phi1.true)/phi1.true,
             phiad.bias = (phiad.obs-phiad.true)/phiad.true,
