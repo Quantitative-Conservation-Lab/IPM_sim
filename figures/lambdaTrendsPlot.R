@@ -11,6 +11,8 @@ library(tidybayes)
 library(ggplot2)
 library(wesanderson)
 library(here)
+library(tidyverse)
+library(reshape2)
 
 pal <- rev(wes_palette("Zissou1", 3, type = "continuous"))
 
@@ -18,416 +20,150 @@ row.low <- read_csv(here("results", "row_low.csv"))
 row.med <- read_csv(here("results", "row_med.csv"))
 row.high <- read_csv(here("results", "row_high.csv"))
 
+scenario_ID <- read_csv(here("data", "scenario_ID.csv")) %>% 
+  select(-c(n.viable.combinations, priority))
+
 # Reformat for plotting
 toplot1 <- row.low %>%
-  select(contains("geomean"), scenario, sims, simscenarios) %>%
+  select(contains("geomean"), scenario, sims, simscenarios, Quantile) %>%
   #group_by(model, detection)
   pivot_longer(cols = starts_with("geomean"), names_to = "Year") %>%
   filter(!is.na(value)) %>%
   mutate(Year = str_remove(Year, "geomean\\.")) %>%
   mutate(Year = as.numeric(Year)) %>%
-  group_by(scenario, sims, simscenarios, Year) %>% # checked through here - TODO
+  group_by(scenario, sims, simscenarios, Year, Quantile) %>% # checked through here - TODO
   # summarise(low = quantile(value, 0.025),
   #           med = quantile(value, 0.5),
   #           high = quantile(value, 0.975)) %>%
   ungroup() %>%
+  left_join(scenario_ID, by = "simscenarios") %>% 
   mutate(scenario = as.factor(scenario),
          sims = as.factor(sims), 
-         simscenarios = as.factor(simscenarios)) 
+         simscenarios = as.factor(simscenarios))
+
+# use reshape cast to spread the quantiles out into lower middle upper for line plot
 
 toplot2 <- row.med %>%
-  select(contains("geomean"), scenario, sims, simscenarios) %>%
+  select(contains("geomean"), scenario, sims, simscenarios, Quantile) %>%
   #group_by(model, detection)
   pivot_longer(cols = starts_with("geomean"), names_to = "Year") %>%
   filter(!is.na(value)) %>%
   mutate(Year = str_remove(Year, "geomean\\.")) %>%
   mutate(Year = as.numeric(Year)) %>%
-  group_by(scenario, sims, simscenarios, Year) %>% # checked through here - TODO
+  group_by(scenario, sims, simscenarios, Year, Quantile) %>% # checked through here - TODO
   # summarise(low = quantile(value, 0.025),
   #           med = quantile(value, 0.5),
   #           high = quantile(value, 0.975)) %>%
   ungroup() %>%
+  left_join(scenario_ID, by = "simscenarios") %>% 
   mutate(scenario = as.factor(scenario),
          sims = as.factor(sims), 
          simscenarios = as.factor(simscenarios))
 
 toplot3 <- row.high %>%
-  select(contains("geomean"), scenario, sims, simscenarios) %>%
+  select(contains("geomean"), scenario, sims, simscenarios, Quantile) %>%
   #group_by(model, detection)
   pivot_longer(cols = starts_with("geomean"), names_to = "Year") %>%
   filter(!is.na(value)) %>%
   mutate(Year = str_remove(Year, "geomean\\.")) %>%
   mutate(Year = as.numeric(Year)) %>%
-  group_by(scenario, sims, simscenarios, Year) %>% # checked through here - TODO
+  group_by(scenario, sims, simscenarios, Year, Quantile) %>% # checked through here - TODO
   # summarise(low = quantile(value, 0.025),
   #           med = quantile(value, 0.5),
   #           high = quantile(value, 0.975)) %>%
   ungroup() %>%
+  left_join(scenario_ID, by = "simscenarios") %>% 
   mutate(scenario = as.factor(scenario),
          sims = as.factor(sims), 
-         simscenarios = as.factor(simscenarios)) 
+         simscenarios = as.factor(simscenarios))
 
-# AEB - idea for version two of this plot
-## row low
-g1 <- ggplot(toplot1, aes(x = Year, y = value)) +
- stat_pointinterval(aes(color = simscenarios, fill = simscenarios), alpha = 0.5, .width = c(0.5, 0.95)) +
- geom_hline(yintercept = 0.95, linetype = "dashed", color = "black") +
- geom_hline(yintercept = 1.00, linetype = "solid", color = "black") +
- facet_grid(.~simscenarios) +
-  theme_minimal() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.text = element_text(size = 12),
-        axis.text.x = element_blank(),
-        #axis.title.x = element_blank(),
-        strip.text = element_blank(),
-        legend.position = "none", # turn off legend
-        legend.text = element_text(size = 12),
-        legend.title = element_text(size = 12),
-        plot.title.position = "plot",
-        axis.title=element_text(size=12)) +
-  scale_x_discrete(name="Year",breaks = seq(1, 14, by = 3)) +
-  coord_cartesian(clip = "off") +
-  scale_color_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))  +
-  scale_fill_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))
+toplot <- bind_rows(toplot1, toplot2, toplot3) %>% 
+  select(-simscenarios) %>% 
+  transform(dataset = ifelse(is.na(det.MR)&!is.na(det.prod), 'Counts+Prod', 
+                             ifelse(!is.na(det.MR)&is.na(det.prod), 'Counts+MR',
+                                    ifelse(is.na(det.MR)&is.na(det.prod), 'Counts', 'Full')))) %>% 
+  group_by(Quantile, Year, det.abund, lambda, dataset, det.MR, det.prod) %>% 
+  # took mean over demographic scenario (n = 25) and replicate (n = 50)
+  # and mark recapture detection and fecundity
+  # AEB - is it ok to take mean of quantiles? review here ######
+  summarize(value = mean(value), .groups = "keep") %>% 
+  ungroup() %>% 
+  mutate(Quantile = str_remove(Quantile, "\\%")) %>% 
+  mutate(Quantile = paste("X", Quantile, sep = "")) %>% 
+  reshape2::dcast(dataset + Year +  det.MR + det.prod + det.abund   + lambda ~ Quantile, value.var = "value") %>% 
+  filter(Year %in% c(1:5, 10)) %>% 
+  mutate(Year = factor(Year)) %>% 
+  mutate(det.abund = factor(det.abund, levels = c("L", "M", "H"))) %>% 
+  mutate(det.prod = factor(det.prod, levels = c("L", "M", "H"))) %>% 
+  mutate(det.MR = factor(det.MR, levels = c("L", "M", "H"))) %>% 
+  transform(lambda = factor(lambda, levels = c("L", "M", "H"), 
+                            labels = c("Decreasing", "Stable", "Increasing"))) %>%
+  transform(dataset = factor(dataset, levels = c('Full', 'Counts+Prod', 'Counts+MR', 'Counts'),
+                             labels = c('Full', 'Counts+Prod', 'Counts+MR', 'Counts')))
 
-## row med
-g2 <- ggplot(toplot2, aes(x = Year, y = value)) +
-  stat_pointinterval(aes(color = simscenarios, fill = simscenarios), alpha = 0.5, .width = c(0.5, 0.95)) +
-  geom_hline(yintercept = 1.00, linetype = "dashed", color = "black") +
-  geom_hline(yintercept = 1.00, linetype = "solid", color = "black") +
-  facet_grid(.~simscenarios) +
-  theme_minimal() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.text = element_text(size = 12),
-        axis.text.x = element_blank(),
-        #axis.title.x = element_blank(),
-        strip.text = element_blank(),
-        legend.position = "none", # turn off legend
-        legend.text = element_text(size = 12),
-        legend.title = element_text(size = 12),
-        plot.title.position = "plot",
-        axis.title=element_text(size=12)) +
-  scale_x_discrete(name="Year",breaks = seq(1, 14, by = 3)) +
-  coord_cartesian(clip = "off") +
-  scale_color_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))  +
-  scale_fill_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))
 
-## row high
-g3 <- ggplot(toplot3, aes(x = Year, y = value)) +
-  stat_pointinterval(aes(color = simscenarios, fill = simscenarios), alpha = 0.5, .width = c(0.5, 0.95)) +
-  geom_hline(yintercept = 1.05, linetype = "dashed", color = "black") +
-  geom_hline(yintercept = 1.00, linetype = "solid", color = "black") +
-  facet_grid(.~simscenarios) +
-  theme_minimal() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.text = element_text(size = 12),
-        axis.text.x = element_blank(),
-        #axis.title.x = element_blank(),
-        strip.text = element_blank(),
-        legend.position = "bottom",
-        legend.text = element_text(size = 12),
-        legend.title = element_text(size = 12),
-        plot.title.position = "plot",
-        axis.title=element_text(size=12)) +
-  scale_x_discrete(name="Year", labels = seq(1, 14, by = 3), breaks = seq(1, 14, by = 3)) +
-  coord_cartesian(clip = "off") +
-  scale_color_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))  +
-  scale_fill_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))
-
-## combine all
-library(patchwork)
-library(cowplot)
-
-pdf(here("figures", "lambda_plot1.pdf"), width = 12, height = 8)
-plot_grid(g1, g2, g3, nrow = 3)
+pdf(here("figures", "lambdaTrends.pdf"), width = 12, height = 8)
+rainbow2 <- c("violetred4", "dodgerblue3", 'deepskyblue1', "#4aaaa5", "#a3d39c", "#f6b61c", "chocolate2", "red3")
+ggplot(toplot) +
+  geom_point(aes(x = Year, y = X50, col = det.abund, group = det.abund), position = position_dodge(width = 0.5)) +
+  #geom_linerange(aes(ymin = X2.5, ymax = X97.5, x = Year), position = position_dodge(width = 0.5)) +
+  #geom_hline(aes(yintercept = 1.0), linetype = 'dotted') +
+  xlab('Year') + ylab('Lambda') + 
+  ylim(0.87, 1.14) +
+  facet_grid(dataset ~ lambda, scales = 'free') +
+  theme_bw() +
+  theme(legend.position = 'top',
+        plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1)) +
+  scale_color_manual(values = rainbow2[-c(1,4)], name = 'Abundance detection level') + 
+  geom_rect(aes(ymin=-Inf,
+                ymax=Inf,
+                xmin=which(levels(Year) == "10")-0.65,
+                xmax=which(levels(Year) == "10")+0.65),
+            fill="grey85", alpha=0.25, col = NA) +
+  geom_hline(aes(yintercept = 1.0), linetype = 'dotted') +
+  geom_linerange(aes(ymin = X2.5, ymax = X97.5, x = Year, col = det.abund, group = det.abund), position = position_dodge(width = 0.5)) +
+  geom_point(aes(x = Year, y = X50, col = det.abund, group = det.abund), position = position_dodge(width = 0.5))
 dev.off()
+  
+######
 
-## simplified version of above plot
-df1 <- toplot1 %>%
-  mutate(Lambda = c("Decreasing"),
-         simscenarios2 = ifelse(simscenarios == 1, "low", # check this
-                                ifelse(simscenarios == 2, "med",
-                                       ifelse(simscenarios == 3, "high", "")))) %>%
-  slice_sample(prop = .1) # remove due to memory issues
-df2 <- toplot2 %>%
-  mutate(Lambda = c("Stable"),
-         simscenarios2 = ifelse(simscenarios == 4, "low", # check this
-                                ifelse(simscenarios == 5, "med",
-                                       ifelse(simscenarios == 6, "high", "")))) %>%
-  slice_sample(prop = .1) # remove due to memory issues
-df3 <- toplot3 %>%
-  mutate(Lambda = c("Increasing"),
-         simscenarios2 = ifelse(simscenarios == 7, "low", # check this
-                                ifelse(simscenarios == 8, "med",
-                                       ifelse(simscenarios == 9, "high", "")))) %>%
-  slice_sample(prop = .1) # remove due to memory issues
-df <- rbind(df1, df2, df3)
-# # change factor levels
-# df$simscenarios <- factor(df$simscenarios, levels = c(1, 2, 3),
-#                           ordered = TRUE, labels = c(expression(paste("low ", italic(p))), 
-#                                                      expression(paste("med ", italic(p))), 
-#                                                      expression(paste("high ", italic(p)))))
-df$Lambda <- factor(df$Lambda, levels = c("Decreasing", "Stable", "Increasing"),
-                                        ordered = TRUE, labels = c(expression(paste("Decreasing ", lambda)), 
-                                                                   expression(paste("Stable ", lambda)), 
-                                                                   expression(paste("Increasing ", lambda))))
-
-
-# plotting
-# h1 <- ggplot(df, aes(x = Year, y = value)) +  
-#   stat_pointinterval(aes(color = simscenarios2, fill = simscenarios2), 
-#                      alpha = 0.5, .width = c(0.5, 0.95)) +
-#   geom_hline(yintercept = 0.95, linetype = "dashed", color = "black") +
-#   geom_hline(yintercept = 1.00, linetype = "solid", color = "black") +
-#   geom_hline(yintercept = 1.05, linetype = "dashed", color = "black") +
-#   facet_grid(.~Lambda) +
-#   theme_minimal() +
-#   theme(panel.grid.major = element_blank(),
-#         panel.grid.minor = element_blank(),
-#         axis.text = element_text(size = 12),
-#         # axis.text.x = element_blank(),
-#         # axis.title.x = element_blank(),
-#         # strip.text = element_blank(),
-#         legend.position = "bottom", 
-#         legend.text = element_text(size = 12),
-#         legend.title = element_text(size = 12),
-#         plot.title.position = "plot",
-#         axis.title=element_text(size=12)) +
-#   scale_x_discrete(name="Year", breaks = seq(1, 14, by = 3)) +
-#   coord_cartesian(clip = "off") +
-#   scale_color_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))  +
-#   scale_fill_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High")) 
-# h1
-h2 <- ggplot(df) +  
- geom_violin(aes(x = Year, y = value, color = simscenarios2, fill = simscenarios2, group = Year)) +
-  geom_hline(yintercept = 0.95, linetype = "dashed", color = "black") +
-  geom_hline(yintercept = 1.00, linetype = "solid", color = "black") +
-  geom_hline(yintercept = 1.05, linetype = "dashed", color = "black") +
-  facet_grid(.~Lambda) +
-  theme_minimal() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.text = element_text(size = 12),
-        # axis.text.x = element_blank(),
-        # axis.title.x = element_blank(),
-        # strip.text = element_blank(),
-        legend.position = "bottom", 
-        legend.text = element_text(size = 12),
-        legend.title = element_text(size = 12),
-        plot.title.position = "plot",
-        axis.title=element_text(size=12)) +
-  # scale_x_discrete(name="Year", breaks = seq(1, 14, by = 3)) +
-  coord_cartesian(clip = "off") +
-  scale_color_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))  +
-  scale_fill_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High")) 
-h2
-
-# create plots for year 1, year 5, year 10 (need to re-factor lambda levels above)
-dfyr1 <- df %>% filter(Year == 1)
-dfyr5 <- df %>% filter(Year == 5)
-dfyr10 <- df %>% filter(Year == 10)
-
-## plotting
-j1 <- ggplot(dfyr1) +  
-  geom_violin(aes(x = simscenarios2, y = value, color = simscenarios2, fill = simscenarios2)) +
-  geom_hline(yintercept = 0.95, linetype = "dashed", color = "black", size = 0.25) +
-  geom_hline(yintercept = 1.00, linetype = "solid", color = "black", size = 0.25) +
-  geom_hline(yintercept = 1.05, linetype = "dashed", color = "black", size = 0.25) +
-  facet_wrap(.~Lambda, labeller = label_parsed, nrow = 3) +
-  ylim(c(0.75, 1.25)) + ylab("") +
-  theme_minimal() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.text = element_text(size = 12),
-        axis.text.x = element_blank(),
-        axis.title.x = element_blank(),
-        # strip.text = element_blank(),
-        legend.position = "none", 
-        legend.text = element_text(size = 12),
-        legend.title = element_text(size = 12),
-        # plot.title.position = "plot",
-        plot.title = element_text(hjust = 0.5),
-        axis.title=element_text(size=12)) +
-  coord_cartesian(clip = "off") +
-  scale_color_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))  +
-  scale_fill_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High")) +
-  ggtitle("Year 1")
-j1
-j2 <- ggplot(dfyr5) +  
-  geom_violin(aes(x = simscenarios2, y = value, color = simscenarios2, fill = simscenarios2)) +
-  geom_hline(yintercept = 0.95, linetype = "dashed", color = "black", size = 0.25) +
-  geom_hline(yintercept = 1.00, linetype = "solid", color = "black", size = 0.25) +
-  geom_hline(yintercept = 1.05, linetype = "dashed", color = "black", size = 0.25) +
-  # facet_grid(.~Lambda, labeller = label_parsed) +
-  facet_wrap(.~Lambda, labeller = label_parsed, nrow = 3) +
-  ylim(c(0.75, 1.25)) + ylab("") +
-  theme_minimal() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.text = element_text(size = 12),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(), # turn off y-axis
-        axis.title.x = element_blank(),
-        # strip.text = element_blank(),
-        legend.position = "bottom", 
-        legend.text = element_text(size = 12),
-        legend.title = element_text(size = 12),
-        # plot.title.position = "plot",
-        plot.title = element_text(hjust = 0.5),
-        axis.title=element_text(size=12)) +
-  coord_cartesian(clip = "off") +
-  scale_color_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))  +
-  scale_fill_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High")) +
-  ggtitle("Year 5")
-j2
-j3 <- ggplot(dfyr10) +  
-  geom_violin(aes(x = simscenarios2, y = value, color = simscenarios2, fill = simscenarios2)) +
-  geom_hline(yintercept = 0.95, linetype = "dashed", color = "black", size = 0.25) +
-  geom_hline(yintercept = 1.00, linetype = "solid", color = "black", size = 0.25) +
-  geom_hline(yintercept = 1.05, linetype = "dashed", color = "black", size = 0.25) +
-  # facet_grid(.~Lambda, labeller = label_parsed) +
-  facet_wrap(.~Lambda, labeller = label_parsed, nrow = 3) +
-  ylim(c(0.75, 1.25)) + ylab("") +
-  theme_minimal() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.text = element_text(size = 12),
-        axis.text.x = element_blank(),
-        axis.text.y = element_blank(), # turn off y axis
-        axis.title.x = element_blank(),
-        # strip.text = element_blank(),
-        legend.position = "none", 
-        legend.text = element_text(size = 12),
-        legend.title = element_text(size = 12),
-        # plot.title.position = "plot",
-        plot.title = element_text(hjust = 0.5),
-        axis.title=element_text(size=12)) +
-  coord_cartesian(clip = "off") +
-  scale_color_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High"))  +
-  scale_fill_manual(values = pal, name = "Detection\nlevel", labels = c("Low", "Medium", "High")) +
-  ggtitle("Year 10")
-j3
-
-## combine
-library(patchwork)
-library(here)
-all <- j1 + j2 + j3
-all
-
-## export out
-ggsave(filename = here("figures", "lambda_plot4.pdf"), plot = all)
-
-# ## try with cowplot
-# library(cowplot)
-# all2 <- align_plots(j1, j2, j3, align = "hv", axis = "tblr")
-# all2
+# ggplot(toplot, aes(x = Year, y = X50, col = factor(dataset), group = factor(dataset))) +
+#   geom_point(position = position_dodge(width = 0.75)) + geom_linerange(aes(ymin = X2.5, ymax = X97.5, x = Year), position = position_dodge(width = 0.75)) +
+#   geom_hline(aes(yintercept = 1.0), linetype = 'dotted') +
+#   xlab('Year') + ylab('Lambda') +
+#   facet_grid(det.abund ~ lambda, scales = 'free', labeller = "label_both") +
+#   theme_bw() +
+#   theme(legend.position = 'top',
+#         plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1)) #+
+#   #scale_color_manual(values = rainbow2[-c(1,4)], name = '')
 # 
-# pdf("lambda_plot4.pdf", width = 8, height = 6)
-# plot_grid(j1, j2, j3, ncol = 3)
-# dev.off()
-
-# AEB - old stuff ########
-p1 <- ggplot(transform(toplot1,
-                       model = factor(model, levels = c("Full IPM", "No nest data", "No mark recapture data", "Abundance data only")))) +
-  #geom_hline(yintercept = 1, linetype = "solid", color = "grey40") +
-  geom_line(aes(x = Year, y = high, color = detection), linetype = "solid", alpha = 0.5) +
-  geom_line(aes(x = Year, y = low, color = detection), linetype = "solid", alpha = 0.5) +
-  geom_line(aes(x = Year, y = med, color = detection), size = 1.05) +
-  facet_grid(.~model) +
-  geom_hline(yintercept = 1.05, linetype = "dashed", color = "black") +
-  theme_minimal() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.text = element_text(size = 12),
-        axis.text.x = element_blank(),
-        axis.title.x = element_blank(),
-        strip.text = element_text(size = 12),
-        legend.position = "top",
-        legend.text = element_text(size = 12),
-        legend.title = element_text(size = 12),
-        plot.title.position = "plot",
-        axis.title=element_text(size=12)) +
-  scale_x_continuous(name="Year", limits = c(1, 13), breaks = seq(1, 14, by = 3)) +
-  scale_y_continuous(name="", limits = c(0.8, 1.3), breaks = c(0.95, 1, 1.05), position = "left") +
-  theme(plot.margin = unit(c(0, 0, 0, 0), "lines")) +
-  coord_cartesian(clip = "off") +
-  #annotate(geom = "text", x=14.5, y=0.65, label="Population\ndeclining", size = 3) +
-  #annotate(geom = "text", x=14.5, y=1.25, label="Population\nincreasing", size = 3) +
-  annotate(geom = "text", x=14.5, y=0.925+0.1, label=expression(paste("True ",lambda)), size = 3) +
-  scale_color_manual(values = pal, name = "Data\nquality", labels = c("Low", "Medium", "High"))  +
-  scale_fill_manual(values = pal, name = "Data\nquality", labels = c("Low", "Medium", "High"))
-p1
-
-p2 <- ggplot(toplot2) +
-  #geom_hline(yintercept = 1, linetype = "solid", color = "grey40") +
-  geom_line(aes(x = Year, y = high, color = detection), linetype = "solid", alpha = 0.5) +
-  geom_line(aes(x = Year, y = low, color = detection), linetype = "solid", alpha = 0.5) +
-  geom_line(aes(x = Year, y = med, color = detection), size = 1.05) +
-  facet_grid(.~model) +
-  geom_hline(yintercept = 1, linetype = "dashed", color = "black") +
-  #geom_hline(yintercept = 1, linetype = "solid", color = "black") +
-  theme_minimal() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.text = element_text(size = 12),
-        axis.text.x = element_blank(),
-        axis.title.x = element_blank(),
-        legend.position = "none",
-        strip.text = element_blank(),
-        legend.text = element_text(size = 12),
-        legend.title = element_text(size = 12),
-        plot.title.position = "plot",
-        axis.title=element_text(size=12)) +
-  scale_x_continuous(name="Year", limits = c(1, 13), breaks = seq(1, 14, by = 3)) +
-  scale_y_continuous(name=expression(paste("Estimated ", lambda)), limits = c(0.8, 1.3), breaks = c(0.95, 1, 1.05), position = "left") +
-  #scale_x_continuous(name="Year", limits = c(1, 13), breaks = 1:14) +
-  #scale_y_continuous(name=expression(paste("Estimated ", lambda)), limits = c(0.8, 1.3), breaks = seq(0.8, 1.3, 0.1)) +
-  theme(plot.margin = unit(c(0, 0, 0, 0), "lines")) +
-  coord_cartesian(clip = "off") +
-  #annotate(geom = "text", x=14.5, y=0.65, label="Population\ndeclining", size = 3) +
-  #annotate(geom = "text", x=14.5, y=1.25, label="Population\nincreasing", size = 3) +
-  annotate(geom = "text", x=14.5, y=0.925+0.05, label=expression(paste("True ",lambda)), size = 3) +
-  scale_color_manual(values = pal, name = "Data\nquality", labels = c("Low", "Medium", "High"))  +
-  scale_fill_manual(values = pal, name = "Data\nquality", labels = c("Low", "Medium", "High"))
-p2
-
-p3 <- ggplot(toplot3) +
-  #geom_hline(yintercept = 1, linetype = "solid", color = "grey40") +
-  geom_line(aes(x = Year, y = high, color = detection), linetype = "solid", alpha = 0.5) +
-  geom_line(aes(x = Year, y = low, color = detection), linetype = "solid", alpha = 0.5) +
-  geom_line(aes(x = Year, y = med, color = detection), size = 1.05) +
-  facet_grid(.~model) +
-  geom_hline(yintercept = 0.95, linetype = "dashed", color = "black") +
-  #geom_hline(yintercept = 1, linetype = "solid", color = "black") +
-  theme_minimal() +
-  theme(panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        axis.text = element_text(size = 12),
-        legend.position = "none",
-        strip.text = element_blank(),
-        legend.text = element_text(size = 12),
-        legend.title = element_text(size = 12),
-        plot.title.position = "plot",
-        axis.title=element_text(size=12)) +
-  scale_x_continuous(name="Year", limits = c(1, 13), breaks = seq(1, 14, by = 3)) +
-  scale_y_continuous(name="", limits = c(0.8, 1.3), breaks = c(0.95, 1, 1.05), position = "left") +
-  #scale_x_continuous(name="Year", limits = c(1, 13), breaks = 1:14) +
-  #scale_y_continuous(name=expression(paste("Estimated ", lambda)), limits = c(0.8, 1.3), breaks = seq(0.8, 1.3, 0.1)) +
-  theme(plot.margin = unit(c(0, 0, 0, 0), "lines")) +
-  coord_cartesian(clip = "off") +
-  #annotate(geom = "text", x=14.5, y=0.65, label="Population\ndeclining", size = 3) +
-  #annotate(geom = "text", x=14.5, y=1.25, label="Population\nincreasing", size = 3) +
-  annotate(geom = "text", x=14.5, y=0.925, label=expression(paste("True ",lambda)), size = 3) +
-  scale_color_manual(values = pal, name = "Data\nquality", labels = c("Low", "Medium", "High"))  +
-  scale_fill_manual(values = pal, name = "Data\nquality", labels = c("Low", "Medium", "High"))
-p3
-
-library(patchwork)
-library(cowplot)
-
-pdf("IPMplotTrevor.pdf", width = 12, height = 8)
-plot_grid(p1, p2, p3, nrow = 3)
-dev.off()
+# ggplot(toplot, aes(x = Year, y = X50, col = factor(dataset), group = factor(dataset))) +
+#   geom_point(position = position_dodge(width = 0.75)) + geom_linerange(aes(ymin = X2.5, ymax = X97.5, x = Year), position = position_dodge(width = 0.75)) +
+#   geom_hline(aes(yintercept = 1.0), linetype = 'dotted') +
+#   xlab('Year') + ylab('Lambda') +
+#   facet_grid(det.MR ~ lambda, scales = 'free', labeller = "label_both") +
+#   theme_bw() +
+#   theme(legend.position = 'top',
+#         plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1))
+# 
+# ggplot(toplot, aes(x = Year, y = X50, col = factor(dataset), group = factor(dataset))) +
+#   geom_point(position = position_dodge(width = 0.75)) + geom_linerange(aes(ymin = X2.5, ymax = X97.5, x = Year), position = position_dodge(width = 0.75)) +
+#   geom_hline(aes(yintercept = 1.0), linetype = 'dotted') +
+#   xlab('Year') + ylab('Lambda') +
+#   facet_grid(det.prod ~ lambda, scales = 'free', labeller = "label_both") +
+#   theme_bw() +
+#   theme(legend.position = 'top',
+#         plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1))
+# 
+# ggplot(toplot %>%  filter(lambda == "L"), aes(x = Year, y = X50, col = factor(det.abund), group = factor(det.abund))) +
+#   geom_point(position = position_dodge(width = 0.75)) + geom_linerange(aes(ymin = X2.5, ymax = X97.5, x = Year), position = position_dodge(width = 0.75)) +
+#   geom_hline(aes(yintercept = 1.0), linetype = 'dotted') +
+#   xlab('Year') + ylab('Lambda') +
+#   facet_grid(det.prod ~ det.MR, scales = 'free', labeller = "label_both") +
+#   theme_bw() +
+#   theme(legend.position = 'top',
+#         plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1))
+# 
+# 
+# library(patchwork)
+# library(cowplot)
