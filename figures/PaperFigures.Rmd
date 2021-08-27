@@ -20,6 +20,7 @@ library(here)
 library(RColorBrewer)
 library(colorspace)
 library(ggh4x)
+library(Hmisc)
 
 rainbow2 <- c("violetred4", "dodgerblue3", 'deepskyblue1', "#4aaaa5", "#a3d39c", "#f6b61c", "chocolate2", "red3")
 
@@ -462,6 +463,8 @@ ggplot(rmse.few %>% filter(variable %nin% obs.pars), aes(x = factor(det.abund), 
  #                             expression(paste("high ", italic(p))))) +
   theme_light() +
   theme(legend.position = 'top',
+        legend.text = element_text(size = 8),
+        legend.title = element_text(size = 9),
         # axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
         axis.ticks.x = element_blank(),
@@ -489,6 +492,8 @@ ggplot(rmse.few %>% filter(variable %in% obs.pars), aes(x = factor(det.abund), y
   theme_light() +
   theme(legend.position = 'top',
         # axis.text.y = element_blank(),
+        legend.text = element_text(size = 8, angle = 90, vjust = 0.5),
+        legend.title = element_text(size = 10, vjust = 0.75),
         axis.ticks.y = element_blank(),
         axis.ticks.x = element_blank(),
         panel.grid.major = element_blank(),
@@ -585,12 +590,12 @@ ggplot(plot.vals.rmse, aes(x = factor(fec_cat), y = factor(variable), fill = val
   xlab('True fecundity') + ylab('') +
   facet_grid(dataset~phi1_cat, drop = T, scales = 'free_x') +
     scale_fill_gradient2(name = "RMSE",
-                      mid = "white", high = rainbow2[2], midpoint = 0,
-                      # breaks = c(-0.5, -0.25, 0, 0.25, 0.5), n.breaks = 5, 
-                      labels = c('0.5', "-0.25", "0", "0.25", '0.5')) +
+                      mid = "white", high = rainbow2[2]) +
   theme_light() +
   theme(legend.position = 'top',
         # axis.text.y = element_blank(),
+        legend.text = element_text(size = 8, angle = 90, vjust = 0.5),
+        legend.title = element_text(size = 11, vjust = 0.75),
         axis.ticks.y = element_blank(),
         axis.ticks.x = element_blank(),
         panel.grid.major = element_blank(),
@@ -651,6 +656,7 @@ p1 <- ggplot(rel.bias.vals %>% filter(variable == 'Adult survival'),
                       breaks = c(-0.15, -0.05, 0, 0.05), n.breaks = 4, labels = c("-0.15", "-0.05", "0", "0.05")) +
   theme_light() +
   theme(legend.position = 'right',
+        legend.text = element_text(size = 8, angle = 90),
         axis.text.y = element_blank(),
         axis.ticks.y = element_blank(),
         axis.ticks.x = element_blank(),
