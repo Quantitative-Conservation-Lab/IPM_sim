@@ -27,7 +27,7 @@ rainbow2 <- c("violetred4", "dodgerblue3", 'deepskyblue1', "#4aaaa5", "#a3d39c",
 ```
 
 ```{r data load}
-
+ 
 scenarios <- read.csv(file = here::here('data', 'scenario_ID.csv'), header = T, stringsAsFactors = F)
 
 low <- read.csv(file = here::here('results', 'lowout.csv')) %>%
