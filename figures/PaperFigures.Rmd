@@ -268,7 +268,7 @@ dev.off()
 # 
 # write.csv(all.meds.sc, here::here('results', 'Processed csvs', 'all.meds.sc.csv'), row.names = F)
 
-all.meds.sc <- read.csv(file = here::here('results', 'Processed csvs', 'all.meds.sc.csv'), 
+all.meds.sc <- read.csv(file = here::here('figures', 'Processed csvs', 'all.meds.sc.csv'), 
                      header = T, stringsAsFactors = F)
 
 #just bias; same as above, keep 'scenario'
@@ -311,7 +311,10 @@ rel.bias.dem <- rel.bias.sc %>%
             phi1_cat = ifelse(phi1.true < phi1_lims[1], 'L', ifelse(phi1.true > phi1_lims[2], 'H', 'M'))) %>%
   transform(fec_cat = factor(fec_cat, levels = c('L', 'M', 'H')),
             phiad_cat = factor(phiad_cat, levels = c('L', 'M', 'H')),
-            phi1_cat = factor(phi1_cat, levels = c('L', 'M', 'H'))) %>%
+            phi1_cat = factor(phi1_cat, levels = c('L', 'M', 'H'),
+                              labels = c('True juvenile survival: L', 
+                                         'True juvenile survival: M', 
+                                         'True juvenile survival: H'))) %>%
   transform(lambda.scenario = factor(lambda.scenario, 
                                      levels = c("Decreasing", "Stable", "Increasing"))) %>%
   transform(dataset = factor(dataset, levels = c('Full', 'Counts+Prod', 'Counts+MR', 'Counts'),
@@ -336,9 +339,9 @@ rel.bias.dem <- rel.bias.sc %>%
 #facet by both fec and juv true vals
 plot.vals <- rel.bias.dem %>%
   group_by(variable, fec_cat, phi1_cat, dataset) %>%
-  dplyr::summarize(value = mean(value), .groups = 'keep')
+  dplyr::summarize(value = mean(value), .groups = 'keep') 
 
-#use me fig 2
+#heat map
 ggplot(plot.vals, aes(x = factor(fec_cat), y = variable, fill = value)) +
   geom_tile(color = 'grey50') +
   xlab('Fecundity') + ylab('') +
@@ -573,7 +576,10 @@ rmse.dem <- rmse.vals.sc %>%
             phi1_cat = ifelse(phi1.true < phi1_lims[1], 'L', ifelse(phi1.true > phi1_lims[2], 'H', 'M'))) %>%
   transform(fec_cat = factor(fec_cat, levels = c('L', 'M', 'H')),
             phiad_cat = factor(phiad_cat, levels = c('L', 'M', 'H')),
-            phi1_cat = factor(phi1_cat, levels = c('L', 'M', 'H'))) %>%
+            phi1_cat = factor(phi1_cat, levels = c('L', 'M', 'H'),
+                              labels = c('True juvenile survival: L', 
+                                                   'True juvenile survival: M', 
+                                                   'True juvenile survival: H'))) %>%
   transform(dataset = factor(dataset, levels = c('Full', 'Counts+Prod', 'Counts+MR', 'Counts'),
                              labels = c('Full', 'Counts+Prod', 'Counts+MR', 'Counts')))
 
