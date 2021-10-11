@@ -6,3 +6,8 @@
 bias_summary.csv
 results
 EuringPoster
+highout.csv
+lowout.csv
+row_high.csv
+row_low.csv
+row_med.csv
