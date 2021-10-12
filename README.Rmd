@@ -99,9 +99,11 @@ Computes the geometric means for $\lambda$ in each MCMC output.
 
 #### 2 - Figures
 
+Contains code used to produce figures for manuscript. 
+
 ### Results
 
-
+Processed results files referenced in figure code `lowout.csv`, `medout.csv`, and `highout.csv` are quite large and are available upon request. `Processed csvs` contains posterior medians for all converged model runs. `row_-` files contains estimates of population trend, $\lambda$, where "-" is "low", "med", or "high" and corresponds to a decreasing, stable, or increasing population trend, respectively. 
 
 
 

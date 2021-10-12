@@ -89,7 +89,7 @@ run time for each model.
 
 ###### generate\_scenarios.R
 
-Function ‘getNviable’ for finding the combinations of parameters that
+Function `getNviable` for finding the combinations of parameters that
 give a population growth rate (*λ*) within certain bounds, using the
 eigenvalue from the Leslie matrix. The output from this function
 produces the parameter scenarios used to simulate population
@@ -100,24 +100,24 @@ IPM models.
 
 ###### IPM\_sim\_2.0function.R
 
-Script contains two functions for simulating data: ‘simPopTrajectory’
-and ‘simData’.
+Script contains two functions for simulating data: `simPopTrajectory`
+and `simData`.
 
-The ‘simPopTrajectory’ function simulates the true population trajectory
+The `simPopTrajectory` function simulates the true population trajectory
 by individual and age class, starting from the stable age distribution.
 Individual fates are retained throughout total number of years.
 
-The ‘simData’ function uses the output from the ‘simPopTrajectory’
+The `simData` function uses the output from the `simPopTrajectory`
 function to simulate the observation process for each data type. The
-true individual data is broken down into independent sets, each is
+true individual data is broken down into independent sets and each is
 subject to observation error. Mark-resight, count, and reproductive
 success data are output from this function.
 
 ###### simulateTrajectories.R
 
-Script that pulls from the scenarios that were created in ‘0 - preparing
-scenarios’ and the functions in IPM\_sim\_2.0function.R to simulate
-observation data sets for model fitting.
+Script that pulls from the scenarios that were created in
+`0 - preparing scenarios` and the functions in `IPM_sim_2.0function.R`
+to simulate observation data sets for model fitting.
 
 ##### 2 - models
 
@@ -127,21 +127,21 @@ Functions for putting data in the form required by the survival model.
 
 ###### IPM\_marray.R
 
-Script contains 4 IPM NIMBLE models.
+Script contains 4 NIMBLE models.
 
-1.  full IPM model (‘IPMmod’) where all three datasets are included
-2.  model without productivity dataset (‘nonests’)
-3.  model without survival model (‘nomr’)
-4.  abundance only model without productivity or survival (‘abundonly’)
+1.  full IPM model (`IPMmod`) where all three datasets are included
+2.  model without productivity dataset (`nonests`)
+3.  model without survival model (`nomr`)
+4.  abundance only model without productivity or survival (`abundonly`)
 
 ##### 3 - run models
 
 ###### run\_scenarios\_helperFns.R
 
-Script with functions and code to run NIMBLE models. Function ‘marray’
+Script with functions and code to run NIMBLE models. Function `marray`
 transforms the survival data capture histories to m-array format. MCMC
 settings in this script, with functions for each of the 4 models. Each
-model has a run model function that defines constants, initial values,
+model has a “run model” function that defines constants, initial values,
 data, parameters to monitor, and code to build/run the models in NIMBLE.
 
 ###### run\_scenarios.R
@@ -161,6 +161,15 @@ the output into categories based on the population growth rate, *λ*.
 
 Computes the geometric means for *λ* in each MCMC output.
 
-#### 2 - igures
+#### 2 - Figures
+
+Contains code used to produce figures for manuscript.
 
 ### Results
+
+Processed results files referenced in figure code `lowout.csv`,
+`medout.csv`, and `highout.csv` are quite large and are available upon
+request. `Processed csvs` contains posterior medians for all converged
+model runs. `row_-` files contains estimates of population trend, *λ*,
+where “-” is “low”, “med”, or “high” and corresponds to a decreasing,
+stable, or increasing population trend, respectively.
