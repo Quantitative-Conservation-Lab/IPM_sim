@@ -92,7 +92,7 @@ toplot <- bind_rows(toplot1, toplot2, toplot3) %>%
   mutate(Quantile = paste("X", Quantile, sep = "")) %>% 
   reshape2::dcast(dataset + Year +  det.MR + det.prod + det.abund   + lambda ~ Quantile, value.var = "value") %>% 
   mutate(Year = Year + 1) %>% 
-  filter(Year %in% c(2:6, 15)) %>% 
+  filter(Year %in% c(15)) %>% 
   mutate(Year = factor(Year)) %>% 
   mutate(det.abund = factor(det.abund, levels = c("L", "M", "H"))) %>% 
   mutate(det.prod = factor(det.prod, levels = c("L", "M", "H"))) %>% 
@@ -107,28 +107,21 @@ toplot <- bind_rows(toplot1, toplot2, toplot3) %>%
     lambda == "Increasing" ~ 1.05))
 
 
-pdf(here("figures", "lambdaTrends.pdf"), width = 12, height = 8)
+pdf(here("figures", "lambdaTrends.pdf"), width = 8, height = 8)
 rainbow2 <- c("violetred4", "dodgerblue3", 'deepskyblue1', "#4aaaa5", "#a3d39c", "#f6b61c", "chocolate2", "red3")
 ggplot(toplot) +
   geom_point(aes(x = Year, y = X50, col = det.abund, group = det.abund), position = position_dodge(width = 0.5)) +
-  #geom_linerange(aes(ymin = X2.5, ymax = X97.5, x = Year), position = position_dodge(width = 0.5)) +
-  #geom_hline(aes(yintercept = 1.0), linetype = 'dotted') +
-  xlab('Years') + ylab('Lambda') + 
+  geom_linerange(aes(x = Year, ymin = X2.5, ymax = X97.5, col = det.abund, group = det.abund), position = position_dodge(width = 0.5)) +
+  geom_hline(aes(yintercept = intercept), linetype = 'dotted') +
+  geom_hline(aes(yintercept = 1.0), linetype = 'solid') +
+  xlab('Years') + 
+  ylab('Lambda') + 
   #ylim(0.87, 1.14) +
   facet_grid(dataset ~ lambda, scales = 'free') +
   theme_bw() +
   theme(legend.position = 'top',
         plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1)) +
-  scale_color_manual(values = rainbow2[-c(1,4)], name = 'Abundance detection level') + 
-  geom_rect(aes(ymin=-Inf,
-                ymax=Inf,
-                xmin=which(levels(Year) == "15")-0.65,
-                xmax=which(levels(Year) == "15")+0.65),
-            fill="grey85", alpha=0.25, col = NA) +
-  geom_hline(aes(yintercept = intercept), linetype = 'dotted') +
-  geom_hline(aes(yintercept = 1.0), linetype = 'solid') +
-  geom_linerange(aes(ymin = X2.5, ymax = X97.5, x = Year, col = det.abund, group = det.abund), position = position_dodge(width = 0.5)) +
-  geom_point(aes(x = Year, y = X50, col = det.abund, group = det.abund), position = position_dodge(width = 0.5))
+  scale_color_manual(values = rainbow2[-c(1,4)], name = 'Abundance detection level') 
 dev.off()
   
 ######
