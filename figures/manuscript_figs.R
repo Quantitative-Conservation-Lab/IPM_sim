@@ -334,14 +334,16 @@ dplyr::summarize(value = mean(value), .groups = "keep") %>%
 ######################################################
 
 
-#### Figure 3: RMSE and bias of ecological parameters v true fecundity ####
+#### Figure 3: RMSE and bias ecological paramters x count survey detection ####
+
 ## bias dot plot
-a1 <- ggplot(plot.vals, aes(x = fec_cat, y = value, col = factor(variable), group = factor(variable),
-                      shape = factor(variable))) +
+a1 <- ggplot(rel.bias.few  %>% filter(variable %nin% obs.pars), 
+             aes(x = det.abund, y = bias, col = factor(variable), group = factor(variable),
+                 shape = factor(variable))) +
   geom_point() + geom_line() +
   geom_hline(aes(yintercept = 0), linetype = 'dotted') +
-  xlab('True fecundity') + ylab('Relative bias') +
-  facet_grid(dataset~phi1_cat, scales = 'free_x', labeller = label_wrap_gen()) +
+  xlab('Count survey detection') + ylab('Relative bias') +
+  facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
   ylim(c(-1.75, 1.75)) +
   theme_bw() +
   theme(legend.position = 'top',
@@ -356,11 +358,12 @@ a1 <- ggplot(plot.vals, aes(x = fec_cat, y = value, col = factor(variable), grou
 a1
 
 ## RMSE heat map
-a2 <- ggplot(plot.vals.rmse, aes(x = factor(fec_cat), y = factor(variable), fill = value)) +
+a2 <- ggplot(rmse.few %>% filter(variable %nin% obs.pars), aes(x = factor(det.abund), y = variable, fill = rmse)) +
   geom_tile(color = 'grey50') +
-  xlab('True fecundity') + ylab('') +
-  facet_grid(dataset~phi1_cat, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
-  scale_fill_gradient2(name = "RMSE", mid = "white", high = rainbow2[2], midpoint = 0) +
+  xlab('Count survey detection') + ylab('') +
+  facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
+  scale_fill_gradient2(name = "RMSE",
+                       mid = "white", high = rainbow2[2], midpoint = 0) +
   theme_light() +
   theme(legend.position = 'top',
         legend.title = element_text(size = 11, vjust = 0.75),
@@ -379,14 +382,15 @@ a2
 plot_grid(a1, a2, ncol = 2, labels = "AUTO", align = "h", label_size = 16)
 ggsave(width = 15, height = 8, here("figures", "fig3.png"))
 
-#### Figure 4: RMSE and bias of observation parameters ####
-b1 <- ggplot(rel.bias.few  %>% filter(variable %in% obs.pars), 
-       aes(x = det.abund, y = bias, col = factor(variable), group = factor(variable),
-           shape = factor(variable))) +
+#### Figure 4: RMSE and bias ecological parameters x true fecundity ####
+
+## bias dot plot
+b1 <- ggplot(plot.vals, aes(x = fec_cat, y = value, col = factor(variable), group = factor(variable),
+                            shape = factor(variable))) +
   geom_point() + geom_line() +
   geom_hline(aes(yintercept = 0), linetype = 'dotted') +
-  xlab('Count survey detection') + ylab('Relative bias') +
-  facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
+  xlab('True fecundity') + ylab('Relative bias') +
+  facet_grid(dataset~phi1_cat, scales = 'free_x', labeller = label_wrap_gen()) +
   ylim(c(-1.75, 1.75)) +
   theme_bw() +
   theme(legend.position = 'top',
@@ -396,17 +400,16 @@ b1 <- ggplot(rel.bias.few  %>% filter(variable %in% obs.pars),
         axis.text.x = element_text(angle = 0, vjust = 1.5),
         panel.border = element_rect(color = "black", fill = NA),  
         panel.spacing.x = unit(0.75, "line")) +
-  scale_color_manual(values = rainbow2[c(2,3)], name = '') +
-  scale_shape_manual(values = c(15,16), name = '')
+  scale_color_manual(values = rainbow2[-c(1,4)], name = '') +
+  scale_shape_manual(values = c(15, 16, 17), name = '')
 b1
 
-b2 <- ggplot(rmse.few %>% filter(variable %in% obs.pars), aes(x = factor(det.abund), y = variable, fill = rmse)) +
+## RMSE heat map
+b2 <- ggplot(plot.vals.rmse, aes(x = factor(fec_cat), y = factor(variable), fill = value)) +
   geom_tile(color = 'grey50') +
-  xlab('Count survey detection') + ylab('') +
-  facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
-  scale_fill_gradient2(name = "RMSE",
-                       mid = "white", high = rainbow2[2], midpoint = 0) +
-  # breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2")) +
+  xlab('True fecundity') + ylab('') +
+  facet_grid(dataset~phi1_cat, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
+  scale_fill_gradient2(name = "RMSE", mid = "white", high = rainbow2[2], midpoint = 0) +
   theme_light() +
   theme(legend.position = 'top',
         legend.title = element_text(size = 11, vjust = 0.75),
@@ -454,9 +457,12 @@ ggsave(width = 6, height = 8, here("figures", "fig5.png"))
 ################### Appendix #########################
 ######################################################
 
-d1 <- ggplot(rel.bias.few  %>% filter(variable %nin% obs.pars), 
-       aes(x = det.abund, y = bias, col = factor(variable), group = factor(variable),
-           shape = factor(variable))) +
+#### Figure 6: RMSE and bias observation parameters x count survey detection ####
+
+## bias dot plot
+d1 <- ggplot(rel.bias.few  %>% filter(variable %in% obs.pars), 
+             aes(x = det.abund, y = bias, col = factor(variable), group = factor(variable),
+                 shape = factor(variable))) +
   geom_point() + geom_line() +
   geom_hline(aes(yintercept = 0), linetype = 'dotted') +
   xlab('Count survey detection') + ylab('Relative bias') +
@@ -470,16 +476,18 @@ d1 <- ggplot(rel.bias.few  %>% filter(variable %nin% obs.pars),
         axis.text.x = element_text(angle = 0, vjust = 1.5),
         panel.border = element_rect(color = "black", fill = NA),  
         panel.spacing.x = unit(0.75, "line")) +
-  scale_color_manual(values = rainbow2[-c(1,4)], name = '') +
-  scale_shape_manual(values = c(15, 16, 17), name = '')
+  scale_color_manual(values = rainbow2[c(2,3)], name = '') +
+  scale_shape_manual(values = c(15,16), name = '')
 d1
 
-d2 <- ggplot(rmse.few %>% filter(variable %nin% obs.pars), aes(x = factor(det.abund), y = variable, fill = rmse)) +
+## RMSE heat map
+d2 <- ggplot(rmse.few %>% filter(variable %in% obs.pars), aes(x = factor(det.abund), y = variable, fill = rmse)) +
   geom_tile(color = 'grey50') +
   xlab('Count survey detection') + ylab('') +
   facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
   scale_fill_gradient2(name = "RMSE",
                        mid = "white", high = rainbow2[2], midpoint = 0) +
+  # breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2")) +
   theme_light() +
   theme(legend.position = 'top',
         legend.title = element_text(size = 11, vjust = 0.75),
@@ -496,4 +504,4 @@ d2
 
 ## combine
 plot_grid(d1, d2, ncol = 2, labels = "AUTO", align = "h", label_size = 16)
-ggsave(width = 15, height = 8, here("figures", "appendix_s1.png"))
+ggsave(width = 15, height = 8, here("figures", "fig6.png"))
