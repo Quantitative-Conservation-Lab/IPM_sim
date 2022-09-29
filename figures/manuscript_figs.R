@@ -3,6 +3,7 @@
 ## A DuVall
 ## 15 Oct 2021
 
+library(tidyverse)
 library(tidyr)
 library(dplyr)
 library(cowplot)
@@ -480,13 +481,14 @@ d1 <- ggplot(rel.bias.few  %>% filter(variable %in% obs.pars),
   scale_shape_manual(values = c(15,16), name = '')
 d1
 
+
 ## RMSE heat map
 d2 <- ggplot(rmse.few %>% filter(variable %in% obs.pars), aes(x = factor(det.abund), y = variable, fill = rmse)) +
   geom_tile(color = 'grey50') +
   xlab('Count survey detection') + ylab('') +
   facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
   scale_fill_gradient2(name = "RMSE",
-                       mid = "white", high = rainbow2[2], midpoint = 0) +
+                       mid = "white", high = rainbow2[2], midpoint = 0, n.breaks = 3) +
   # breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2")) +
   theme_light() +
   theme(legend.position = 'top',
