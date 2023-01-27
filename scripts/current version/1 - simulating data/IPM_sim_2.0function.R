@@ -1,18 +1,22 @@
 # function to simulate the trajectory of a population
 # adapted from Kery and Schaub, 2011
 
-# Definitions ####
-# n.years = n years to simulate,
-# n.data.types = proportion of pop observed for each dataset,
-# age.init = starting age structure, 
+# Function input definitions
+# n.years = number of years to simulate,
+# n.data.types = vector with proportion of pop observed for each dataset,
+# age.init = vector of starting age structure/number in each age class, i.e.,
+#           = c(1st years, adults), 
 # phi.1 = juv survival,  
 # phi.ad = adult survival,
 # f = fecundity
+
+
 simPopTrajectory <- function(n.years, n.data.types, age.init,
                              phi.1, phi.ad, f){
 
   ####### HELPER FUNCTIONS  ####### 
   # states: [1yrolds, Adult, chicks, Dead]
+  # indfates is an array [states,year,individual]
   
   # fate of juveniles
   oneyr_fatefn<-function(ind,time){
@@ -81,12 +85,15 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
   #lambda from N, matches eigenvalue
   #nlam<-N[,nplus1.years]/N[,n.years]
   #note that this is without demographic stochasticity and
-  #when we simulate the fates the actual lambda will change based on that
+  #when fates are simulated the actual lambda will change slightly
 
-
+  ######
   #simulate what happens to each individual:
-  if(N[1]==0 || N[2]==0){print("no individuals!!!!!!!!!")}
+  ######
+  
   #dont run if there arent any individuals given
+  if(N[1]==0 || N[2]==0){print("no individuals!!!!!!!!!")}
+
 
   #make an array for each individual, for each year, what state it is in
   # states: [1yrolds, Adult, chicks, Dead]
@@ -94,14 +101,13 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
   #dead is when they die
 
   #simulate their fates
-
   #set up array for individuals
   indfates<-array(dim=c(4, nplus1.years, no.ani.max))
   #add in the stable age distribution to start from, given our total starting population
   age1<-round(sum(age.init)*sad[1])
   age2<-round(sum(age.init)*sad[2])
-  indfates[1,1,1:age1]<-1 #one year olds in year 1
-  indfates[2,1,(age1+1):sum(age1+age2)]<-1 #adults in year 1
+  indfates[1,1,1:age1]<-1 #number of one year olds in year 1
+  indfates[2,1,(age1+1):sum(age1+age2)]<-1 #number of adults in year 1
 
   #this commented out bit is for if we dont want to start at stable age distribution
   #indfates[1,1,1:age.init[1]]<-1
@@ -109,7 +115,7 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
 
   inpop<-numeric(n.years) #track the population over time
   #inpop[1]<-sum(age.init) alternative way to do it
-  inpop[1]<-sum(age1+age2) #stable age distribution way to do it
+  inpop[1]<-sum(age1+age2) #first year total, stable age distribution way to do it
 
   # simulate ind. trajectories with dem stochasticity
   chickst<-numeric(n.years) # tracking number of chicks produced each year
@@ -117,11 +123,11 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
   for(t in 1:n.years){
     for(i in 1:inpop[t]){
       tempstep[i,t]<-which(indfates[c(1,2,4),t,i]==1)
-      if(tempstep[i,t]==1){
+      if(tempstep[i,t]==1){ #if first years
         indfates[,(t:(t+1)),i]<-oneyr_fatefn(ind = i, time = t)#[,(t:(t+1))]
-      }else if(tempstep[i,t]==2){
+      }else if(tempstep[i,t]==2){ #if adults
         indfates[,(t:(t+1)),i]<-adfatefn(ind = i, time = t)#[,(t:(t+1))]
-      } else if(tempstep[i,t]==3){
+      } else if(tempstep[i,t]==3){ #if dead
         indfates[,((t+1)),i]<-deadfn(ind = i, time = t)#[,(t:(t+1))]
       }
     } #i loop over population size at time t
@@ -131,6 +137,7 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
     if(inpop[t+1]>inpop[t]){
       indfates[3,t,(inpop[t]+1):inpop[t+1]]<-1
       for(i in (inpop[t]+1):inpop[t+1]){
+        #if chicks were produced, do they survive
         indfates[,((t+1)),i]<-chickfatefn(ind = i, time = t)#[,(t:(t+1))]
       }
     }else{}
@@ -150,7 +157,7 @@ simPopTrajectory <- function(n.years, n.data.types, age.init,
   for(i in 2:length(adj)){
     adj[i]<-sum(ad[i]+j[i])/sum(ad[i-1]+j[i-1])
   }
-  mean(adj[2:10])
+  #mean(adj[2:10])
   #close *enough* to actual lambda, again demographic stochasticity is the cause!
 
   #we dont want to output the leslie matrix N, we want to output the N
@@ -227,7 +234,7 @@ simData <- function(indfates, n.years, n.data.types,
       #so we have 2 classes, we care about in marking: 1year olds, and adults
       ind_mr<-IND_MR[c(1,2),1:n.years,]
       #ind_mr[1,,]<-NA #if not banding 1yearold/s, then remove
-      rm<-numeric(dim(ind_mr)[3]) # remove dead individuals
+      rm<-numeric(dim(ind_mr)[3]) #vector to remove dead individuals
       for(i in 1:dim(ind_mr)[3]){
         if(length(which(!is.na(ind_mr[1:2,,i])))==0){
           rm[i]<-1
