@@ -87,7 +87,7 @@ all.meds.sc <- read.csv(file = here::here('figures', 'Processed csvs', 'all.meds
                         header = T, stringsAsFactors = F)
 
 ## just bias; same as above, keep 'scenario'
-rel.bias.sc <- all.meds.sc %>%
+rel.bias.sc <- all_meds_sc %>%
   transform(phi1.bias = (phi1.obs-phi1.true)/phi1.true,
             phiad.bias = (phiad.obs-phiad.true)/phiad.true,
             fec.bias = (fec.obs-fec.true)/fec.true) %>%
@@ -437,7 +437,7 @@ c1 <- ggplot(toplot) +
                      shape = det.abund), position = position_dodge(width = 0.5)) +
   geom_hline(aes(yintercept = intercept), linetype = 'dotted') +
   geom_hline(aes(yintercept = 1.0), linetype = 'solid') +
-  xlab('Years') + 
+  xlab('Final year (t=15)') + #renamed the axis
   ylab(expression(lambda)) + 
   facet_grid(dataset ~ lambda, scales = 'free', labeller = label_wrap_gen()) +
   theme_bw() +
@@ -445,7 +445,9 @@ c1 <- ggplot(toplot) +
         plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
         strip.text = element_text(color = "black"),
         strip.background = element_rect(fill = NA, color = "black"),
-        axis.text.x = element_text(angle = 0, vjust = 1.5),
+        #HAS: removed axis labels
+        axis.text.x = element_blank(),#element_text(angle = 0, vjust = 1.5),
+        axis.ticks.x=element_blank(),
         panel.border = element_rect(color = "black", fill = NA),  
         panel.spacing.x = unit(0.75, "line")) +
   scale_color_manual(values = rainbow2[-c(1,4)], name = 'Count survey detection level') +
