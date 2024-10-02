@@ -1,12 +1,12 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# Effects of species life history and data availability on integrate population model performance
+## Effects of species life history and data availability on integrate population model performance
 
 Abby E. Bratt, Caroline D. Cappello, Amelia J. DuVall, Hannah A. Sipe,
 Amanda J. Warlick, Beth Gardner, Sarah J. Converse
 
-Code provided for peer review and may change
+Code provided for peer review
 
 ## Abstract
 
@@ -56,13 +56,13 @@ collection.
 
 ### 0 - preparing scenarios
 
-#### compute_time_calc.R
+##### compute_time_calc.R
 
 Code for approximating the total run time, given number of simulated
 datasets, number of parameter scenarios, computer cores, and estimated
 run time for each model.
 
-#### generate_scenarios.R
+##### generate_scenarios.R
 
 Function ‘getNviable’ for finding the combinations of parameters that
 give a population growth rate ($\lambda$) within certain bounds, using
@@ -73,7 +73,7 @@ IPM models.
 
 ### 1 - simulating data
 
-#### IPM_sim_2.0function.R
+##### IPM_sim_2.0function.R
 
 Script contains two functions for simulating data: ‘simPopTrajectory’
 and ‘simData’.
@@ -88,7 +88,7 @@ true individual data is broken down into independent sets, each is
 subject to observation error. Mark-resight, count, and reproductive
 success data are output from this function.
 
-#### simulateTrajectories.R
+##### simulateTrajectories.R
 
 Script that pulls from the scenarios that were created in ‘0 - preparing
 scenarios’ and the functions in IPM_sim_2.0function.R to simulate
@@ -96,11 +96,11 @@ observation data sets for model fitting.
 
 ### 2 - models
 
-#### IPMinitvalues.R
+##### IPMinitvalues.R
 
 Functions for putting data in the form required by the survival model.
 
-#### IPM_marray.R
+##### IPM_marray.R
 
 Script contains 4 IPM NIMBLE models.
 
@@ -111,7 +111,7 @@ Script contains 4 IPM NIMBLE models.
 
 ### 3 - run models
 
-#### run_scenarios_helperFns.R
+##### run_scenarios_helperFns.R
 
 Script with functions and code to run NIMBLE models. Function ‘marray’
 transforms the survival data capture histories to m-array format. MCMC
@@ -119,21 +119,21 @@ settings in this script, with functions for each of the 4 models. Each
 model has a run model function that defines constants, initial values,
 data, parameters to monitor, and code to build/run the models in NIMBLE.
 
-#### run_scenarios.R
+##### run_scenarios.R
 
 Main workhorse script that pulls from the scripts above to run models in
 parallel and output results.
 
 ### 4 - process results
 
-#### 01_load_and_process_data.R
+##### 01_load_and_process_data.R
 
 Script that checks the Gelman-Rubin convergence statistic for each
 output MCMC sample, then thins the chains to reduce file size and places
 the output into categories based on the population growth rate,
 $\lambda$.
 
-#### 02_compute_geom_means.R
+##### 02_compute_geom_means.R
 
 Computes the geometric means for $\lambda$ in each MCMC output.
 
