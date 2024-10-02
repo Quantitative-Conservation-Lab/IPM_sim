@@ -87,7 +87,8 @@ all.meds.sc <- read.csv(file = here::here('figures', 'Processed csvs', 'all.meds
                         header = T, stringsAsFactors = F)
 
 ## just bias; same as above, keep 'scenario'
-rel.bias.sc <- all_meds_sc %>%
+#rel.bias.sc <- all_meds_sc %>%
+rel.bias.sc <- all.meds.sc %>%
   transform(phi1.bias = (phi1.obs-phi1.true)/phi1.true,
             phiad.bias = (phiad.obs-phiad.true)/phiad.true,
             fec.bias = (fec.obs-fec.true)/fec.true) %>%
@@ -337,42 +338,80 @@ dplyr::summarize(value = mean(value), .groups = "keep") %>%
 
 #### Figure 3: RMSE and bias ecological paramters x count survey detection ####
 
+dataset.labs <- c("Full IPM", "Abundance & Prod.", "Abundance & Surv.", "Abundance Only")
+names(dataset.labs) <- c("Full IPM", "Abundance & Productivity", "Abundance & Survival", "Abundance Only")
+lambda.labs <- c("Decrease", "Stable", "Increase")
+names(lambda.labs) <- c("Decreasing", "Stable", "Increasing")
+
 ## bias dot plot
 a1 <- ggplot(rel.bias.few  %>% filter(variable %nin% obs.pars), 
              aes(x = det.abund, y = bias, col = factor(variable), group = factor(variable),
                  shape = factor(variable))) +
-  geom_point() + geom_line() +
+  geom_point() + 
+  geom_line() +
   geom_hline(aes(yintercept = 0), linetype = 'dotted') +
-  xlab('Count survey detection') + ylab('Relative bias') +
-  facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
-  ylim(c(-1.75, 1.75)) +
+  #xlab('Count survey detection') + ylab('Relative bias') +
+  #facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
+  #ylim(c(-1.75, 1.75)) +
+  scale_x_discrete(labels = c("L", "M", "H")) +
+  xlab('Count survey detection') + 
+  ylab('Relative bias') +
+  facet_grid(dataset~lambda.scenario, scales = 'free_x', 
+           labeller = labeller(dataset = dataset.labs, lambda.scenario = lambda.labs)) +
+  scale_y_continuous(limits = c(-1.2, 1.2), breaks = c(-1,0,1)) +
   theme_bw() +
   theme(legend.position = 'top',
-        plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
-        strip.text = element_text(color = "black"),
+        #plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
+        #strip.text = element_text(color = "black"),
+        legend.text = element_text(size = 12),
+        axis.text = element_text(size = 10, vjust = 0.75),
+        axis.title = element_text(size = 10, vjust = 0.75),
+        strip.text = element_text(color = "black", size = 8),
         strip.background = element_rect(fill = NA, color = "black"),
         axis.text.x = element_text(angle = 0, vjust = 1.5),
         panel.border = element_rect(color = "black", fill = NA),  
-        panel.spacing.x = unit(0.75, "line")) +
-  scale_color_manual(values = rainbow2[-c(1,4)], name = '') +
-  scale_shape_manual(values = c(15, 16, 17), name = '')
+        #panel.spacing.x = unit(0.75, "line")) +
+  #scale_color_manual(values = rainbow2[-c(1,4)], name = '') +
+  #scale_shape_manual(values = c(15, 16, 17), name = '')
+       panel.spacing.x = unit(0.75, "line"),
+       panel.grid.major = element_blank(),
+       panel.grid.minor = element_blank()) +
+  scale_color_manual(values = rainbow2[-c(1,4)], name = '', 
+                   labels = c(expression(phi["ad"]), 
+                              expression(phi["1"]), expression(f))) +
+  scale_shape_manual(values = c(15, 16, 17), name = '',
+                   labels = c(expression(phi["ad"]),
+                              expression(phi["1"]), expression(f)))
 a1
+
 
 ## RMSE heat map
 a2 <- ggplot(rmse.few %>% filter(variable %nin% obs.pars), aes(x = factor(det.abund), y = variable, fill = rmse)) +
   geom_tile(color = 'grey50') +
   xlab('Count survey detection') + ylab('') +
-  facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
+  #facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
+  facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', 
+             labeller = labeller(dataset = dataset.labs, 
+                                 lambda.scenario = lambda.labs)) +
   scale_fill_gradient2(name = "RMSE",
-                       mid = "white", high = rainbow2[2], midpoint = 0) +
+                       #mid = "white", high = rainbow2[2], midpoint = 0) +
+                       low = "white", mid = rainbow2[3], high = rainbow2[2],
+                       midpoint = 0.3) +
   theme_light() +
+  scale_y_discrete(labels = c(expression(phi["AY1"]), expression(phi["Y1"]), expression(f))) +
+  scale_x_discrete(labels = c("L", "M", "H")) +
   theme(legend.position = 'top',
-        legend.title = element_text(size = 11, vjust = 0.75),
+        #legend.title = element_text(size = 11, vjust = 0.75),
+        legend.title = element_text(size = 10, vjust = 0.75),
+        legend.text = element_text(size = 12),
+        axis.text = element_text(size = 10, vjust = 0.75),
+        axis.title = element_text(size = 10, vjust = 0.75),
+        strip.text = element_text(color = "black", size = 8),
         axis.ticks.y = element_blank(),
         axis.ticks.x = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        strip.text = element_text(color = "black"),
+        #strip.text = element_text(color = "black"),
         strip.background = element_rect(fill = NA, color = "black"),
         axis.text.x = element_text(angle = 0, vjust = 1.5),
         panel.border = element_rect(color = "black", fill = NA),  
@@ -380,45 +419,76 @@ a2 <- ggplot(rmse.few %>% filter(variable %nin% obs.pars), aes(x = factor(det.ab
 a2
 
 ## combine
-plot_grid(a1, a2, ncol = 2, labels = "AUTO", align = "h", label_size = 16)
-ggsave(width = 15, height = 8, here("figures", "fig3.png"))
+plot_grid(a1, a2, ncol = 2, rel_widths = c(0.55, 0.45), labels = "AUTO",
+          align = "hv", label_size = 12)
+ggsave(width = 6.5, height = 6, here("figures", "fig3.png"))
+
 
 #### Figure 4: RMSE and bias ecological parameters x true fecundity ####
+
+phi1_cat_lab <- c("True first-year\nφ: Low", 
+                  "True first-year\nφ: Med",
+                  "True first-year\nφ: High")
+
+names(phi1_cat_lab) <- c("True first-year survival: Low", 
+                         "True first-year survival: Medium", 
+                         "True first-year survival: High")
 
 ## bias dot plot
 b1 <- ggplot(plot.vals, aes(x = fec_cat, y = value, col = factor(variable), group = factor(variable),
                             shape = factor(variable))) +
   geom_point() + geom_line() +
   geom_hline(aes(yintercept = 0), linetype = 'dotted') +
+  scale_x_discrete(labels = c("L", "M", "H")) +
   xlab('True fecundity') + ylab('Relative bias') +
-  facet_grid(dataset~phi1_cat, scales = 'free_x', labeller = label_wrap_gen()) +
-  ylim(c(-1.75, 1.75)) +
+  facet_grid(dataset~phi1_cat, scales = 'free_x', 
+             labeller = labeller(dataset = dataset.labs, phi1_cat = phi1_cat_lab)) +
+             #labeller = label_wrap_gen()) +
+  #ylim(c(-1.75, 1.75)) +
+  scale_y_continuous(limits = c(-1.75, 1.75), breaks = c(-1,0,1)) +
+  scale_color_manual(values = rainbow2[-c(1,4)], name = '',
+                     labels = c(expression(phi["ad"]), expression(phi["1"]), expression(f))) +
+  scale_shape_manual(values = c(15, 16, 17), name = '',
+                     labels = c(expression(phi["ad"]), expression(phi["1"]), expression(f))) +
   theme_bw() +
   theme(legend.position = 'top',
-        plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
-        strip.text = element_text(color = "black"),
+        legend.text = element_text(size = 12),
+        axis.text = element_text(size = 10, vjust = 0.75),
+        axis.title = element_text(size = 10, vjust = 0.75),
+        #plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
+        strip.text = element_text(color = "black", size = 8),
         strip.background = element_rect(fill = NA, color = "black"),
         axis.text.x = element_text(angle = 0, vjust = 1.5),
         panel.border = element_rect(color = "black", fill = NA),  
-        panel.spacing.x = unit(0.75, "line")) +
-  scale_color_manual(values = rainbow2[-c(1,4)], name = '') +
-  scale_shape_manual(values = c(15, 16, 17), name = '')
+        panel.spacing.x = unit(0.75, "line"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) #+
+  #scale_color_manual(values = rainbow2[-c(1,4)], name = '') +
+  #scale_shape_manual(values = c(15, 16, 17), name = '')
 b1
 
 ## RMSE heat map
 b2 <- ggplot(plot.vals.rmse, aes(x = factor(fec_cat), y = factor(variable), fill = value)) +
   geom_tile(color = 'grey50') +
   xlab('True fecundity') + ylab('') +
-  facet_grid(dataset~phi1_cat, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
-  scale_fill_gradient2(name = "RMSE", mid = "white", high = rainbow2[2], midpoint = 0) +
+  facet_grid(dataset~phi1_cat, drop = T, scales = 'free_x', 
+             labeller = labeller(dataset = dataset.labs, phi1_cat = phi1_cat_lab)) + #label_wrap_gen()) +
+  #scale_fill_gradient2(name = "RMSE", mid = "white", high = rainbow2[2], midpoint = 0) +
+  scale_fill_gradient2(name = "RMSE", low = "white", mid = rainbow2[3], high = rainbow2[2],
+                       midpoint = 0.5, limits = c(0, 1.1), breaks = c(0, 0.5, 1)) +
   theme_light() +
+  scale_y_discrete(labels = c(expression(φ["ad"]), expression(φ["1"]), expression(f))) +
+  scale_x_discrete(labels = c("L", "M", "H")) +
   theme(legend.position = 'top',
-        legend.title = element_text(size = 11, vjust = 0.75),
+        legend.title = element_text(size = 10, vjust = 0.75),
+        legend.text = element_text(size = 10),
+        axis.text = element_text(size = 10, vjust = 0.75),
+        axis.title = element_text(size = 10, vjust = 0.75),
         axis.ticks.y = element_blank(),
         axis.ticks.x = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
-        strip.text = element_text(color = "black"),
+        strip.text = element_text(color = "black", size = 8),
         strip.background = element_rect(fill = NA, color = "black"),
         axis.text.x = element_text(angle = 0, vjust = 1.5),
         panel.border = element_rect(color = "black", fill = NA),  
@@ -426,8 +496,9 @@ b2 <- ggplot(plot.vals.rmse, aes(x = factor(fec_cat), y = factor(variable), fill
 b2
 
 ## combine
-plot_grid(b1, b2, ncol = 2, labels = "AUTO", align = "h", label_size = 16)
-ggsave(width = 15, height = 8, here("figures", "fig4.png"))
+plot_grid(b1, b2, ncol = 2, labels = "AUTO", align = "hv", label_size = 12)
+ggsave(width = 6.5, height = 6, here("figures", "fig4.png"))
+
 
 #### Figure 5: Lambda trends ####
 
