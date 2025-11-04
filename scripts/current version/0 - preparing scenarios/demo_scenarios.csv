@@ -1,0 +1,10 @@
+"scenario","S.J","S.A","f","lambda"
+"fast,stable",0.3,0.4,2,1
+"fast,decline",0.29,0.38,2,0.96
+"fast,increase",0.315,0.41,2,1.04
+"slow,stable",0.5,0.6,0.8,1
+"slow,decline",0.48,0.6,0.75,0.96
+"slow,increase",0.52,0.611,0.825,1.04
+"mod,stable",0.4,0.5,1.25,1
+"mod,decline",0.38,0.485,1.25,0.96
+"mod,increase",0.42,0.515,1.25,1.04
