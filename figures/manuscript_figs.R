@@ -377,10 +377,10 @@ a1 <- ggplot(rel.bias.few  %>% filter(variable %nin% obs.pars),
        panel.grid.major = element_blank(),
        panel.grid.minor = element_blank()) +
   scale_color_manual(values = rainbow2[-c(1,4)], name = '', 
-                   labels = c(expression(phi["ad"]), 
+                   labels = c(expression(phi["2"]), 
                               expression(phi["1"]), expression(f))) +
   scale_shape_manual(values = c(15, 16, 17), name = '',
-                   labels = c(expression(phi["ad"]),
+                   labels = c(expression(phi["2"]),
                               expression(phi["1"]), expression(f)))
 a1
 
@@ -398,7 +398,7 @@ a2 <- ggplot(rmse.few %>% filter(variable %nin% obs.pars), aes(x = factor(det.ab
                        low = "white", mid = rainbow2[3], high = rainbow2[2],
                        midpoint = 0.3) +
   theme_light() +
-  scale_y_discrete(labels = c(expression(phi["AY1"]), expression(phi["Y1"]), expression(f))) +
+  scale_y_discrete(labels = c(expression(phi["2"]), expression(phi["1"]), expression(f))) +
   scale_x_discrete(labels = c("L", "M", "H")) +
   theme(legend.position = 'top',
         #legend.title = element_text(size = 11, vjust = 0.75),
