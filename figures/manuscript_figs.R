@@ -447,9 +447,9 @@ b1 <- ggplot(plot.vals, aes(x = fec_cat, y = value, col = factor(variable), grou
   #ylim(c(-1.75, 1.75)) +
   scale_y_continuous(limits = c(-1.75, 1.75), breaks = c(-1,0,1)) +
   scale_color_manual(values = rainbow2[-c(1,4)], name = '',
-                     labels = c(expression(phi["ad"]), expression(phi["1"]), expression(f))) +
+                     labels = c(expression(phi["2"]), expression(phi["1"]), expression(f))) +
   scale_shape_manual(values = c(15, 16, 17), name = '',
-                     labels = c(expression(phi["ad"]), expression(phi["1"]), expression(f))) +
+                     labels = c(expression(phi["2"]), expression(phi["1"]), expression(f))) +
   theme_bw() +
   theme(legend.position = 'top',
         legend.text = element_text(size = 12),
@@ -477,7 +477,7 @@ b2 <- ggplot(plot.vals.rmse, aes(x = factor(fec_cat), y = factor(variable), fill
   scale_fill_gradient2(name = "RMSE", low = "white", mid = rainbow2[3], high = rainbow2[2],
                        midpoint = 0.5, limits = c(0, 1.1), breaks = c(0, 0.5, 1)) +
   theme_light() +
-  scale_y_discrete(labels = c(expression(φ["ad"]), expression(φ["1"]), expression(f))) +
+  scale_y_discrete(labels = c(expression(φ["2"]), expression(φ["1"]), expression(f))) +
   scale_x_discrete(labels = c("L", "M", "H")) +
   theme(legend.position = 'top',
         legend.title = element_text(size = 10, vjust = 0.75),
