@@ -60,7 +60,30 @@ IPMmod<-nimbleCode({
     p[t]<-mean.p
   }
 
-  #priors for resight and adult or 1yo survival
+
+  #m-array - juveniles, multinomial likelihood
+  for(t in 1:(nyears-1)){
+    marr.j[t,1:nyears]~dmulti(pr.j[t,1:nyears],R.j[t])
+  }
+  for(t in 1:(nyears-1)){
+    q[t]<-1-p[t]
+    pr.j[t,t]<-phi.j[t]*p[t]
+    for(j in (t+1):(nyears-1)){
+      pr.j[t,j]<-prod(phi.j[t]*phi.ad[(t+1):j])*prod(q[t:(j-1)])*p[j]
+    }
+    for(j in 1:(t-1)){
+      pr.j[t,j]<-0
+    }
+  }
+  for(t in 1:(nyears-1)){
+    pr.j[t,nyears]<-1-sum(pr.j[t,1:(nyears-1)])
+  }
+  for(t in 1:(nyears)){
+    phi.j[t]<-mean.phi[1]
+  }
+  
+  
+    #priors for resight and adult or 1yo survival
   mean.phi[1]~dunif(0,1) #surv 1 year olds
   mean.phi[2]~dunif(0,1) #surv adults
   mean.p~dunif(0,1) #resight prob
