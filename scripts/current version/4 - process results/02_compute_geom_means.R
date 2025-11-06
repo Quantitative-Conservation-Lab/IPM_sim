@@ -23,7 +23,8 @@ p_funs <- map(p, ~partial(quantile, probs = .x, na.rm = TRUE)) %>%
 row.high <- highout %>%
   select(contains("lambda") | contains("sims") | contains("scenario")) %>% 
   group_by(sims, scenario, simscenarios) %>% 
-  summarise(across(everything(), funs(!!!p_funs))) %>% # get quantiles
+  #summarise(across(everything(), funs(!!!p_funs))) %>% # get quantiles
+  summarise(across(everything(), p_funs)) %>% # deprecated dplyr code above
   pivot_longer( # begin reshaping
     cols = contains("%"), 
     names_to = "quantile",
@@ -41,29 +42,31 @@ row.high <- highout %>%
                 "Year_13", "Year_14")) # end reshaping
 
 row.med <- medout %>%
-  select(contains("lambda") | contains("sims") | contains("scenario")) %>% 
-  group_by(sims, scenario, simscenarios) %>% 
-  summarise(across(everything(), funs(!!!p_funs))) %>% # get quantiles
+  select(contains("lambda") | contains("sims") | contains("scenario")) %>%
+  group_by(sims, scenario, simscenarios) %>%
+  #summarise(across(everything(), funs(!!!p_funs))) %>% # get quantiles
+  summarise(across(everything(), p_funs)) %>% # deprecated dplyr code above
   pivot_longer( # begin reshaping
-    cols = contains("%"), 
+    cols = contains("%"),
     names_to = "quantile",
     values_to = "lambda",
-  ) %>% 
-  mutate(Year = str_extract(quantile, "\\[\\d+\\]")) %>% 
-  mutate(Year = str_extract(quantile, "\\d+")) %>% 
-  mutate(Quantile = str_extract(quantile, "\\d+\\.?\\d?%")) %>% 
-  select(-quantile) %>% 
-  select(c(1:3, 6, 5, 4)) %>% 
-  arrange(sims, scenario, simscenarios, Quantile, Year) %>% 
-  pivot_wider(names_from = Year, values_from = lambda, names_prefix = "Year_") %>% 
-  select(c(1:4, "Year_1", "Year_2", "Year_3", "Year_4", "Year_5", "Year_6", 
-           "Year_7", "Year_8", "Year_9", "Year_10", "Year_11", "Year_12", 
+  ) %>%
+  mutate(Year = str_extract(quantile, "\\[\\d+\\]")) %>%
+  mutate(Year = str_extract(quantile, "\\d+")) %>%
+  mutate(Quantile = str_extract(quantile, "\\d+\\.?\\d?%")) %>%
+  select(-quantile) %>%
+  select(c(1:3, 6, 5, 4)) %>%
+  arrange(sims, scenario, simscenarios, Quantile, Year) %>%
+  pivot_wider(names_from = Year, values_from = lambda, names_prefix = "Year_") %>%
+  select(c(1:4, "Year_1", "Year_2", "Year_3", "Year_4", "Year_5", "Year_6",
+           "Year_7", "Year_8", "Year_9", "Year_10", "Year_11", "Year_12",
            "Year_13", "Year_14")) # end reshaping
 
 row.low <- lowout %>%
   select(contains("lambda") | contains("sims") | contains("scenario")) %>% 
   group_by(sims, scenario, simscenarios) %>% 
-  summarise(across(everything(), funs(!!!p_funs))) %>% # get quantiles
+  #summarise(across(everything(), funs(!!!p_funs))) %>% # get quantiles
+  summarise(across(everything(), p_funs)) %>% # deprecated dplyr code above
   pivot_longer( # begin reshaping
     cols = contains("%"), 
     names_to = "quantile",
@@ -81,7 +84,7 @@ row.low <- lowout %>%
            "Year_13", "Year_14")) # end reshaping
 
 # create new variables for geometric mean by year
-for (i in 1:14) {
+for (i in 1:14) { # number of years
   row.low <- row.low %>%
     mutate("geomean.{i}" :=  NA_real_)
   row.med <- row.med %>%
