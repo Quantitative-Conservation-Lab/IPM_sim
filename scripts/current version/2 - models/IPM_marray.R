@@ -40,50 +40,37 @@ IPMmod<-nimbleCode({
   
   #m-array, multinomial likelihood
   for(t in 1:(nyears-1)){
-    marr[t,1:nyears]~dmulti(pr[t,1:nyears],R[t])
-  }
-  for(t in 1:(nyears-1)){
-    q[t]<-1-p[t]
-    pr[t,t]<-phi.ad[t]*p[t]
-    for(j in (t+1):(nyears-1)){
-      pr[t,j]<-prod(phi.ad[t:j])*prod(q[t:(j-1)])*p[j]
-    }
-    for(j in 1:(t-1)){
-      pr[t,j]<-0
-    }
-  }
-  for(t in 1:(nyears-1)){
-    pr[t,nyears]<-1-sum(pr[t,1:(nyears-1)])
-  }
-  for(t in 1:(nyears)){
-    phi.ad[t]<-mean.phi[2]
-    p[t]<-mean.p
-  }
-
-
-  #m-array - juveniles, multinomial likelihood
-  for(t in 1:(nyears-1)){
     marr.j[t,1:nyears]~dmulti(pr.j[t,1:nyears],R.j[t])
+    marr.a[t,1:nyears]~dmulti(pr.a[t,1:nyears],R.a[t])
   }
   for(t in 1:(nyears-1)){
     q[t]<-1-p[t]
     pr.j[t,t]<-phi.j[t]*p[t]
+    pr.a[t,t]<-phi.a[t]*p[t]
+  }
+  for(t in 1:(nyears-2)){
     for(j in (t+1):(nyears-1)){
-      pr.j[t,j]<-prod(phi.j[t]*phi.ad[(t+1):j])*prod(q[t:(j-1)])*p[j]
+      pr.j[t,j]<-phi.j[t]*prod(phi.a[(t+1):j])*prod(q[t:(j-1)])*p[j]
+      pr.a[t,j]<-prod(phi.a[t:j])*prod(q[t:(j-1)])*p[j]
     }
+  }
+  for (t in 2:(nyears-1)){
     for(j in 1:(t-1)){
       pr.j[t,j]<-0
+      pr.a[t,j]<-0
     }
   }
   for(t in 1:(nyears-1)){
+    pr.a[t,nyears]<-1-sum(pr.a[t,1:(nyears-1)])
     pr.j[t,nyears]<-1-sum(pr.j[t,1:(nyears-1)])
   }
   for(t in 1:(nyears)){
     phi.j[t]<-mean.phi[1]
+    phi.a[t]<-mean.phi[2]
+    p[t]<-mean.p
   }
-  
-  
-    #priors for resight and adult or 1yo survival
+
+  #priors for resight and adult or 1yo survival
   mean.phi[1]~dunif(0,1) #surv 1 year olds
   mean.phi[2]~dunif(0,1) #surv adults
   mean.p~dunif(0,1) #resight prob
