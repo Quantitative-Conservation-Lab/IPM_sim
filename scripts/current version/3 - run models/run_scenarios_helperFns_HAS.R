@@ -37,10 +37,10 @@ runIPMmod <- function(nb, ni, nt, nc,
                       comb, detect) {
   #### DATA ####
   dat1 <- list(y = popDat$SUR,
-               marr.a = marray(popDat$ch),
-               marr.j=marray(popDat$ch), #HAS TODO
-               R.j=rowSums(marray(popDat$ch)), #HAS: TODO, with updated output
-               R.a = rowSums(marray(popDat$ch)),
+               marr.a = marray(popDat$ch.a),
+               marr.j=marray(popDat$ch.j), #HAS TODO
+               R.j=rowSums(marray(popDat$ch.j)), #HAS: TODO, with updated output
+               R.a = rowSums(marray(popDat$ch.a)),
                OBS_nestlings = popDat$OBS_nestlings,
                R_obs = popDat$R_obs
   )
@@ -93,10 +93,10 @@ runnonests <- function(nb, ni, nt, nc,
                       comb, detect) {
 
   dat1 <- list(y = popDat$SUR,
-               marr.a = marray(popDat$ch),
-               marr.j=marray(popDat$ch), #HAS TODO
-               R.j=rowSums(marray(popDat$ch)), #HAS: TODO, with updated output
-               R.a = rowSums(marray(popDat$ch))
+               marr.a = marray(popDat$ch.a),
+               marr.j=marray(popDat$ch.j), #HAS TODO
+               R.j=rowSums(marray(popDat$ch.j)), #HAS: TODO, with updated output
+               R.a = rowSums(marray(popDat$ch.a))
   )
 
 
