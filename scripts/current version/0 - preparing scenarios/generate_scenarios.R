@@ -1,63 +1,95 @@
-library(tidyverse)
-library(stringr)
+library(here)
+library(popbio)
+library(DescTools)
 
-getNviable <- function() {
-  # 1 - figure out how many viable combos there are - then add them to the scenarios table
-  # 2 - what ARE the viable combinations
+# NOTE script takes ~30 mins to run
 
-  # parameter combination
-  coms <- expand.grid(fec = fec, phi1 = surv, phiad = surv)
-  #output vector
-  lams<-numeric(length(coms[,1]))
-  #leslie matrix for each
-  mats<-array(dim=c(length(coms[,1]), 2,2))
+# POPULATION SCENARIOS ----
 
-  for(i in 1:length(coms[,1])){ #loop over combinations
-    #leslie matrix for each combination
-    mats[i,1,]<-c(coms[i,"phi1"]*coms[i,"fec"],coms[i,"phi1"]*coms[i,"fec"])
-    mats[i,2,]<-c(coms[i,"phiad"], coms[i,"phiad"])
-    #Get the eigenvalue for each leslie matrix, which is the lambda
-    lams[i]<-eigen(mats[i,,])$values[1]
+eval <- function(SJ.lo,SJ.hi,SJ.seq,SA.lo,SA.hi,SA.seq,f.lo,f.hi,f.seq){
+  grid <- expand.grid(seq(SJ.lo,SJ.hi,SJ.seq),seq(SA.lo,SA.hi,SA.seq),seq(f.lo,f.hi,f.seq))
+  store <- rep(NA,nrow(grid))
+  for(i in 1:nrow(grid)){ 
+    pop.mat.rd <- matrix(NA,nrow=2,ncol=2)
+    pop.mat.rd[1,] <- c(grid[i,1]*grid[i,3], grid[i,1]*grid[i,3])
+    pop.mat.rd[2,] <- c(grid[i,2], grid[i,2])
+  
+    store[i] <- eigen.analysis(pop.mat.rd)$lambda1
   }
-
-  return(cbind(coms, lams))
+    out <- cbind(grid,store)
+    return(out)
 }
+
+keep <- data.frame("scenario"=c("fast,stable","fast,decline","fast,increase","slow,stable","slow,decline","slow,increase","mod,stable","mod,decline","mod,increase"),"S.J"=rep(NA,9),"S.A"=rep(NA,9),"f"=rep(NA,9),"lambda"=rep(NA,9))
+
+##FAST life history 
+out.fast <- eval(SJ.lo = 0.28,SJ.hi = 0.32,SJ.seq = 0.001,SA.lo = 0.38,SA.hi = 0.42,SA.seq = 0.001,f.lo = 1.8,f.hi = 2.2,f.seq = 0.001)
+
+#eyeballing results to choose best
+#rule of thumb is that we prefer changes in both survival rates before fecundity 
+#then in juvenile survival and fecundity 
+#this is just for consistency 
+
+#find best fast, stable 
+out.fast[Closest(x=out.fast[,4],a=1.0,which = TRUE,na.rm=FALSE),]
+keep[1,2:5] <- out.fast[337041,1:4]
+
+#find best fast, declining 
+out.fast[Closest(x=out.fast[,4],a=0.96,which=TRUE,na.rm=FALSE),]
+keep[2,2:5] <- out.fast[336211,1:4]
+
+#find best fast, increasing 
+out.fast[Closest(x=out.fast[,4],a=1.04,which=TRUE,na.rm=FALSE),]
+keep[3,2:5] <- out.fast[337466,1:4]
+
+##SLOW life history 
+out.slow <- eval(SJ.lo = 0.48,SJ.hi = 0.52,SJ.seq = 0.001,SA.lo = 0.58,SA.hi = 0.62,SA.seq = 0.001,f.lo = 0.6,f.hi = 1.0,f.seq = 0.001)
+
+#find best slow, stable 
+out.slow[Closest(x=out.slow[,4],a=1.0,which = TRUE,na.rm=FALSE),]
+keep[4,2:5] <- out.slow[337041,1:4]
+
+#find best slow, declining 
+out.slow[Closest(x=out.slow[,4],a=0.96,which=TRUE,na.rm=FALSE),]
+keep[5,2:5] <- out.slow[252971,1:4]
+
+#find best slow, increasing 
+out.slow[Closest(x=out.slow[,4],a=1.04,which=TRUE,na.rm=FALSE),]
+keep[6,2:5] <- out.slow[379537,1:4]
+
+## MODERATE life history 
+out.mod <- eval(SJ.lo = 0.38,SJ.hi = 0.42,SJ.seq = 0.001,SA.lo = 0.48,SA.hi = 0.52,SA.seq = 0.001,f.lo = 1.1,f.hi = 2.5,f.seq = 0.001)
+
+#find best slow, stable 
+out.mod[Closest(x=out.mod[,4],a=1.0,which = TRUE,na.rm=FALSE),]
+keep[7,2:5] <- out.mod[252991,1:4]
+
+#find best slow, declining 
+out.mod[Closest(x=out.mod[,4],a=0.96,which=TRUE,na.rm=FALSE),]
+keep[8,2:5] <- out.mod[252356,1:4]
+
+#find best slow, increasing 
+out.mod[Closest(x=out.mod[,4],a=1.04,which=TRUE,na.rm=FALSE),]
+keep[9,2:5] <- out.mod[253626,1:4]
+
+write.csv(keep,
+          here("data","scenarios.csv"),
+          row.names=FALSE)
+saveRDS(keep, here("data", "scenarios.RDS"))
+
+# DATA SCENARIOS ----
 
 # construct matrix of scenarios #####
 det.abund <- factor(x = c("L", "M", "H"))
 det.MR <- factor(x = c("L", "M", "H", "NA"))
 det.prod <- factor(x = c("L", "M", "H", "NA"))
-lambda <- factor(x = c("L", "M", "H"))
-scenarios <- expand.grid(det.abund = det.abund, det.MR = det.MR, det.prod = det.prod,
-                         lambda = lambda)
-
-# run function to generate possible parameter combinations #####
-fec <- seq(1, 6, 0.05)/2 # realistic demographic parameters
-surv <- seq(0.1, 0.98, 0.01) # realistic demographic parameters
-lams <- getNviable() # NOTE this is kind of slow
-
-# filter into decreasing, stable, and increasing trajectories ####
-lamlowcombs <- lams %>% filter(lams >= 0.94 & lams <= 0.96)
-lammedcombs <- lams %>% filter(lams >= 0.99 & lams <= 1.01)
-lamhighcombs <- lams %>% filter(lams >= 1.04 & lams <= 1.06)
-
-# how many viable parameter combinations are there to choose from?
-n.viable.low <- dim(lamlowcombs)[1]
-n.viable.med <- dim(lammedcombs)[1]
-n.viable.high <- dim(lamhighcombs)[1]
-
-scenarios <- scenarios %>%
-  mutate(n.viable.combinations = case_when(
-    lambda == "L" ~ n.viable.low,
-    lambda == "M" ~ n.viable.med,
-    lambda == "H" ~ n.viable.high
-    )
+data_scenarios <- expand.grid(
+  det.abund = det.abund, 
+  det.MR = det.MR, 
+  det.prod = det.prod
   )
 
-# save objects 
-saveRDS(scenarios, here("data", "scenarios.RDS"))
-saveRDS(lamlowcombs, here("data", "low.lam.combos.RDS"))
-saveRDS(lammedcombs, here("data", "med.lam.combos.RDS"))
-saveRDS(lamhighcombs, here("data", "high.lam.combos.RDS"))
-
-
+write.csv(data_scenarios,
+          here("data","data_scenarios.csv"),
+          row.names=FALSE)
+saveRDS(data_scenarios, here("data", "data_scenarios.RDS"))

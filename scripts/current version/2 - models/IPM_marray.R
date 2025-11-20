@@ -1,13 +1,14 @@
 # this file contains all of the model code for each combination of available datasets
 
 # load libraries
-library("here")
-library("nimble")
+library(here)
+library(nimble)
 
 # source initial value functions
 source(here("scripts", "current version", "2 - models", "IPMinitvalues.R"))
 
 ###### FULL IPM ######
+# TODO needs tested, but has been updated
 IPMmod<-nimbleCode({
 
   # COUNTS #####
@@ -137,6 +138,7 @@ nonests<-nimbleCode({
 
   # CAPTURE RECAPTURE #####
   #m-array, multinomial likelihood
+  # TODO m array needs updated here
   for(t in 1:(nyears-1)){
     marr[t,1:nyears]~dmulti(pr[t,1:nyears],R[t])
   }

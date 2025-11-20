@@ -8,6 +8,8 @@ library(here)
 library(purrr)
 library(beepr)
 
+# TODO needs checked
+
 # load data ####
 highout <- read_csv(here("results", "highout.csv"))
 medout <- read_csv(here("results", "medout.csv"))

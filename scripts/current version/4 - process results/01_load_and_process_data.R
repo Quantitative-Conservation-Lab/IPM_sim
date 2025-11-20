@@ -7,6 +7,12 @@ library(coda)
 library(nlist)
 library(beepr)
 
+# TODO
+# needs reassessed
+# are there unpushed changes here? don't see the change beth made from 1.2 -> 1.1
+# count converged ones
+
+
 scenarios <- readRDS(here("data", "scenarios.RDS"))
 low.lam.combos <- readRDS(here("data","low.lam.params.RDS"))
 med.lam.combos <- readRDS(here("data","med.lam.params.RDS"))

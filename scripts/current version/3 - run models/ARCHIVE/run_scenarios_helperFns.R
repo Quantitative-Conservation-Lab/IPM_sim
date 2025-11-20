@@ -37,10 +37,8 @@ runIPMmod <- function(nb, ni, nt, nc,
                       comb, detect) {
   #### DATA ####
   dat1 <- list(y = popDat$SUR,
-               marr.a = marray(popDat$ch.a),
-               marr.j=marray(popDat$ch.j), #HAS TODO
-               R.j=rowSums(marray(popDat$ch.j)), #HAS: TODO, with updated output
-               R.a = rowSums(marray(popDat$ch.a)),
+               marr = marray(popDat$ch),
+               R = rowSums(marray(popDat$ch)),
                OBS_nestlings = popDat$OBS_nestlings,
                R_obs = popDat$R_obs
   )
@@ -68,7 +66,7 @@ runIPMmod <- function(nb, ni, nt, nc,
   )
 
   #### PARAMETERS TO MONITOR ####
-  params1 <- c("p.surv", "mean.phi","mean.p", "fec", "lambda","Ntot")#,"N1","Nad","f","rho")#0.3764911
+  params1 <- c("p.surv", "mean.phi","mean.p", "fec", "lambda") #,"Ntot","N1","Nad","f","rho")#0.3764911
 
   #### COMPILE CONFIGURE AND BUILD ####
   Rmodel1 <- nimbleModel(code = IPMmod, constants = const1, data = dat1,
@@ -93,10 +91,8 @@ runnonests <- function(nb, ni, nt, nc,
                       comb, detect) {
 
   dat1 <- list(y = popDat$SUR,
-               marr.a = marray(popDat$ch.a),
-               marr.j=marray(popDat$ch.j), #HAS TODO
-               R.j=rowSums(marray(popDat$ch.j)), #HAS: TODO, with updated output
-               R.a = rowSums(marray(popDat$ch.a))
+               marr = marray(popDat$ch),
+               R = rowSums(marray(popDat$ch))
   )
 
 
@@ -124,7 +120,7 @@ runnonests <- function(nb, ni, nt, nc,
   )
 
   #### PARAMETERS TO MONITOR ####
-  params1 <- c("p.surv", "mean.phi","mean.p", "fec", "lambda","Ntot")#,"N1","Nad","f","rho")#0.3764911
+  params1 <- c("p.surv", "mean.phi","mean.p", "fec", "lambda") #,"Ntot","N1","Nad","f","rho")#0.3764911
 
   #### COMPILE CONFIGURE AND BUILD ####
   Rmodel1 <- nimbleModel(code = nonests, constants = const1, data = dat1,
@@ -177,7 +173,7 @@ runnomr <- function(nb, ni, nt, nc,
   )
 
   #### PARAMETERS TO MONITOR ####
-  params1 <- c("p.surv", "mean.phi", "fec", "lambda","Ntot")#,"N1","Nad","f","rho")#0.3764911
+  params1 <- c("p.surv", "mean.phi", "fec", "lambda") #,"Ntot","N1","Nad","f","rho")#0.3764911
 
   #### COMPILE CONFIGURE AND BUILD ####
   Rmodel1 <- nimbleModel(code = nomr, constants = const1, data = dat1,
@@ -229,7 +225,7 @@ runabundonly <- function(nb, ni, nt, nc,
   )
 
   #### PARAMETERS TO MONITOR ####
-  params1 <- c("p.surv", "mean.phi", "fec", "lambda","Ntot")#,"N1","Nad","f","rho")#0.3764911
+  params1 <- c("p.surv", "mean.phi", "fec", "lambda") #,"Ntot","N1","Nad","f","rho")#0.3764911
 
   #### COMPILE CONFIGURE AND BUILD ####
   Rmodel1 <- nimbleModel(code = abundonly, constants = const1, data = dat1,

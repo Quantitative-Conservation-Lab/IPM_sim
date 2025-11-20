@@ -14,11 +14,8 @@ high.lam.combos <- readRDS(here("data","high.lam.params.RDS"))
 # source functions
 source(here("scripts", "current version",
             "0 - preparing scenarios", "compute_time_calc.R"))
-# source(here("scripts", "current version",
-#             "1 - simulating data", "IPM_sim_2.0function.R"))
-#changed to latest simulate script
 source(here("scripts", "current version",
-            "1 - simulating data", "IPM_sim_3.0function.R"))
+            "1 - simulating data", "IPM_sim_2.0function.R"))
 source(here("scripts", "current version",
             "2 - models", "IPM_marray.R"))
 source(here("scripts", "current version",
@@ -80,10 +77,8 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
         if (det.levels[4] == "L") { # simulate low trajectory data #####
           lowpopDat <- simData (indfates = lowpopTraj$indfates,
                                 n.years = 15,
-                                #n.data.types = c(0.25,0.25,0.25),
-                                #remove n.data.types (not needed in newest)
-                                #ADonly = F, 
-                                #HAS: removed ADonly
+                                n.data.types = c(0.25,0.25,0.25),
+                                ADonly = T,
                                 p.1 = as.numeric(det.numeric[2]), #
                                 p.ad = as.numeric(det.numeric[2]), #
                                 p.count = as.numeric(det.numeric[1]), #
@@ -102,10 +97,8 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
         } else if (det.levels[4] == "M") { # simulate medium trajectory data #####
           medpopDat <- simData (indfates = medpopTraj$indfates,
                                 n.years = 15,
-                                #n.data.types = c(0.25,0.25,0.25),
-                                #remove n.data.types (not needed in newest)
-                                #ADonly = F, 
-                                #HAS: removed ADonly
+                                n.data.types = c(0.25,0.25,0.25),
+                                ADonly = T,
                                 p.1 = as.numeric(det.numeric[2]), #
                                 p.ad = as.numeric(det.numeric[2]), #
                                 p.count = as.numeric(det.numeric[1]), #
@@ -124,10 +117,8 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
         } else if (det.levels[4] == "H") { # simulate high trajectory data #####
           highpopDat <- simData (indfates = highpopTraj$indfates,
                                  n.years = 15,
-                                 #n.data.types = c(0.25,0.25,0.25),
-                                 #remove n.data.types (not needed in newest)
-                                 #ADonly = F, 
-                                 #HAS: removed ADonly
+                                 n.data.types = c(0.25,0.25,0.25),
+                                 ADonly = T,
                                  p.1 = as.numeric(det.numeric[2]), #
                                  p.ad = as.numeric(det.numeric[2]), #
                                  p.count = as.numeric(det.numeric[1]), #
@@ -148,10 +139,8 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
         if (det.levels[4] == "L") { # simulate low trajectory data #####
           lowpopDat <- simData (indfates = lowpopTraj$indfates,
                                 n.years = 15,
-                                #n.data.types = c(0.25,0.25,0.25),
-                                #remove n.data.types (not needed in newest)
-                                #ADonly = F, 
-                                #HAS: removed ADonly
+                                n.data.types = c(0.25,0.25,0.25),
+                                ADonly = T,
                                 p.1 = as.numeric(det.numeric[2]), #
                                 p.ad = as.numeric(det.numeric[2]), #
                                 p.count = as.numeric(det.numeric[1]), #
@@ -170,10 +159,8 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
         } else if (det.levels[4] == "M") { # simulate medium trajectory data #####
           medpopDat <- simData (indfates = medpopTraj$indfates,
                                 n.years = 15,
-                                #n.data.types = c(0.25,0.25,0.25),
-                                #remove n.data.types (not needed in newest)
-                                #ADonly = F, 
-                                #HAS: removed ADonly
+                                n.data.types = c(0.25,0.25,0.25),
+                                ADonly = T,
                                 p.1 = as.numeric(det.numeric[2]), #
                                 p.ad = as.numeric(det.numeric[2]), #
                                 p.count = as.numeric(det.numeric[1]), #
@@ -192,10 +179,8 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
         } else if (det.levels[4] == "H") { # simulate high trajectory data #####
           highpopDat <- simData (indfates = highpopTraj$indfates,
                                  n.years = 15,
-                                 #n.data.types = c(0.25,0.25,0.25),
-                                 #remove n.data.types (not needed in newest)
-                                 #ADonly = F, 
-                                 #HAS: removed ADonly
+                                 n.data.types = c(0.25,0.25,0.25),
+                                 ADonly = T,
                                  p.1 = as.numeric(det.numeric[2]), #
                                  p.ad = as.numeric(det.numeric[2]), #
                                  p.count = as.numeric(det.numeric[1]), #
@@ -216,10 +201,8 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
         if (det.levels[4] == "L") { # simulate low trajectory data #####
           lowpopDat <- simData (indfates = lowpopTraj$indfates,
                                 n.years = 15,
-                                #n.data.types = c(0.25,0.25,0.25),
-                                #remove n.data.types (not needed in newest)
-                                #ADonly = F, 
-                                #HAS: removed ADonly
+                                n.data.types = c(0.25,0.25,0.25),
+                                ADonly = T,
                                 p.1 = as.numeric(det.numeric[2]), #
                                 p.ad = as.numeric(det.numeric[2]), #
                                 p.count = as.numeric(det.numeric[1]), #
@@ -238,10 +221,8 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
         } else if (det.levels[4] == "M") { # simulate medium trajectory data #####
           medpopDat <- simData (indfates = medpopTraj$indfates,
                                 n.years = 15,
-                                #n.data.types = c(0.25,0.25,0.25),
-                                #remove n.data.types (not needed in newest)
-                                #ADonly = F, 
-                                #HAS: removed ADonly
+                                n.data.types = c(0.25,0.25,0.25),
+                                ADonly = T,
                                 p.1 = as.numeric(det.numeric[2]), #
                                 p.ad = as.numeric(det.numeric[2]), #
                                 p.count = as.numeric(det.numeric[1]), #
@@ -260,10 +241,8 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
         } else if (det.levels[4] == "H") { # simulate high trajectory data #####
           highpopDat <- simData (indfates = highpopTraj$indfates,
                                  n.years = 15,
-                                 #n.data.types = c(0.25,0.25,0.25),
-                                 #remove n.data.types (not needed in newest)
-                                 #ADonly = F, 
-                                 #HAS: removed ADonly
+                                 n.data.types = c(0.25,0.25,0.25),
+                                 ADonly = T,
                                  p.1 = as.numeric(det.numeric[2]), #
                                  p.ad = as.numeric(det.numeric[2]), #
                                  p.count = as.numeric(det.numeric[1]), #
@@ -284,10 +263,8 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
         if (det.levels[4] == "L") { # simulate low trajectory data #####
           lowpopDat <- simData (indfates = lowpopTraj$indfates,
                                 n.years = 15,
-                                #n.data.types = c(0.25,0.25,0.25),
-                                #remove n.data.types (not needed in newest)
-                                #ADonly = F, 
-                                #HAS: removed ADonly
+                                n.data.types = c(0.25,0.25,0.25),
+                                ADonly = T,
                                 p.1 = as.numeric(det.numeric[2]), #
                                 p.ad = as.numeric(det.numeric[2]), #
                                 p.count = as.numeric(det.numeric[1]), #
@@ -306,10 +283,8 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
         } else if (det.levels[4] == "M") { # simulate medium trajectory data #####
           medpopDat <- simData (indfates = medpopTraj$indfates,
                                 n.years = 15,
-                                #n.data.types = c(0.25,0.25,0.25),
-                                #remove n.data.types (not needed in newest)
-                                #ADonly = F, 
-                                #HAS: removed ADonly
+                                n.data.types = c(0.25,0.25,0.25),
+                                ADonly = T,
                                 p.1 = as.numeric(det.numeric[2]), #
                                 p.ad = as.numeric(det.numeric[2]), #
                                 p.count = as.numeric(det.numeric[1]), #
@@ -328,10 +303,8 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
         } else if (det.levels[4] == "H") { # simulate high trajectory data #####
           highpopDat <- simData (indfates = highpopTraj$indfates,
                                  n.years = 15,
-                                 #n.data.types = c(0.25,0.25,0.25),
-                                 #remove n.data.types (not needed in newest)
-                                 #ADonly = F, 
-                                 #HAS: removed ADonly
+                                 n.data.types = c(0.25,0.25,0.25),
+                                 ADonly = T,
                                  p.1 = as.numeric(det.numeric[2]), #
                                  p.ad = as.numeric(det.numeric[2]), #
                                  p.count = as.numeric(det.numeric[1]), #

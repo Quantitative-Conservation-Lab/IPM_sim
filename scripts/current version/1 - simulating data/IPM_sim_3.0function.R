@@ -70,13 +70,15 @@ simPopTrajectory <- function(n.years, age.init,
   for(t in 1:n.years){
     N[,(t+1)]<-lesmat%*%N[,t]
   }
+  
   # give a warning if param values are outside of desired pop. growth rates
   el<-eigen(lesmat)$values[1]
-  if(el<0.90 || el>1.10){
-    print("Lambda is either too low or too high, revisit parameters")
-    print(el)
-  }
+  # if(el<0.90 || el>1.10){
+  #   print("Lambda is either too low or too high, revisit parameters")
+  #   print(el)
+  # }
   #eigen(lesmat) #for lambda, if we need to check
+  
   no.animals<-sum(N) #number of animals ever in the system at anytime
   no.ani.max<-round(no.animals*5) #include more for simulation of offspring
   ####stable age distribution is:
@@ -202,15 +204,19 @@ simData <- function(indfates, n.years,
 
   ###################Create Mark-Resight data  ###################
   
+  # TODO
+  # should update the comments thru here
+  
   #Marking adults and 1 year olds, which will have the same
   #for adults and 1yr olds only
-  #AD_only=T
 
   #for adults, 1 year olds and chicks
-  #AD_only=F
-
   if(!is.na(p.1) & !is.na(p.ad)) {
-    #if(ADonly==T){
+    # TODO 
+      # hannah, had to uncomment this to make the function work
+      # is this correct??
+    
+    # #if(ADonly==T){
       #using the population array for MR data
       mr_classes.a<-dim(IND_MR)[1] - 3 #since we wont see Dead and the reproduction doesnt matter
       #so we have 2 classes, we care about in marking: 1year olds, and adults
