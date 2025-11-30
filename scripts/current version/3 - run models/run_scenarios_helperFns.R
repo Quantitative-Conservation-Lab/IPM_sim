@@ -95,7 +95,7 @@ runnonests <- function(nb, ni, nt, nc,
 
   dat1 <- list(y = popDat$SUR,
                marr.a = marray(popDat$ch.a),
-               marr.j=marray(popDat$ch.j[,-16]), # TODO note hardcode
+               marr.j=marray(popDat$ch.j), # TODO note hardcode
                R.j=rowSums(marray(popDat$ch.j)), 
                R.a = rowSums(marray(popDat$ch.a))
   )

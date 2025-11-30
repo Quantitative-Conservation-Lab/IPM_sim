@@ -7,7 +7,7 @@ library(doParallel)
 
 # load data
 # TODO - adjust as in previous file
-scenarios <- readRDS(here("data", "scenarios.RDS")) %>% 
+scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>% 
   separate_wider_delim(cols = scenario, delim = ",", 
                        names = c("life_hist", "trend")) %>% 
   rename(
@@ -71,7 +71,7 @@ data_scenarios <- readRDS(here("data", "data_scenarios.RDS"))
 # MCMC settings #######
 # TODO this is defined differently elsewhere
 # does it need to be longer for convergence, especially given stricter cutoff
-nb <- 200000#0 #burn-in
+nb <- 100000#0 #burn-in # TODO play with this
 ni <- nb + nb #total iterations
 nt <- 10  #thin
 nc <- 3  #chains
@@ -88,18 +88,29 @@ registerDoParallel(cl)
 # j is replicate
 # d is scenario number
 
+# TODO tidy this up and create a globals doc
+scenarios.picked <- nrow(low.lam.params) # TODO note change here
+sims.per <- 50 # TODO - is this what we decided? didn't we discuss either less
 
 # TODO this for loop requires some recoding given new structure of 
 # scenarios and data scenarios
-foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  #####
+#foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  #####
+foreach(j = 1:sims.per) %dopar% { # loop over population trajectory  #####
+    
   library(here)
   library(nimble)
-  for (j in 1:sims.per) { # loop over replicate  #####
+  #for (j in 1:sims.per) { # loop over replicate  #####
+  for (i in 1:scenarios.picked) { # loop over replicate  #####
     # load relevant population trajectories ####
     lowpopTraj <- readRDS(here("data", "lowTrajectories", paste("lowpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     medpopTraj <- readRDS(here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     highpopTraj <- readRDS(here("data", "highTrajectories", paste("highpopTraj", "-", i, "-", j, ".RDS", sep = "")))
-    for (d in 1:dim(data_scenarios)[1]) { # loop over model scenario  #####
+    #for (d in 1:dim(data_scenarios)[1]) { # loop over model scenario  #####
+    
+    # TESTING
+    for (d in 1:10) { # loop over model scenario  #####
+      print(paste0(d, " out of ", 10))
+      
       # translate detection levels into numbes
       det.levels <- data_scenarios[d, 1:3]
       det.numeric <- det.levels[1:3]
@@ -108,7 +119,7 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
       det.numeric[which(det.numeric== "H")] <- detect.h
       det.numeric[which(det.numeric== "NA")] <- NA
       if (is.na(det.numeric[2]) & is.na(det.numeric[3])) { # ABUNDANCE ONLY #####
-        if (det.levels[4] == "L") { # simulate low trajectory data #####
+        #if (det.levels[4] == "L") { # simulate low trajectory data #####
           lowpopDat <- simData (indfates = lowpopTraj$indfates,
                                 n.years = 15,
                                 #n.data.types = c(0.25,0.25,0.25),
@@ -130,7 +141,7 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
           lowout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(lowout, here("results",paste("lowout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(lowout)
-        } else if (det.levels[4] == "M") { # simulate medium trajectory data #####
+        #} else if (det.levels[4] == "M") { # simulate medium trajectory data #####
           medpopDat <- simData (indfates = medpopTraj$indfates,
                                 n.years = 15,
                                 #n.data.types = c(0.25,0.25,0.25),
@@ -152,7 +163,7 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
           medout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(medout, here("results", paste("medout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(medout)
-        } else if (det.levels[4] == "H") { # simulate high trajectory data #####
+        #} else if (det.levels[4] == "H") { # simulate high trajectory data #####
           highpopDat <- simData (indfates = highpopTraj$indfates,
                                  n.years = 15,
                                  #n.data.types = c(0.25,0.25,0.25),
@@ -174,9 +185,9 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
           highout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(highout)
-        }
+        #}
       } else if (is.na(det.numeric[2])) { # NO MARK RECAPTURE ######
-        if (det.levels[4] == "L") { # simulate low trajectory data #####
+        #if (det.levels[4] == "L") { # simulate low trajectory data #####
           lowpopDat <- simData (indfates = lowpopTraj$indfates,
                                 n.years = 15,
                                 #n.data.types = c(0.25,0.25,0.25),
@@ -198,7 +209,7 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
           lowout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(lowout, here("results", paste("lowout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(lowout)
-        } else if (det.levels[4] == "M") { # simulate medium trajectory data #####
+        #} else if (det.levels[4] == "M") { # simulate medium trajectory data #####
           medpopDat <- simData (indfates = medpopTraj$indfates,
                                 n.years = 15,
                                 #n.data.types = c(0.25,0.25,0.25),
@@ -220,7 +231,7 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
           medout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(medout, here("results", paste("medout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(medout)
-        } else if (det.levels[4] == "H") { # simulate high trajectory data #####
+        #} else if (det.levels[4] == "H") { # simulate high trajectory data #####
           highpopDat <- simData (indfates = highpopTraj$indfates,
                                  n.years = 15,
                                  #n.data.types = c(0.25,0.25,0.25),
@@ -242,9 +253,9 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
           highout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(highout)
-        }
+        #}
       } else if (is.na(det.numeric[3])) { # NO NEST SURVIVAL ######
-        if (det.levels[4] == "L") { # simulate low trajectory data #####
+        #if (det.levels[4] == "L") { # simulate low trajectory data #####
           lowpopDat <- simData (indfates = lowpopTraj$indfates,
                                 n.years = 15,
                                 #n.data.types = c(0.25,0.25,0.25),
@@ -271,7 +282,7 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
           lowout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(lowout, here("results", paste("lowout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(lowout)
-        } else if (det.levels[4] == "M") { # simulate medium trajectory data #####
+        #} else if (det.levels[4] == "M") { # simulate medium trajectory data #####
           medpopDat <- simData (indfates = medpopTraj$indfates,
                                 n.years = 15,
                                 #n.data.types = c(0.25,0.25,0.25),
@@ -293,7 +304,7 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
           medout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(medout, here("results", paste("medout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(medout)
-        } else if (det.levels[4] == "H") { # simulate high trajectory data #####
+        #} else if (det.levels[4] == "H") { # simulate high trajectory data #####
           highpopDat <- simData (indfates = highpopTraj$indfates,
                                  n.years = 15,
                                  #n.data.types = c(0.25,0.25,0.25),
@@ -315,9 +326,9 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
           highout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(highout)
-        }
+       # }
       } else { # FULL IPM ########
-        if (det.levels[4] == "L") { # simulate low trajectory data #####
+       # if (det.levels[4] == "L") { # simulate low trajectory data #####
           lowpopDat <- simData (indfates = lowpopTraj$indfates,
                                 n.years = 15,
                                 #n.data.types = c(0.25,0.25,0.25),
@@ -341,7 +352,7 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
           lowout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(lowout, here("results", paste("lowout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(lowout)
-        } else if (det.levels[4] == "M") { # simulate medium trajectory data #####
+       # } else if (det.levels[4] == "M") { # simulate medium trajectory data #####
           medpopDat <- simData (indfates = medpopTraj$indfates,
                                 n.years = 15,
                                 #n.data.types = c(0.25,0.25,0.25),
@@ -365,7 +376,7 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
           medout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(medout, here("results", paste("medout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(medout)
-        } else if (det.levels[4] == "H") { # simulate high trajectory data #####
+       # } else if (det.levels[4] == "H") { # simulate high trajectory data #####
           highpopDat <- simData (indfates = highpopTraj$indfates,
                                  n.years = 15,
                                  #n.data.types = c(0.25,0.25,0.25),
@@ -389,7 +400,7 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
           highout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(highout)
-        }
+       # }
       } # else
     } # scenarios row (d)
   } # sims per (j)
