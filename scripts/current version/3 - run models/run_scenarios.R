@@ -105,11 +105,11 @@ foreach(j = 1:sims.per) %dopar% { # loop over population trajectory  #####
     lowpopTraj <- readRDS(here("data", "lowTrajectories", paste("lowpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     medpopTraj <- readRDS(here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     highpopTraj <- readRDS(here("data", "highTrajectories", paste("highpopTraj", "-", i, "-", j, ".RDS", sep = "")))
-    #for (d in 1:dim(data_scenarios)[1]) { # loop over model scenario  #####
+    for (d in 1:dim(data_scenarios)[1]) { # loop over model scenario  #####
     
     # TESTING
-    for (d in 1:10) { # loop over model scenario  #####
-      print(paste0(d, " out of ", 10))
+    # for (d in 1:10) { # loop over model scenario  #####
+    #   print(paste0(d, " out of ", 10))
       
       # translate detection levels into numbes
       det.levels <- data_scenarios[d, 1:3]
