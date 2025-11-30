@@ -44,7 +44,7 @@ high.lam.params <- scenarios %>%
   filter(trend == "increase")
 
 # TODO discussed creating a global constants file, decide if useful
-scenarios.picked <- nrow(scenarios)
+scenarios.picked <- nrow(low.lam.params) # TODO note change here
 sims.per <- 50 # TODO - is this what we decided? didn't we discuss either less
 # demog stochasticity or less sampling stochasticity?
 # if we dropped demog stochasticity we'd have less to save which would save memory among other things
@@ -53,7 +53,7 @@ sims.per <- 50 # TODO - is this what we decided? didn't we discuss either less
 # simulate populations
 # and save the trajectories in data files
 cores=detectCores()
-cl <- makeCluster(cores[1]-2, setup_strategy = "sequential") 
+cl <- makeCluster(sims.per/2, setup_strategy = "sequential") # TODO note change here
 
 # TODO remove
 # TESTING 
@@ -61,10 +61,13 @@ cl <- makeCluster(cores[1]-2, setup_strategy = "sequential")
 # cl <- makeCluster(3, setup_strategy = "sequential")
 # TESTING
 
+t.start <- Sys.time()
 registerDoParallel(cl)
-foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
+#foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
+foreach(j = 1:sims.per) %dopar% { #scenarios picked
   library(here)
-  for (j in 1:sims.per) { # sims per
+  #for (j in 1:sims.per) { # sims per
+  for (i in 1:scenarios.picked) { # sims per
     
   lowpopTraj <- simPopTrajectory(n.years=15,
                                    #n.data.types=c(0.25,0.25,0.25),
@@ -72,6 +75,10 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
                                    phi.1=low.lam.params$phi1[i],
                                    phi.ad=low.lam.params$phiad[i],
                                    f=low.lam.params$fec[i])
+  
+  assign(paste("lowpopTraj", "-", i, "-", j, sep = ""), lowpopTraj)
+  saveRDS(lowpopTraj, here("data", "lowTrajectories", paste("lowpopTraj", "-", i, "-", j, ".RDS", sep = "")))
+  rm(lowpopTraj)
 
     medpopTraj <- simPopTrajectory(n.years=15,
                                    #n.data.types=c(0.25,0.25,0.25),
@@ -79,6 +86,10 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
                                    phi.1=med.lam.params$phi1[i],
                                    phi.ad=med.lam.params$phiad[i],
                                    f=med.lam.params$fec[i])
+    
+    assign(paste("medpopTraj", "-", i, "-", j, sep = ""), medpopTraj)
+    saveRDS(medpopTraj, here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
+    rm(medpopTraj)
 
     highpopTraj <- simPopTrajectory(n.years=15,
                                     #n.data.types=c(0.25,0.25,0.25),
@@ -86,14 +97,6 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
                                     phi.1=high.lam.params$phi1[i],
                                     phi.ad=high.lam.params$phiad[i],
                                     f=high.lam.params$fec[i])
-
-    assign(paste("lowpopTraj", "-", i, "-", j, sep = ""), lowpopTraj)
-    saveRDS(lowpopTraj, here("data", "lowTrajectories", paste("lowpopTraj", "-", i, "-", j, ".RDS", sep = "")))
-    rm(lowpopTraj)
-
-    assign(paste("medpopTraj", "-", i, "-", j, sep = ""), medpopTraj)
-    saveRDS(medpopTraj, here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
-    rm(medpopTraj)
 
     assign(paste("highpopTraj", "-", i, "-", j, sep = ""), highpopTraj)
     saveRDS(highpopTraj, here("data", "highTrajectories", paste("highpopTraj", "-", i, "-", j, ".RDS", sep = "")))
@@ -103,4 +106,6 @@ foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
 } # foreach
 
 stopCluster(cl)
+t.end <- Sys.time()
+t.end - t.start
 
