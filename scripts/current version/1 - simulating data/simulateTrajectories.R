@@ -5,7 +5,7 @@ library(tidyverse)
 
 # load data
 # TODO - this should maybe go to the end of the previous file
-scenarios <- readRDS(here("data", "scenarios.RDS")) %>% 
+scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>% 
   separate_wider_delim(cols = scenario, delim = ",", 
                        names = c("life_hist", "trend")) %>% 
   rename(
@@ -57,8 +57,8 @@ cl <- makeCluster(cores[1]-2, setup_strategy = "sequential")
 
 # TODO remove
 # TESTING 
-sims.per <- 3
-cl <- makeCluster(3, setup_strategy = "sequential")
+# sims.per <- 3
+# cl <- makeCluster(3, setup_strategy = "sequential")
 # TESTING
 
 registerDoParallel(cl)
