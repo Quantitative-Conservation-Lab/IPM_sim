@@ -136,7 +136,7 @@ foreach(j = 1:sims.per) %dopar% { # loop over population trajectory  #####
                                 productivity = T)
           popDat <- lowpopDat
           popTraj <- lowpopTraj
-          comb <- low.lam.combos[i,]
+          comb <- low.lam.params[i,]
           # run model and save results ####
           lowout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(lowout, here("results",paste("lowout-",i,"-",j,"-",d,".RDS", sep = "")))
@@ -158,7 +158,7 @@ foreach(j = 1:sims.per) %dopar% { # loop over population trajectory  #####
                                 productivity = T)
           popDat <- medpopDat
           popTraj <- medpopTraj
-          comb <- med.lam.combos[i,]
+          comb <- med.lam.params[i,]
           # run model and save results ####
           medout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(medout, here("results", paste("medout-",i,"-",j,"-",d,".RDS", sep = "")))
@@ -180,7 +180,7 @@ foreach(j = 1:sims.per) %dopar% { # loop over population trajectory  #####
                                  productivity = T)
           popDat <- highpopDat
           popTraj <- highpopTraj
-          comb <- high.lam.combos[i,]
+          comb <- high.lam.params[i,]
           # run model and save results ####
           highout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
@@ -204,7 +204,7 @@ foreach(j = 1:sims.per) %dopar% { # loop over population trajectory  #####
                                 productivity = T)
           popDat <- lowpopDat
           popTraj <- lowpopTraj
-          comb <- low.lam.combos[i,]
+          comb <- low.lam.params[i,]
           # run model and save results ####
           lowout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(lowout, here("results", paste("lowout-",i,"-",j,"-",d,".RDS", sep = "")))
@@ -226,7 +226,7 @@ foreach(j = 1:sims.per) %dopar% { # loop over population trajectory  #####
                                 productivity = T)
           popDat <- medpopDat
           popTraj <- medpopTraj
-          comb <- med.lam.combos[i,]
+          comb <- med.lam.params[i,]
           # run model and save results ####
           medout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(medout, here("results", paste("medout-",i,"-",j,"-",d,".RDS", sep = "")))
@@ -248,7 +248,7 @@ foreach(j = 1:sims.per) %dopar% { # loop over population trajectory  #####
                                  productivity = T)
           popDat <- highpopDat
           popTraj <- highpopTraj
-          comb <- high.lam.combos[i,]
+          comb <- high.lam.params[i,]
           # run model and save results ####
           highout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
@@ -275,7 +275,7 @@ foreach(j = 1:sims.per) %dopar% { # loop over population trajectory  #####
           
           # TODO change here
           # TODO will need to change the loop structure to deal w this
-          #comb <- low.lam.combos[i,]
+          #comb <- low.lam.params[i,]
           comb <- low.lam.params[i,]
           
           # run model and save results ####
@@ -299,7 +299,7 @@ foreach(j = 1:sims.per) %dopar% { # loop over population trajectory  #####
                                 productivity = T)
           popDat <- medpopDat
           popTraj <- medpopTraj
-          comb <- med.lam.combos[i,]
+          comb <- med.lam.params[i,]
           # run model and save results ####
           medout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(medout, here("results", paste("medout-",i,"-",j,"-",d,".RDS", sep = "")))
@@ -321,7 +321,7 @@ foreach(j = 1:sims.per) %dopar% { # loop over population trajectory  #####
                                  productivity = T)
           popDat <- highpopDat
           popTraj <- highpopTraj
-          comb <- high.lam.combos[i,]
+          comb <- high.lam.params[i,]
           # run model and save results ####
           highout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))

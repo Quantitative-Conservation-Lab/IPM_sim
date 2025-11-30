@@ -387,10 +387,14 @@ simData <- function(indfates, n.years,
       }
     
   } else {
-    ch=NULL
-    age_ch=NULL
-    firstobs=NULL
-    lastobs=NULL
+    ch.a=NULL
+    ch.j=NULL
+    age_ch.a=NULL
+    age_ch.j=NULL
+    firstobs.a=NULL
+    firstobs.j=NULL
+    lastobs.a=NULL
+    lastobs.j=NULL
   }
 
 
