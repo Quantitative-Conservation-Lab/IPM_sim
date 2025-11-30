@@ -33,6 +33,7 @@ IPMmod<-nimbleCode({
   for(n in 1:n.sam){
     for (t in 1:nyears){
       #y[n,t]~dnorm(Ntot[t],sd=p.surv)
+      # TODO did the productivity change mess with the initial values?
       y[n,t] ~ dbin(p.surv,Ntot[t])
     }
   }
@@ -44,18 +45,25 @@ IPMmod<-nimbleCode({
     marr.j[t,1:nyears]~dmulti(pr.j[t,1:nyears],R.j[t])
     marr.a[t,1:nyears]~dmulti(pr.a[t,1:nyears],R.a[t])
   }
-  for(t in 1:(nyears-1)){
+  
+  # TODO
+  # monitor pr.j and pr.a and see what the structure is
+  
+  # diagonal
+  for(t in 1:(nyears-1)){ # 1:14, 1:14
     q[t]<-1-p[t]
     pr.j[t,t]<-phi.j[t]*p[t]
     pr.a[t,t]<-phi.a[t]*p[t]
   }
-  for(t in 1:(nyears-2)){
+  #upper triangle
+  for(t in 1:(nyears-2)){ #1:13, 2:14
     for(j in (t+1):(nyears-1)){
       pr.j[t,j]<-phi.j[t]*prod(phi.a[(t+1):j])*prod(q[t:(j-1)])*p[j]
       pr.a[t,j]<-prod(phi.a[t:j])*prod(q[t:(j-1)])*p[j]
     }
   }
-  for (t in 2:(nyears-1)){
+  #lower triangle
+  for (t in 2:(nyears-1)){ #2:14, 1:13
     for(j in 1:(t-1)){
       pr.j[t,j]<-0
       pr.a[t,j]<-0
@@ -104,6 +112,7 @@ IPMmod<-nimbleCode({
 
 ##### NO NESTS #####
 
+# TODO m array needs tested here
 nonests<-nimbleCode({
 
   # COUNTS #####
@@ -138,25 +147,34 @@ nonests<-nimbleCode({
 
   # CAPTURE RECAPTURE #####
   #m-array, multinomial likelihood
-  # TODO m array needs updated here
   for(t in 1:(nyears-1)){
-    marr[t,1:nyears]~dmulti(pr[t,1:nyears],R[t])
+    marr.j[t,1:nyears]~dmulti(pr.j[t,1:nyears],R.j[t])
+    marr.a[t,1:nyears]~dmulti(pr.a[t,1:nyears],R.a[t])
   }
   for(t in 1:(nyears-1)){
     q[t]<-1-p[t]
-    pr[t,t]<-phi.ad[t]*p[t]
+    pr.j[t,t]<-phi.j[t]*p[t]
+    pr.a[t,t]<-phi.a[t]*p[t]
+  }
+  for(t in 1:(nyears-2)){
     for(j in (t+1):(nyears-1)){
-      pr[t,j]<-prod(phi.ad[t:j])*prod(q[t:(j-1)])*p[j]
+      pr.j[t,j]<-phi.j[t]*prod(phi.a[(t+1):j])*prod(q[t:(j-1)])*p[j]
+      pr.a[t,j]<-prod(phi.a[t:j])*prod(q[t:(j-1)])*p[j]
     }
+  }
+  for (t in 2:(nyears-1)){
     for(j in 1:(t-1)){
-      pr[t,j]<-0
+      pr.j[t,j]<-0
+      pr.a[t,j]<-0
     }
   }
   for(t in 1:(nyears-1)){
-    pr[t,nyears]<-1-sum(pr[t,1:(nyears-1)])
+    pr.a[t,nyears]<-1-sum(pr.a[t,1:(nyears-1)])
+    pr.j[t,nyears]<-1-sum(pr.j[t,1:(nyears-1)])
   }
   for(t in 1:(nyears)){
-    phi.ad[t]<-mean.phi[2]
+    phi.j[t]<-mean.phi[1]
+    phi.a[t]<-mean.phi[2]
     p[t]<-mean.p
   }
 

@@ -73,9 +73,9 @@ out.mod[Closest(x=out.mod[,4],a=1.04,which=TRUE,na.rm=FALSE),]
 keep[9,2:5] <- out.mod[253626,1:4]
 
 write.csv(keep,
-          here("data","scenarios.csv"),
+          here("data","demographic_scenarios.csv"),
           row.names=FALSE)
-saveRDS(keep, here("data", "scenarios.RDS"))
+saveRDS(keep, here("data", "demographic_scenarios.RDS"))
 
 # DATA SCENARIOS ----
 

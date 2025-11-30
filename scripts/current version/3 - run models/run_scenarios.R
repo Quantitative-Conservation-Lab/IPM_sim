@@ -7,15 +7,30 @@ library(doParallel)
 
 # load data
 # TODO - adjust as in previous file
-scenarios <- readRDS(here("data", "scenarios.RDS"))
-low.lam.combos <- readRDS(here("data","low.lam.params.RDS"))
-med.lam.combos <- readRDS(here("data","med.lam.params.RDS"))
-high.lam.combos <- readRDS(here("data","high.lam.params.RDS"))
+scenarios <- readRDS(here("data", "scenarios.RDS")) %>% 
+  separate_wider_delim(cols = scenario, delim = ",", 
+                       names = c("life_hist", "trend")) %>% 
+  rename(
+    "phi1" = "S.J", 
+    "phiad" = "S.A",
+    "fec" = "f"
+  )
+# low.lam.combos <- readRDS(here("data","low.lam.params.RDS"))
+# med.lam.combos <- readRDS(here("data","med.lam.params.RDS"))
+# high.lam.combos <- readRDS(here("data","high.lam.params.RDS"))
+# TODO fix hard coding
+low.lam.params <- scenarios %>% 
+  filter(trend == "decline")
+med.lam.params <- scenarios %>% 
+  filter(trend == "stable")
+high.lam.params <- scenarios %>% 
+  filter(trend == "increase")
 
 # source functions
 # TODO - don't source from here? or do? what is easier to avoid hardcoding
-source(here("scripts", "current version",
-            "0 - preparing scenarios", "compute_time_calc.R"))
+# source(here("scripts", "current version",
+#             "0 - preparing scenarios", "compute_time_calc.R"))
+
 # source(here("scripts", "current version",
 #             "1 - simulating data", "IPM_sim_2.0function.R"))
 #changed to latest simulate script
@@ -24,7 +39,7 @@ source(here("scripts", "current version",
 source(here("scripts", "current version",
             "2 - models", "IPM_marray.R"))
 source(here("scripts", "current version",
-            "4 - run models", "run_scenarios_helperFns.R"))
+            "3 - run models", "run_scenarios_helperFns.R"))
 
 # TODO cut this bit
 # determine priority score for scenarios
@@ -37,11 +52,11 @@ source(here("scripts", "current version",
 # scenarios <- scenarios %>% arrange(priority) %>% # save in prioritized order
 #   transform(simscenarios = 1:144)
 
-write.csv(scenarios, here::here('data', 'scenario_ID.csv'), row.names = F)
+# write.csv(scenarios, here::here('data', 'scenario_ID.csv'), row.names = F)
 
-which.prio.1 <- which(scenarios$priority == 1)
-which.prio.2 <- which(scenarios$priority == 2)
-which.prio.3 <- which(scenarios$priority == 3)
+# which.prio.1 <- which(scenarios$priority == 1)
+# which.prio.2 <- which(scenarios$priority == 2)
+# which.prio.3 <- which(scenarios$priority == 3)
 
 # TODO note hardcoding here. this seems like an ok place to define it though
 # detection levels
@@ -50,6 +65,8 @@ detect.m <- 0.5
 detect.h <- 0.8
 
 detect <- c(detect.l, detect.m, detect.h)
+
+data_scenarios <- readRDS(here("data", "data_scenarios.RDS"))
 
 # MCMC settings #######
 # TODO this is defined differently elsewhere
@@ -70,6 +87,10 @@ registerDoParallel(cl)
 # i is the unique trajectory (within trend)
 # j is replicate
 # d is scenario number
+
+
+# TODO this for loop requires some recoding given new structure of 
+# scenarios and data scenarios
 foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  #####
   library(here)
   library(nimble)
@@ -78,9 +99,9 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
     lowpopTraj <- readRDS(here("data", "lowTrajectories", paste("lowpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     medpopTraj <- readRDS(here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     highpopTraj <- readRDS(here("data", "highTrajectories", paste("highpopTraj", "-", i, "-", j, ".RDS", sep = "")))
-    for (d in 1:dim(scenarios)[1]) { # loop over model scenario  #####
+    for (d in 1:dim(data_scenarios)[1]) { # loop over model scenario  #####
       # translate detection levels into numbes
-      det.levels <- scenarios[d, 1:4]
+      det.levels <- data_scenarios[d, 1:3]
       det.numeric <- det.levels[1:3]
       det.numeric[which(det.numeric == "L")] <- detect.l
       det.numeric[which(det.numeric == "M")] <- detect.m
@@ -240,7 +261,12 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
                                 productivity = T)
           popDat <- lowpopDat
           popTraj <- lowpopTraj
-          comb <- low.lam.combos[i,]
+          
+          # TODO change here
+          # TODO will need to change the loop structure to deal w this
+          #comb <- low.lam.combos[i,]
+          comb <- low.lam.params[i,]
+          
           # run model and save results ####
           lowout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(lowout, here("results", paste("lowout-",i,"-",j,"-",d,".RDS", sep = "")))
@@ -308,7 +334,9 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
                                 productivity = T)
           popDat <- lowpopDat
           popTraj <- lowpopTraj
-          comb <- low.lam.combos[i,]
+          
+          comb <- low.lam.params[i,] # TODO
+          
           # run model and save results ####
           lowout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(lowout, here("results", paste("lowout-",i,"-",j,"-",d,".RDS", sep = "")))
@@ -330,7 +358,9 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
                                 productivity = T)
           popDat <- medpopDat
           popTraj <- medpopTraj
-          comb <- med.lam.combos[i,]
+          
+          comb <- med.lam.params[i,]
+          
           # run model and save results ####
           medout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(medout, here("results", paste("medout-",i,"-",j,"-",d,".RDS", sep = "")))
@@ -352,7 +382,9 @@ foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  ###
                                  productivity = T)
           popDat <- highpopDat
           popTraj <- highpopTraj
-          comb <- high.lam.combos[i,]
+          
+          comb <- high.lam.params[i,]
+          
           # run model and save results ####
           highout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))

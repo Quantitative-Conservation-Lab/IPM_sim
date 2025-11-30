@@ -38,9 +38,9 @@ runIPMmod <- function(nb, ni, nt, nc,
                       comb, detect) {
   #### DATA ####
   dat1 <- list(y = popDat$SUR,
-               marr.a = marray(popDat$ch.a),
-               marr.j=marray(popDat$ch.j), 
-               R.j=rowSums(marray(popDat$ch.j)), 
+               marr.a = marray(popDat$ch.a), 
+               marr.j=marray(popDat$ch.j), # TODO note hardcode
+               R.j=rowSums(marray(popDat$ch.j)), # TODO could try making same as adults for testig
                R.a = rowSums(marray(popDat$ch.a)),
                OBS_nestlings = popDat$OBS_nestlings,
                R_obs = popDat$R_obs
@@ -95,7 +95,7 @@ runnonests <- function(nb, ni, nt, nc,
 
   dat1 <- list(y = popDat$SUR,
                marr.a = marray(popDat$ch.a),
-               marr.j=marray(popDat$ch.j), 
+               marr.j=marray(popDat$ch.j[,-16]), # TODO note hardcode
                R.j=rowSums(marray(popDat$ch.j)), 
                R.a = rowSums(marray(popDat$ch.a))
   )

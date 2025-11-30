@@ -54,11 +54,19 @@ sims.per <- 50 # TODO - is this what we decided? didn't we discuss either less
 # and save the trajectories in data files
 cores=detectCores()
 cl <- makeCluster(cores[1]-2, setup_strategy = "sequential") 
+
+# TODO remove
+# TESTING 
+sims.per <- 3
+cl <- makeCluster(3, setup_strategy = "sequential")
+# TESTING
+
 registerDoParallel(cl)
 foreach(i = 1:scenarios.picked) %dopar% { #scenarios picked
   library(here)
   for (j in 1:sims.per) { # sims per
-    lowpopTraj <- simPopTrajectory(n.years=15,
+    
+  lowpopTraj <- simPopTrajectory(n.years=15,
                                    #n.data.types=c(0.25,0.25,0.25),
                                    age.init=c(150,150),
                                    phi.1=low.lam.params$phi1[i],

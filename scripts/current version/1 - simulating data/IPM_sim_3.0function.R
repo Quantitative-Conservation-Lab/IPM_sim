@@ -10,6 +10,8 @@
 # phi.ad = adult survival,
 # f = fecundity
 
+# TODO tidy up a bit
+
 
 simPopTrajectory <- function(n.years, age.init,
                              phi.1, phi.ad, f){
@@ -204,23 +206,19 @@ simData <- function(indfates, n.years,
 
   ###################Create Mark-Resight data  ###################
   
-  # TODO
-  # should update the comments thru here
-  
   #Marking adults and 1 year olds, which will have the same
   #for adults and 1yr olds only
 
   #for adults, 1 year olds and chicks
   if(!is.na(p.1) & !is.na(p.ad)) {
-    # TODO 
-      # hannah, had to uncomment this to make the function work
-      # is this correct??
     
     # #if(ADonly==T){
       #using the population array for MR data
       mr_classes.a<-dim(IND_MR)[1] - 3 #since we wont see Dead and the reproduction doesnt matter
       #so we have 2 classes, we care about in marking: 1year olds, and adults
-      ind_mr.a<-IND_MR[c(1,2),1:n.years,]
+      
+      ind_mr.a<-IND_MR[c(1,2),1:n.years,] 
+      
       #ind_mr[1,,]<-NA #if not banding 1yearold/s, then remove
       rm<-numeric(dim(ind_mr.a)[3]) #vector to remove dead individuals
       for(i in 1:dim(ind_mr.a)[3]){
@@ -301,7 +299,6 @@ simData <- function(indfates, n.years,
         lastobs.a[i]<-max(which(ch.a[i,]==1))
       }
       
-      
       #for marking chicks
       tomark.j<-matrix(0,nrow=n.years, ncol=dim(indfates)[3])
       for(t in 1:n.years){
@@ -316,14 +313,15 @@ simData <- function(indfates, n.years,
       #only want those that are new additions
       #those what were new to the pop:
       indsmarked.j<-which((tomark.j==1), arr.ind=T)[,2]
+      
       age.j<-first.j<-last.j<-numeric()
-      mr_t.j<-dim(indfates)[2]
+      mr_t.j<-dim(indfates)[2] - 1 # Note change to prevent dimension mismatch
       mr_ind.j<-length(indsmarked.j)
       for(i in 1:mr_ind.j){
         g <- which(!is.na(indfates[1:3,,indsmarked.j[i]]), arr.ind = TRUE)
         age.j[i] <- g[1,1] #at marking (1=1year olds, 2=adults, 3= chicks)
         first.j[i] <- g[1,2]
-        h <- which(indfates[1:3,,indsmarked.j[i]]==1, arr.ind = TRUE)
+        h <- which(indfates[1:3,1:n.years,indsmarked.j[i]]==1, arr.ind = TRUE) 
         last.j[i] <- max(h[,2])
       }
       ch.true.j<-matrix(0,ncol=mr_t.j, nrow=mr_ind.j)
