@@ -157,10 +157,22 @@ write.csv(row.low, file = "lowout.csv")
 
 #rm(list = ls())
 
+# TODO
+  # count number that converged 
+nlow <- length(ls(patt="lowout"))
+nmed <- length(ls(patt="medout"))
+nhigh <- length(ls(patt="highout"))
+
 # TODO 
+  # should i run at 1.2 just for a start
   # take converged ones
   # make smaller
   # bundle
   # upload?? 
 
+# going to need some help diagnosing what is wrong
 
+# MISSING ONES
+# med 2 44 5 
+
+# should 
