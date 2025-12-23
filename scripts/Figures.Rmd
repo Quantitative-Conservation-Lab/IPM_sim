@@ -36,32 +36,35 @@ row.high <- read.csv(file = here::here('results', 'highout.csv'))
 low <- row.low %>%
   dplyr::rename(phi1 = `mean.phi[1]`, phiad = `mean.phi[2]`)
 
-low.params <- readRDS(file = here::here('data', 'low.lam.params.rds')) %>%
-  transform(scenario = 1:25)
+# low.params <- readRDS(file = here::here('data', 'low.lam.params.rds')) %>%
+#   transform(scenario = 1:25)
 
 med <- row.med %>%
   dplyr::rename(phi1 = `mean.phi[1]`, phiad = `mean.phi[2]`)
 
-med.params <- readRDS(file = here::here('data', 'med.lam.params.rds')) %>%
-  transform(scenario = 1:25)
+# med.params <- readRDS(file = here::here('data', 'med.lam.params.rds')) %>%
+#   transform(scenario = 1:25)
 
 high <- row.high %>%
   dplyr::rename(phi1 = `mean.phi[1]`, phiad = `mean.phi[2]`)
 
-high.params <- readRDS(file = here::here('data', 'high.lam.params.rds')) %>%
-  transform(scenario = 1:25)
+# high.params <- readRDS(file = here::here('data', 'high.lam.params.rds')) %>%
+#   transform(scenario = 1:25)
 
 #combine to get true values integrated in results
 low.dat <- low %>%
-  inner_join(low.params, by = 'scenario', suffix = c('.obs', '.true')) %>%
+  inner_join(low.lam.params %>% mutate(scenario = row_number()), 
+             by = 'scenario', suffix = c('.obs', '.true')) %>%
   transform(lambda.scenario = 'Decreasing')
 
 med.dat <- med %>%
-  inner_join(med.params, by = 'scenario', suffix = c('.obs', '.true')) %>%
+  inner_join(med.lam.params %>% mutate(scenario = row_number()), 
+             by = 'scenario', suffix = c('.obs', '.true')) %>%
   transform(lambda.scenario = 'Stable')
 
 high.dat <- high %>%
-  inner_join(high.params, by = 'scenario', suffix = c('.obs', '.true')) %>%
+  inner_join(high.lam.params %>% mutate(scenario = row_number()),
+             by = 'scenario', suffix = c('.obs', '.true')) %>%
   transform(lambda.scenario = 'Increasing')
 
 all.dat <- bind_rows(low.dat, med.dat, high.dat)
@@ -74,11 +77,13 @@ all.dat <- bind_rows(low.dat, med.dat, high.dat)
 #get posterior medians
 all.meds <- all.dat %>%
   dplyr::select('phi1.obs', 'phi1.true', 'phiad.obs', 'phiad.true', 'fec.obs', 'fec.true',
+                "p.surv", "mean.p",
                             'sims', 'scenario', 'simscenarios', 'lambda.scenario') %>%
   reshape2::melt(id.vars = c('lambda.scenario', 'sims', 'scenario', 'simscenarios')) %>%
   group_by(lambda.scenario, scenario, simscenarios, variable) %>%
-  summarize(median = median(value), .groups = 'keep') %>%
+  dplyr::summarize(median = median(value), .groups = 'keep') %>%
   reshape2::dcast(lambda.scenario + scenario + simscenarios ~ variable, value.var = 'median') 
+# NOTE stopping here for now - returning to manuscript figs
 
 #just bias
 rel.bias <- all.meds %>%
@@ -192,12 +197,13 @@ all.meds.sc <- all.dat %>%
                             'sims', 'scenario', 'simscenarios', 'lambda.scenario') %>%
   reshape2::melt(id.vars = c('sims', 'scenario', 'simscenarios', 'lambda.scenario')) %>%
   group_by(lambda.scenario, scenario, simscenarios, variable) %>%
-  summarize(median = median(value)) %>%
+  dplyr::summarize(median = median(value)) %>%
   reshape2::dcast(lambda.scenario + scenario + simscenarios ~ variable, value.var = 'median') %>%
   #calculate relative bias
   transform(phi1.bias = (phi1.obs-phi1.true)/phi1.true,
             phiad.bias = (phiad.obs-phiad.true)/phiad.true,
             fec.bias = (fec.obs-fec.true)/fec.true)
+# FROM HERE - back to manuscript figs
 
 #just bias; same as above, keep 'scenario'
 rel.bias.sc <- all.meds.sc %>%
