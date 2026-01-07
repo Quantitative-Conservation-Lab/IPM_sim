@@ -317,27 +317,29 @@ plot.vals <- rel.bias.dem %>%
 
 # TODO - repeat changes above here. LATER
 
-rmse.vals <- all.meds %>%
+rmse.vals <- all.stats %>%
   inner_join(data_scenarios %>% mutate(simscenarios = row_number()), 
              by = "simscenarios") %>% 
-  transform(p.surv.true = ifelse(det.abund == 'L', 0.3, 
-                                 ifelse(det.abund == 'M', 0.5, 
-                                        ifelse(det.abund == 'H', 0.8, NA)))) %>%
-  transform(mean.p.true = ifelse(det.MR == 'L', 0.3, 
-                                 ifelse(det.MR == 'M', 0.5, 
-                                        ifelse(det.MR == 'H', 0.8, NA)))) %>%
-  transform(fec.rmse = (fec.obs-fec.true)^2,
-            phiad.rmse = (phiad.obs-phiad.true)^2,
-            phi1.rmse = (phi1.obs-phi1.true)^2,
-            mean.p.rmse = (mean.p-mean.p.true)^2,
-            p.surv.rmse = (p.surv-p.surv.true)^2) %>%
-  dplyr::select(lambda.scenario, scenario, fec.rmse, phiad.rmse, phi1.rmse, p.surv.rmse, mean.p.rmse,
+  # transform(p.surv.true = ifelse(det.abund == 'L', 0.3, 
+  #                                ifelse(det.abund == 'M', 0.5, 
+  #                                       ifelse(det.abund == 'H', 0.8, NA)))) %>%
+  # transform(mean.p.true = ifelse(det.MR == 'L', 0.3, 
+  #                                ifelse(det.MR == 'M', 0.5, 
+  #                                       ifelse(det.MR == 'H', 0.8, NA)))) %>%
+  # transform(fec.rmse = (fec.obs-fec.true)^2,
+  #           phiad.rmse = (phiad.obs-phiad.true)^2,
+  #           phi1.rmse = (phi1.obs-phi1.true)^2,
+  #           mean.p.rmse = (mean.p-mean.p.true)^2,
+  #           p.surv.rmse = (p.surv-p.surv.true)^2) %>%
+  dplyr::select(lambda.scenario, scenario, simscenarios, 
+                param, rmse_mean,
                 det.MR, det.abund, det.prod) %>%
-  reshape2::melt(id.vars = c('lambda.scenario', 'scenario', 'det.MR', 'det.abund', 'det.prod')) %>%
-  group_by(lambda.scenario, det.MR, det.abund, det.prod, variable) %>%
-  dplyr::summarize(mean.rmse = sqrt(mean(value)), .groups = 'keep') %>% # TODO - added sqrt, check
-  transform(variable = factor(variable, levels = c('phiad.rmse', 'phi1.rmse', 'fec.rmse', 
-                                                   'p.surv.rmse', 'mean.p.rmse'),
+  reshape2::melt(id.vars = c('lambda.scenario', 'scenario', 'simscenarios', 'param', 'det.MR', 'det.abund', 'det.prod')) %>%
+  group_by(lambda.scenario, det.MR, det.abund, det.prod, param) %>%
+  dplyr::summarize(mean.rmse = mean(value), .groups = 'keep') %>% # TODO - added sqrt, check
+  rename(variable = param) %>% 
+  transform(variable = factor(variable, levels = c('phiad', 'phi1', 'fec', 
+                                                   'psurv', 'meanp'),
                               labels = c('Adult survival', 'First-year survival', 'Fecundity',
                                          'Count survey detection', 'MR detection'))) %>%
   transform(lambda.scenario = factor(lambda.scenario,
@@ -365,19 +367,22 @@ rmse.few <- rmse.vals %>%
 #                            labels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only')))
 
 ########data-generating values
-rmse.vals.sc <- all.meds %>%
+rmse.vals.sc <- all.stats %>%
   inner_join(data_scenarios %>% mutate(simscenarios = row_number()), 
              by = "simscenarios") %>% 
-  transform(fec.rmse = (fec.obs-fec.true)^2,
-            phiad.rmse = (phiad.obs-phiad.true)^2,
-            phi1.rmse = (phi1.obs-phi1.true)^2) %>%
-  dplyr::select(lambda.scenario, scenario, fec.rmse, phiad.rmse, phi1.rmse, 
+  filter(param %nin% c("meanp", "psurv")) %>% 
+  # transform(fec.rmse = (fec.obs-fec.true)^2,
+  #           phiad.rmse = (phiad.obs-phiad.true)^2,
+  #           phi1.rmse = (phi1.obs-phi1.true)^2) %>%
+  dplyr::select(lambda.scenario, scenario, simscenarios, 
+                param, rmse_mean, 
                 det.MR, det.abund, det.prod) %>%
-  reshape2::melt(id.vars = c('lambda.scenario', 'scenario', 'det.MR', 'det.abund', 'det.prod')) %>%
-  group_by(lambda.scenario, scenario, det.MR, det.abund, det.prod, variable) %>%
-  dplyr::summarize(mean.rmse = sqrt(mean(value)), .groups = 'keep') %>% # TODO changed here, check
+  #reshape2::melt(id.vars = c('lambda.scenario', 'scenario', 'det.MR', 'det.abund', 'det.prod')) %>%
+  rename(variable = param) %>% 
+  #group_by(lambda.scenario, scenario, simscenarios, det.MR, det.abund, det.prod, variable) %>%
+  #dplyr::summarize(mean.rmse = mean(value), .groups = 'keep') %>% # TODO changed here, check
   #dplyr::summarize(cv = sd(value)/value, .groups = 'keep') %>% # CV version
-  transform(variable = factor(variable, levels = c('phiad.rmse', 'phi1.rmse', 'fec.rmse'),
+  transform(variable = factor(variable, levels = c('phiad', 'phi1', 'fec'),
                               labels = c('Adult survival', 'First-year survival', 'Fecundity'))) %>%
   transform(lambda.scenario = factor(lambda.scenario,
                                      levels = c("Decreasing", "Stable", "Increasing"))) %>%
@@ -389,7 +394,8 @@ rmse.vals.sc <- all.meds %>%
   transform(num.miss = missing.MR + missing.prod) %>%
   transform(dataset = ifelse(is.na(det.MR)&!is.na(det.prod), 'Abundance & Productivity', 
                              ifelse(!is.na(det.MR)&is.na(det.prod), 'Abundance & Survival',
-                                    ifelse(is.na(det.MR)&is.na(det.prod), 'Abundance Only', 'Full IPM'))))
+                                    ifelse(is.na(det.MR)&is.na(det.prod), 'Abundance Only', 'Full IPM')))) %>% 
+  rename("value" = "rmse_mean")
 
 rmse.dem <- rmse.vals.sc %>%
   inner_join(scenarios %>% 
@@ -431,7 +437,7 @@ rmse.dem <- rmse.vals.sc %>%
 #facet by both fec and juv true vals
 plot.vals.rmse <- rmse.dem %>%
   group_by(variable, life_hist, lambda.scenario, dataset) %>% # TODO changed here
-  dplyr::summarize(value = mean(mean.rmse), .groups = 'keep')
+  dplyr::summarize(value = mean(value), .groups = 'keep')
 
 # TODO - add a section for precision (CV?)
 
@@ -626,7 +632,7 @@ a2
 ## combine
 plot_grid(a1, a2, ncol = 2, rel_widths = c(0.55, 0.45), labels = "AUTO",
           align = "hv", label_size = 12)
-ggsave(width = 6.5, height = 6, here("figures", "fig3.png"))
+ggsave(width = 6.5, height = 6, here("figures", "fig3_NEW.png"))
 
 
 #### Figure 4: RMSE and bias ecological parameters x true fecundity ####
@@ -683,7 +689,7 @@ b2 <- ggplot(plot.vals.rmse, aes(x = life_hist, y = factor(variable), fill = val
              ) + #label_wrap_gen()) +
   #scale_fill_gradient2(name = "RMSE", mid = "white", high = rainbow2[2], midpoint = 0) +
   scale_fill_gradient2(name = "RMSE", low = "white", mid = rainbow2[3], high = rainbow2[2],
-                       midpoint = 0.625, limits = c(0, 1.25), breaks = c(0, 0.5, 1, 1.5)) +
+                       midpoint = 1, limits = c(0, 2), breaks = c(0, 0.5, 1, 1.5, 2)) +
   theme_light() +
   scale_y_discrete(labels = c(expression(φ["2"]), expression(φ["1"]), expression(f))) +
   #scale_x_discrete(labels = c("L", "M", "H")) +
@@ -705,7 +711,7 @@ b2
 
 ## combine
 plot_grid(b1, b2, ncol = 2, labels = "AUTO", align = "hv", label_size = 12)
-ggsave(width = 6.5, height = 6, here("figures", "fig4.png"))
+ggsave(width = 6.5, height = 6, here("figures", "fig4_NEW.png"))
 
 
 #### Figure 5: Lambda trends ####
@@ -751,7 +757,7 @@ d1 <- ggplot(rel.bias.few  %>% filter(variable %in% obs.pars),
   geom_hline(aes(yintercept = 0), linetype = 'dotted') +
   xlab('Count survey detection') + ylab('Relative bias') +
   facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
-  ylim(c(-0.5, 0.5)) +
+  ylim(c(-0.3, 0.3)) +
   theme_bw() +
   theme(legend.position = 'top',
         plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
@@ -789,4 +795,6 @@ d2
 
 ## combine
 plot_grid(d1, d2, ncol = 2, labels = "AUTO", align = "h", label_size = 16)
-ggsave(width = 15, height = 8, here("figures", "fig6.png"))
+ggsave(width = 15, height = 8, here("figures", "fig6_NEW.png"))
+
+# TODO - the widths are not working on the figures
