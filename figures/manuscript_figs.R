@@ -572,16 +572,53 @@ plot.vals.cv <- cv.dem %>%
 # TODO - repeat changes above down here
 # TODO - actually this one needs more attention, and also to have computed geom means first
 
-row.low <- read_csv(here("results", "row_low.csv"))
-row.med <- read_csv(here("results", "row_med.csv"))
-row.high <- read_csv(here("results", "row_high.csv"))
+# row.low <- read_csv(here("results", "row_low.csv"))
+# row.med <- read_csv(here("results", "row_med.csv"))
+# row.high <- read_csv(here("results", "row_high.csv"))
+row.low <- read_csv(file = "C:/Users/AbbyBratt/Desktop/IPM SIM results/row_low.csv") %>% 
+  transform(lambda.scenario = 'Decreasing')
+row.med <- read_csv(file = "C:/Users/AbbyBratt/Desktop/IPM SIM results/row_med.csv") %>%
+  transform(lambda.scenario = 'Stable')
+row.high <- read_csv(file = "C:/Users/AbbyBratt/Desktop/IPM SIM results/row_high.csv") %>% 
+  transform(lambda.scenario = 'Increasing')
 
-scenario_ID <- read_csv(here("data", "scenario_ID.csv")) %>% 
-  select(-c(n.viable.combinations, priority))
+# scenario_ID <- read_csv(here("data", "scenario_ID.csv")) %>% 
+#   select(-c(n.viable.combinations, priority))
+# TODO - adjust as in previous file
+scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>% 
+  separate_wider_delim(cols = scenario, delim = ",", 
+                       names = c("life_hist", "trend")) %>% 
+  rename(
+    "phi1" = "S.J", 
+    "phiad" = "S.A",
+    "fec" = "f"
+  )
+
+# low.params <- readRDS(file = here::here('data', 'low.lam.params.rds')) %>%
+#   transform(scenario = 1:25)
+# 
+# med.params <- readRDS(file = here::here('data', 'med.lam.params.rds')) %>%
+#   transform(scenario = 1:25)
+# 
+# high.params <- readRDS(file = here::here('data', 'high.lam.params.rds')) %>%
+#   transform(scenario = 1:25)
+
+low.lam.params <- scenarios %>% 
+  filter(trend == "decline")
+med.lam.params <- scenarios %>% 
+  filter(trend == "stable")
+high.lam.params <- scenarios %>% 
+  filter(trend == "increase")
+
+det.abund <- factor(x = c("L", "M", "H"))
+det.MR <- factor(x = c("L", "M", "H", "NA"))
+det.prod <- factor(x = c("L", "M", "H", "NA"))
+lambda <- factor(x = c("L", "M", "H"))
+data_scenarios <- readRDS(here("data", "data_scenarios.RDS"))
 
 # Reformat for plotting
 toplot1 <- row.low %>%
-  select(contains("geomean"), scenario, sims, simscenarios, Quantile) %>%
+  select(contains("geomean"), scenario, sims, simscenarios, Quantile, lambda.scenario) %>%
   #group_by(model, detection)
   pivot_longer(cols = starts_with("geomean"), names_to = "Year") %>%
   filter(!is.na(value)) %>%
@@ -592,7 +629,20 @@ toplot1 <- row.low %>%
   #           med = quantile(value, 0.5),
   #           high = quantile(value, 0.975)) %>%
   ungroup() %>%
-  left_join(scenario_ID, by = "simscenarios") %>% 
+  inner_join(data_scenarios %>% mutate(simscenarios = row_number()),
+             by = "simscenarios") %>%
+  inner_join(scenarios %>% 
+               arrange(trend) %>% 
+               mutate(scenario = c(1:3, 1:3, 1:3), #janky but try for now 
+                      lambda.scenario = case_when(
+                        trend == "increase" ~ "Increasing",
+                        trend == "decline" ~ "Decreasing",
+                        TRUE ~ "Stable"
+                      )) %>% 
+               rename(phi1.true = phi1, 
+                      phiad.true = phiad, 
+                      fec.true = fec), 
+             by = c("lambda.scenario", "scenario")) %>% 
   mutate(scenario = as.factor(scenario),
          sims = as.factor(sims), 
          simscenarios = as.factor(simscenarios))
@@ -600,7 +650,7 @@ toplot1 <- row.low %>%
 # use reshape cast to spread the quantiles out into lower middle upper for line plot
 
 toplot2 <- row.med %>%
-  select(contains("geomean"), scenario, sims, simscenarios, Quantile) %>%
+  select(contains("geomean"), scenario, sims, simscenarios, Quantile, lambda.scenario) %>%
   #group_by(model, detection)
   pivot_longer(cols = starts_with("geomean"), names_to = "Year") %>%
   filter(!is.na(value)) %>%
@@ -611,13 +661,26 @@ toplot2 <- row.med %>%
   #           med = quantile(value, 0.5),
   #           high = quantile(value, 0.975)) %>%
   ungroup() %>%
-  left_join(scenario_ID, by = "simscenarios") %>% 
+  inner_join(data_scenarios %>% mutate(simscenarios = row_number()),
+             by = "simscenarios") %>%
+  inner_join(scenarios %>% 
+               arrange(trend) %>% 
+               mutate(scenario = c(1:3, 1:3, 1:3), #janky but try for now 
+                      lambda.scenario = case_when(
+                        trend == "increase" ~ "Increasing",
+                        trend == "decline" ~ "Decreasing",
+                        TRUE ~ "Stable"
+                      )) %>% 
+               rename(phi1.true = phi1, 
+                      phiad.true = phiad, 
+                      fec.true = fec), 
+             by = c("lambda.scenario", "scenario")) %>% 
   mutate(scenario = as.factor(scenario),
          sims = as.factor(sims), 
          simscenarios = as.factor(simscenarios))
 
 toplot3 <- row.high %>%
-  select(contains("geomean"), scenario, sims, simscenarios, Quantile) %>%
+  select(contains("geomean"), scenario, sims, simscenarios, Quantile, lambda.scenario) %>%
   #group_by(model, detection)
   pivot_longer(cols = starts_with("geomean"), names_to = "Year") %>%
   filter(!is.na(value)) %>%
@@ -628,41 +691,96 @@ toplot3 <- row.high %>%
   #           med = quantile(value, 0.5),
   #           high = quantile(value, 0.975)) %>%
   ungroup() %>%
-  left_join(scenario_ID, by = "simscenarios") %>% 
+  inner_join(data_scenarios %>% mutate(simscenarios = row_number()),
+             by = "simscenarios") %>%
+  inner_join(scenarios %>% 
+               arrange(trend) %>% 
+               mutate(scenario = c(1:3, 1:3, 1:3), #janky but try for now 
+                      lambda.scenario = case_when(
+                        trend == "increase" ~ "Increasing",
+                        trend == "decline" ~ "Decreasing",
+                        TRUE ~ "Stable"
+                      )) %>% 
+               rename(phi1.true = phi1, 
+                      phiad.true = phiad, 
+                      fec.true = fec), 
+             by = c("lambda.scenario", "scenario")) %>% 
   mutate(scenario = as.factor(scenario),
          sims = as.factor(sims), 
          simscenarios = as.factor(simscenarios))
 
 toplot <- bind_rows(toplot1, toplot2, toplot3) %>% 
-  select(-simscenarios) %>% 
+  #select(-simscenarios) %>% 
+  mutate(
+    det.MR = na_if(as.character(det.MR), "NA"), 
+    det.prod = na_if(as.character(det.prod), "NA"),
+    det.abund = na_if(as.character(det.abund), "NA"),
+    lambda = factor(lambda)
+  ) %>% 
   transform(dataset = ifelse(is.na(det.MR)&!is.na(det.prod), 'Abundance & Productivity', 
                              ifelse(!is.na(det.MR)&is.na(det.prod), 'Abundance & Survival',
                                     ifelse(is.na(det.MR)&is.na(det.prod), 'Abundance Only', 'Full IPM')))) %>%
-  group_by(Quantile, Year, det.abund, lambda, dataset, det.MR, det.prod) %>% 
+  group_by(Quantile, Year, det.abund, lambda, lambda.scenario, life_hist, dataset, det.MR, det.prod) %>% 
   # took mean over demographic scenario (n = 25) and replicate (n = 50)
   # and mark recapture detection and fecundity
   # AEB - is it ok to take mean of quantiles? review here ######
-dplyr::summarize(value = mean(value), .groups = "keep") %>% 
+dplyr::summarize(value = mean(value), .groups = "drop") %>% 
   ungroup() %>% 
   mutate(Quantile = str_remove(Quantile, "\\%")) %>% 
   mutate(Quantile = paste("X", Quantile, sep = "")) %>% 
-  reshape2::dcast(dataset + Year +  det.MR + det.prod + det.abund   + lambda ~ Quantile, value.var = "value") %>% 
+  reshape2::dcast(dataset + Year +  det.MR + det.prod + det.abund + lambda + lambda.scenario + life_hist ~ Quantile, value.var = "value") %>% 
   mutate(Year = Year + 1) %>% 
   filter(Year %in% c(15)) %>% 
   mutate(Year = factor(Year)) %>% 
   mutate(det.abund = factor(det.abund, levels = c("L", "M", "H"), labels = c("Low", "Medium", "High"))) %>% 
   mutate(det.prod = factor(det.prod, levels = c("L", "M", "H"), labels = c("Low", "Medium", "High"))) %>% 
   mutate(det.MR = factor(det.MR, levels = c("L", "M", "H"), labels = c("Low", "Medium", "High"))) %>% 
-  transform(lambda = factor(lambda, levels = c("L", "M", "H"), 
+  transform(lambda.scenario = factor(lambda,
                             labels = c("Decreasing", "Stable", "Increasing"))) %>%
   transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'),
-                             labels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'))) %>% 
+                             labels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'))) #%>% 
 # transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only'),
 #                            labels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only')))
-  mutate(intercept = case_when(
-    lambda == "Decreasing" ~ 0.95, 
-    lambda == "Stable" ~ 1,
-    lambda == "Increasing" ~ 1.05))
+  # mutate(intercept = case_when(
+  #   lambda == "Decreasing" ~ 0.95, 
+  #   lambda == "Stable" ~ 1,
+  #   lambda == "Increasing" ~ 1.05))
+
+###average over two layers of detection (det.MR and det.prod)
+# and life history type
+toplot.few <- toplot %>%
+  group_by(dataset, Year, det.abund, lambda, lambda.scenario) %>%
+  dplyr::summarize(
+    `X2.5` = mean(`X2.5`), 
+    `X50` = mean(`X50`),
+    `X97.5` = mean(`X97.5`),
+    .groups = 'drop') %>%
+  #transform(det.abund = factor(det.abund, levels = c('L', 'M', 'H'), labels = c('Low', 'Medium', 'High'))) %>%
+  transform(lambda.scenario = factor(lambda.scenario,
+                                     levels = c("Decreasing", "Stable", "Increasing"))) %>%
+  transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'),
+                             labels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only')))
+# transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only'),
+# 
+
+###average over all layers of detection
+# NOT life history type
+toplot.lh <- toplot %>%
+  group_by(dataset, Year, life_hist, lambda, lambda.scenario) %>%
+  dplyr::summarize(
+    `X2.5` = mean(`X2.5`), 
+    `X50` = mean(`X50`),
+    `X97.5` = mean(`X97.5`),
+    .groups = 'drop') %>%
+  #transform(det.abund = factor(det.abund, levels = c('L', 'M', 'H'), labels = c('Low', 'Medium', 'High'))) %>%
+  transform(lambda.scenario = factor(lambda.scenario,
+                                     levels = c("Decreasing", "Stable", "Increasing"))) %>%
+  transform(life_hist = factor(life_hist, levels = c("slow", "mod", "fast"), 
+                               labels = c("Slow", "Moderate", "Fast"))) %>%
+  transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'),
+                             labels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only')))
+# transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only'),
+# 
 
 ######################################################
 ################### Figures ##########################
@@ -906,15 +1024,17 @@ ggsave(width = 6.5, height = 18, here("figures", "fig4_NEW.png"))
 
 # TODO edit
 
-c1 <- ggplot(toplot) +
+c1 <- ggplot(toplot.few) +
   geom_point(aes(x = Year, y = X50, col = det.abund, group = det.abund, shape = det.abund), position = position_dodge(width = 0.5)) +
   geom_linerange(aes(x = Year, ymin = X2.5, ymax = X97.5, col = det.abund, group = det.abund,
                      shape = det.abund), position = position_dodge(width = 0.5)) +
-  geom_hline(aes(yintercept = intercept), linetype = 'dotted') +
+  geom_hline(aes(yintercept = as.numeric(as.character(lambda))), linetype = 'dotted') +
   geom_hline(aes(yintercept = 1.0), linetype = 'solid') +
-  xlab('Final year (t=15)') + #renamed the axis
+  xlab('Final year (t=15)') + #renamed the axis - TODO is this correct
+  # oh right, yes, because we should have stopped the model after each year 
+  # (to 'hide' the full time series from being used to estimate trend)
   ylab(expression(lambda)) + 
-  facet_grid(dataset ~ lambda, scales = 'free', labeller = label_wrap_gen()) +
+  facet_grid(dataset ~ lambda.scenario, scales = 'free', labeller = label_wrap_gen()) +
   theme_bw() +
   theme(legend.position = 'top',
         plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
@@ -929,7 +1049,37 @@ c1 <- ggplot(toplot) +
   scale_shape_manual(values = c(15, 16, 17), name = 'Count survey detection level')
 c1
 
-ggsave(width = 6, height = 8, here("figures", "fig5.png"))
+# TODO
+  # do it with respect to life history type??
+c2 <- ggplot(toplot.lh) +
+  geom_point(aes(x = Year, y = X50, col = life_hist, group = life_hist, shape = life_hist), position = position_dodge(width = 0.5)) +
+  geom_linerange(aes(x = Year, ymin = X2.5, ymax = X97.5, col = life_hist, group = life_hist,
+                     shape = life_hist), position = position_dodge(width = 0.5)) +
+  geom_hline(aes(yintercept = as.numeric(as.character(lambda))), linetype = 'dotted') +
+  geom_hline(aes(yintercept = 1.0), linetype = 'solid') +
+  xlab('Final year (t=15)') + #renamed the axis - TODO is this correct
+  # oh right, yes, because we should have stopped the model after each year 
+  # (to 'hide' the full time series from being used to estimate trend)
+  ylab(expression(lambda)) + 
+  facet_grid(dataset ~ lambda.scenario, scales = 'free', labeller = label_wrap_gen()) +
+  theme_bw() +
+  theme(legend.position = 'top',
+        plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
+        strip.text = element_text(color = "black"),
+        strip.background = element_rect(fill = NA, color = "black"),
+        #HAS: removed axis labels
+        axis.text.x = element_blank(),#element_text(angle = 0, vjust = 1.5),
+        axis.ticks.x=element_blank(),
+        panel.border = element_rect(color = "black", fill = NA),  
+        panel.spacing.x = unit(0.75, "line")) +
+  scale_color_manual(values = rainbow2[-c(1,4)], name = 'Life History Type') +
+  scale_shape_manual(values = c(15, 16, 17), name = 'Life History Type')
+c2
+
+plot_grid(c1, c2, ncol = 2, labels = "AUTO", align = "hv", label_size = 12)
+ggsave(width = 15, height = 6, here("figures", "fig5_NEW.png"))
+
+# don't think this one is that interesting
 
 ######################################################
 ################### Appendix #########################

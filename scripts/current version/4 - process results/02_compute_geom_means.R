@@ -9,11 +9,13 @@ library(purrr)
 library(beepr)
 
 # TODO needs checked
+# set working directory
+setwd("C:/Users/AbbyBratt/Desktop/IPM SIM results/")
 
 # load data ####
-highout <- read_csv(here("results", "highout.csv"))
-medout <- read_csv(here("results", "medout.csv"))
-lowout <- read_csv(here("results", "lowout.csv"))
+highout <- read_csv("highout.csv")
+medout <- read_csv("medout.csv")
+lowout <- read_csv("lowout.csv")
 
 # function to compute quantiles of every variable in dataframe ####
 p <- c(0.025, 0.5, 0.975)
@@ -125,6 +127,6 @@ for(i in 1:dim(row.high)[1]) {
 }
 
 # save objects
-write_csv(row.low, here("results", "row_low.csv"))
-write_csv(row.med, here("results", "row_med.csv"))
-write_csv(row.high, here("results", "row_high.csv"))
+write_csv(row.low, "row_low.csv")
+write_csv(row.med, "row_med.csv")
+write_csv(row.high, "row_high.csv")
