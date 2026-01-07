@@ -20,6 +20,8 @@ library(Hmisc)
 library(patchwork)
 library(tidybayes)
 
+# TODO ab to tidy comments
+
 rainbow2 <- c("violetred4", "dodgerblue3", 'deepskyblue1', "#4aaaa5", "#a3d39c", "#f6b61c", "chocolate2", "red3")
 
 #scenarios <- read.csv(file = here::here('data', 'scenario_ID.csv'), header = T, stringsAsFactors = F)
@@ -49,11 +51,67 @@ med.lam.params <- scenarios %>%
 high.lam.params <- scenarios %>% 
   filter(trend == "increase")
 
+# TODO change file path for user
+# NOTE - this is slow, files are large
+row.low <- read.csv(file = "C:/Users/AbbyBratt/Desktop/IPM SIM results/lowout.csv")
+row.med <- read.csv(file = "C:/Users/AbbyBratt/Desktop/IPM SIM results/medout.csv")
+row.high <- read.csv(file = "C:/Users/AbbyBratt/Desktop/IPM SIM results/highout.csv")
+
 # TODO where does this get made
+#combine to get true values integrated in results
+low.dat <- row.low %>%
+  dplyr::rename(phi1 = `mean.phi.1.`, phiad = `mean.phi.2.`) %>% 
+  inner_join(low.lam.params %>% mutate(scenario = row_number()), 
+             by = 'scenario', suffix = c('.obs', '.true')) %>%
+  transform(lambda.scenario = 'Decreasing')
+
+med.dat <- row.med %>%
+  dplyr::rename(phi1 = `mean.phi.1.`, phiad = `mean.phi.2.`) %>% 
+  inner_join(med.lam.params %>% mutate(scenario = row_number()), 
+             by = 'scenario', suffix = c('.obs', '.true')) %>%
+  transform(lambda.scenario = 'Stable')
+
+high.dat <- row.high %>%
+  dplyr::rename(phi1 = `mean.phi.1.`, phiad = `mean.phi.2.`) %>% 
+  inner_join(high.lam.params %>% mutate(scenario = row_number()),
+             by = 'scenario', suffix = c('.obs', '.true')) %>%
+  transform(lambda.scenario = 'Increasing')
+
+all.dat <- bind_rows(low.dat, med.dat, high.dat)
+
+all.meds <- all.dat %>%
+  dplyr::select('phi1.obs', 'phi1.true', 'phiad.obs', 'phiad.true', 'fec.obs', 'fec.true',
+                "p.surv", "mean.p",
+                'sims', 'scenario', 'simscenarios', 'lambda.scenario') %>%
+  reshape2::melt(id.vars = c('lambda.scenario', 'sims', 'scenario', 'simscenarios')) %>%
+  group_by(lambda.scenario, scenario, simscenarios, variable) %>%
+  dplyr::summarize(median = median(value), .groups = 'keep') %>%
+  reshape2::dcast(lambda.scenario + scenario + simscenarios ~ variable, value.var = 'median') 
+# NOTE stopping here for now - returning to manuscript figs
+
 # first chunk in figures.Rmd - move over here
 
 # all.meds <- read.csv(file = here::here('figures', 'Processed csvs', 'all.meds.csv'), 
 #                      header = T, stringsAsFactors = F)
+
+all.sds <- all.dat %>%
+  dplyr::select('phi1.obs', 'phiad.obs', 'fec.obs',
+                "p.surv", "mean.p",
+                'sims', 'scenario', 'simscenarios', 'lambda.scenario') %>%
+  reshape2::melt(id.vars = c('lambda.scenario', 'sims', 'scenario', 'simscenarios')) %>%
+  group_by(lambda.scenario, scenario, simscenarios, sims, variable) %>%
+  dplyr::summarize(sd = sd(value), .groups = 'keep') %>%
+  reshape2::dcast(lambda.scenario + scenario + simscenarios ~ variable, value.var = 'sd') %>% 
+  rename("phi1.sd" = "phi1.obs", "phiad.sd" = "phiad.obs", "fec.sd" = "fec.obs", 
+         "p.surv.sd" = "p.surv", "mean.p.sd" = "mean.p") %>% 
+  left_join(all.meds) %>% 
+  mutate(
+    `phi1.cv` = `phi1.sd`/`phi1.obs`, 
+    `phiad.cv` = `phiad.sd`/`phiad.obs`,
+    `fec.cv` = `fec.sd`/`fec.obs`,
+    `p.surv.cv` = `p.surv.sd`/`p.surv`,
+    `mean.p.cv` = `mean.p.sd`/`mean.p`
+  )
 
 ######################################################
 ##################### Bias ###########################
@@ -116,6 +174,19 @@ rel.bias.few <- rel.bias %>%
 # TODO - go back to figures.RMD to make this object
 # all.meds.sc <- read.csv(file = here::here('figures', 'Processed csvs', 'all.meds.sc.csv'), 
 #                         header = T, stringsAsFactors = F)
+#get posterior medians; same as above except keep 'scenario' in group_by
+all.meds.sc <- all.dat %>%
+  dplyr::select('phi1.obs', 'phi1.true', 'phiad.obs', 'phiad.true', 'fec.obs', 'fec.true',
+                'sims', 'scenario', 'simscenarios', 'lambda.scenario') %>%
+  reshape2::melt(id.vars = c('sims', 'scenario', 'simscenarios', 'lambda.scenario')) %>%
+  group_by(lambda.scenario, scenario, simscenarios, variable) %>%
+  dplyr::summarize(median = median(value)) %>%
+  reshape2::dcast(lambda.scenario + scenario + simscenarios ~ variable, value.var = 'median') %>%
+  #calculate relative bias
+  transform(phi1.bias = (phi1.obs-phi1.true)/phi1.true,
+            phiad.bias = (phiad.obs-phiad.true)/phiad.true,
+            fec.bias = (fec.obs-fec.true)/fec.true)
+# FROM HERE - back to manuscript figs
 
 ## just bias; same as above, keep 'scenario'
 #rel.bias.sc <- all_meds_sc %>%
@@ -142,12 +213,12 @@ rel.bias.sc <- all.meds.sc %>%
 
 # TODO - AEB doesnt think we need this section here because we have fewer scenario ####
 #load saved true values
-true_vals <- read.csv(file = here::here('data', 'true.vals.csv'), header = T, stringsAsFactors = F)
-
-#for categories: 
-fec_lims <- quantile(true_vals$fec.true, probs = c(0.33, 0.7), names = F)
-phiad_lims <- quantile(true_vals$phiad.true, probs = c(0.33, 0.7), names = F)
-phi1_lims <- quantile(true_vals$phi1.true, probs = c(0.33, 0.7), names = F)
+# true_vals <- read.csv(file = here::here('data', 'true.vals.csv'), header = T, stringsAsFactors = F)
+# 
+# #for categories: 
+# fec_lims <- quantile(true_vals$fec.true, probs = c(0.33, 0.7), names = F)
+# phiad_lims <- quantile(true_vals$phiad.true, probs = c(0.33, 0.7), names = F)
+# phi1_lims <- quantile(true_vals$phi1.true, probs = c(0.33, 0.7), names = F)
 #### ----
 
 #merge back onto bias df so can have something to name/view the 'scenarios' 
@@ -201,6 +272,8 @@ plot.vals <- rel.bias.dem %>%
 # TODO - repeat changes above here. LATER
 
 rmse.vals <- all.meds %>%
+  inner_join(data_scenarios %>% mutate(simscenarios = row_number()), 
+             by = "simscenarios") %>% 
   transform(p.surv.true = ifelse(det.abund == 'L', 0.3, 
                                  ifelse(det.abund == 'M', 0.5, 
                                         ifelse(det.abund == 'H', 0.8, NA)))) %>%
@@ -216,7 +289,7 @@ rmse.vals <- all.meds %>%
                 det.MR, det.abund, det.prod) %>%
   reshape2::melt(id.vars = c('lambda.scenario', 'scenario', 'det.MR', 'det.abund', 'det.prod')) %>%
   group_by(lambda.scenario, det.MR, det.abund, det.prod, variable) %>%
-  dplyr::summarize(mean.rmse = mean(value), .groups = 'keep') %>%
+  dplyr::summarize(mean.rmse = sqrt(mean(value)), .groups = 'keep') %>% # TODO - added sqrt, check
   transform(variable = factor(variable, levels = c('phiad.rmse', 'phi1.rmse', 'fec.rmse', 
                                                    'p.surv.rmse', 'mean.p.rmse'),
                               labels = c('Adult survival', 'First-year survival', 'Fecundity',
@@ -245,6 +318,8 @@ rmse.few <- rmse.vals %>%
 
 ########data-generating values
 rmse.vals.sc <- all.meds %>%
+  inner_join(data_scenarios %>% mutate(simscenarios = row_number()), 
+             by = "simscenarios") %>% 
   transform(fec.rmse = (fec.obs-fec.true)^2,
             phiad.rmse = (phiad.obs-phiad.true)^2,
             phi1.rmse = (phi1.obs-phi1.true)^2) %>%
@@ -252,7 +327,8 @@ rmse.vals.sc <- all.meds %>%
                 det.MR, det.abund, det.prod) %>%
   reshape2::melt(id.vars = c('lambda.scenario', 'scenario', 'det.MR', 'det.abund', 'det.prod')) %>%
   group_by(lambda.scenario, scenario, det.MR, det.abund, det.prod, variable) %>%
-  dplyr::summarize(mean.rmse = mean(value), .groups = 'keep') %>%
+  dplyr::summarize(mean.rmse = sqrt(mean(value)), .groups = 'keep') %>% # TODO changed here, check
+  #dplyr::summarize(cv = sd(value)/value, .groups = 'keep') %>% # CV version
   transform(variable = factor(variable, levels = c('phiad.rmse', 'phi1.rmse', 'fec.rmse'),
                               labels = c('Adult survival', 'First-year survival', 'Fecundity'))) %>%
   transform(lambda.scenario = factor(lambda.scenario,
@@ -268,27 +344,43 @@ rmse.vals.sc <- all.meds %>%
                                     ifelse(is.na(det.MR)&is.na(det.prod), 'Abundance Only', 'Full IPM'))))
 
 rmse.dem <- rmse.vals.sc %>%
-  merge(true_vals, by = c('lambda.scenario', 'scenario')) %>%
+  inner_join(scenarios %>% 
+               arrange(trend) %>% 
+               mutate(scenario = c(1:3, 1:3, 1:3), #janky but try for now 
+                      lambda.scenario = case_when(
+                        trend == "increase" ~ "Increasing",
+                        trend == "decline" ~ "Decreasing",
+                        TRUE ~ "Stable"
+                      )) %>% 
+               rename(phi1.true = phi1, 
+                      phiad.true = phiad, 
+                      fec.true = fec), 
+             by = c("lambda.scenario", "scenario")) %>% 
+  # merge(true_vals, by = c('lambda.scenario', 'scenario')) %>%
   # transform(variable = factor(variable, levels = c('phiad.rmse', 'phi1.rmse', 'fec.rmse'),
   #                             labels = c('Adult survival', 'Juv survival', 'Fecundity'))) %>% 
+  # transform(lambda.scenario = factor(lambda.scenario, 
+  #                                    levels = c("Decreasing", "Stable", "Increasing"))) %>%
+  # transform(fec_cat = ifelse(fec.true < fec_lims[1], 'L', ifelse(fec.true > fec_lims[2], 'H', 'M')),
+  #           phiad_cat = ifelse(phiad.true < phiad_lims[1], 'L', ifelse(phiad.true > phiad_lims[2], 'H', 'M')),
+  #           phi1_cat = ifelse(phi1.true < phi1_lims[1], 'L', ifelse(phi1.true > phi1_lims[2], 'H', 'M'))) %>%
+  # transform(fec_cat = factor(fec_cat, levels = c('L', 'M', 'H'),  labels = c('Low', 'Medium', 'High')),
+  #           phiad_cat = factor(phiad_cat, levels = c('L', 'M', 'H'), labels = c('Low', 'Medium', 'High')),
+  #           phi1_cat = factor(phi1_cat, levels = c('L', 'M', 'H'),
+  #                             labels = c('True first-year survival: Low', 
+  #                                        'True first-year survival: Medium', 
+  #                                        'True first-year survival: High'))) %>%
   transform(lambda.scenario = factor(lambda.scenario, 
                                      levels = c("Decreasing", "Stable", "Increasing"))) %>%
-  transform(fec_cat = ifelse(fec.true < fec_lims[1], 'L', ifelse(fec.true > fec_lims[2], 'H', 'M')),
-            phiad_cat = ifelse(phiad.true < phiad_lims[1], 'L', ifelse(phiad.true > phiad_lims[2], 'H', 'M')),
-            phi1_cat = ifelse(phi1.true < phi1_lims[1], 'L', ifelse(phi1.true > phi1_lims[2], 'H', 'M'))) %>%
-  transform(fec_cat = factor(fec_cat, levels = c('L', 'M', 'H'),  labels = c('Low', 'Medium', 'High')),
-            phiad_cat = factor(phiad_cat, levels = c('L', 'M', 'H'), labels = c('Low', 'Medium', 'High')),
-            phi1_cat = factor(phi1_cat, levels = c('L', 'M', 'H'),
-                              labels = c('True first-year survival: Low', 
-                                         'True first-year survival: Medium', 
-                                         'True first-year survival: High'))) %>%
+  transform(life_hist = factor(life_hist, levels = c("slow", "mod", "fast"), 
+                               labels = c("Slow", "Moderate", "Fast"))) %>%
   transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only'),
                              labels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only')))
 
 
 #facet by both fec and juv true vals
 plot.vals.rmse <- rmse.dem %>%
-  group_by(variable, fec_cat, phi1_cat, dataset) %>%
+  group_by(variable, life_hist, lambda.scenario, dataset) %>% # TODO changed here
   dplyr::summarize(value = mean(mean.rmse), .groups = 'keep')
 
 # TODO - add a section for precision (CV?)
@@ -457,7 +549,7 @@ a2 <- ggplot(rmse.few %>% filter(variable %nin% obs.pars), aes(x = factor(det.ab
   scale_fill_gradient2(name = "RMSE",
                        #mid = "white", high = rainbow2[2], midpoint = 0) +
                        low = "white", mid = rainbow2[3], high = rainbow2[2],
-                       midpoint = 0.3) +
+                       midpoint = 0.5) + # TODO - note change here 
   theme_light() +
   scale_y_discrete(labels = c(expression(phi["2"]), expression(phi["1"]), expression(f))) +
   scale_x_discrete(labels = c("L", "M", "H")) +
@@ -487,6 +579,8 @@ ggsave(width = 6.5, height = 6, here("figures", "fig3.png"))
 
 #### Figure 4: RMSE and bias ecological parameters x true fecundity ####
 
+# TODO - revise from here
+
 phi1_cat_lab <- c("True first-year\nφ: Low", 
                   "True first-year\nφ: Med",
                   "True first-year\nφ: High")
@@ -496,17 +590,17 @@ names(phi1_cat_lab) <- c("True first-year survival: Low",
                          "True first-year survival: High")
 
 ## bias dot plot
-b1 <- ggplot(plot.vals, aes(x = fec_cat, y = value, col = factor(variable), group = factor(variable),
+b1 <- ggplot(plot.vals, aes(x = life_hist, y = value, col = factor(variable), group = factor(variable),
                             shape = factor(variable))) +
   geom_point() + geom_line() +
   geom_hline(aes(yintercept = 0), linetype = 'dotted') +
-  scale_x_discrete(labels = c("L", "M", "H")) +
-  xlab('True fecundity') + ylab('Relative bias') +
-  facet_grid(dataset~phi1_cat, scales = 'free_x', 
-             labeller = labeller(dataset = dataset.labs, phi1_cat = phi1_cat_lab)) +
+  #scale_x_discrete(labels = c("L", "M", "H")) +
+  xlab('Life History Type') + ylab('Relative bias') +
+  facet_grid(dataset~lambda.scenario, scales = 'free_x') + #, 
+             #labeller = labeller(dataset = dataset.labs, phi1_cat = phi1_cat_lab)) +
              #labeller = label_wrap_gen()) +
   #ylim(c(-1.75, 1.75)) +
-  scale_y_continuous(limits = c(-1.75, 1.75), breaks = c(-1,0,1)) +
+  scale_y_continuous(limits = c(-1.75, 1.75), breaks = c(-1.5,0,1.5)) +
   scale_color_manual(values = rainbow2[-c(1,4)], name = '',
                      labels = c(expression(phi["2"]), expression(phi["1"]), expression(f))) +
   scale_shape_manual(values = c(15, 16, 17), name = '',
@@ -529,17 +623,18 @@ b1 <- ggplot(plot.vals, aes(x = fec_cat, y = value, col = factor(variable), grou
 b1
 
 ## RMSE heat map
-b2 <- ggplot(plot.vals.rmse, aes(x = factor(fec_cat), y = factor(variable), fill = value)) +
+b2 <- ggplot(plot.vals.rmse, aes(x = life_hist, y = factor(variable), fill = value)) +
   geom_tile(color = 'grey50') +
-  xlab('True fecundity') + ylab('') +
-  facet_grid(dataset~phi1_cat, drop = T, scales = 'free_x', 
-             labeller = labeller(dataset = dataset.labs, phi1_cat = phi1_cat_lab)) + #label_wrap_gen()) +
+  xlab('Life History Type') + ylab('Relative bias') +
+  facet_grid(dataset~lambda.scenario, drop = T, scales = 'free_x'#, 
+             #labeller = labeller(dataset = dataset.labs, phi1_cat = phi1_cat_lab)
+             ) + #label_wrap_gen()) +
   #scale_fill_gradient2(name = "RMSE", mid = "white", high = rainbow2[2], midpoint = 0) +
   scale_fill_gradient2(name = "RMSE", low = "white", mid = rainbow2[3], high = rainbow2[2],
-                       midpoint = 0.5, limits = c(0, 1.1), breaks = c(0, 0.5, 1)) +
+                       midpoint = 0.625, limits = c(0, 1.25), breaks = c(0, 0.5, 1, 1.5)) +
   theme_light() +
   scale_y_discrete(labels = c(expression(φ["2"]), expression(φ["1"]), expression(f))) +
-  scale_x_discrete(labels = c("L", "M", "H")) +
+  #scale_x_discrete(labels = c("L", "M", "H")) +
   theme(legend.position = 'top',
         legend.title = element_text(size = 10, vjust = 0.75),
         legend.text = element_text(size = 10),
@@ -562,6 +657,8 @@ ggsave(width = 6.5, height = 6, here("figures", "fig4.png"))
 
 
 #### Figure 5: Lambda trends ####
+
+# TODO edit
 
 c1 <- ggplot(toplot) +
   geom_point(aes(x = Year, y = X50, col = det.abund, group = det.abund, shape = det.abund), position = position_dodge(width = 0.5)) +
@@ -602,7 +699,7 @@ d1 <- ggplot(rel.bias.few  %>% filter(variable %in% obs.pars),
   geom_hline(aes(yintercept = 0), linetype = 'dotted') +
   xlab('Count survey detection') + ylab('Relative bias') +
   facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
-  ylim(c(-1.75, 1.75)) +
+  ylim(c(-0.5, 0.5)) +
   theme_bw() +
   theme(legend.position = 'top',
         plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
