@@ -439,7 +439,131 @@ plot.vals.rmse <- rmse.dem %>%
   group_by(variable, life_hist, lambda.scenario, dataset) %>% # TODO changed here
   dplyr::summarize(value = mean(value), .groups = 'keep')
 
-# TODO - add a section for precision (CV?)
+######################################################
+##################### CV ###########################
+######################################################
+
+cv.vals <- all.stats %>%
+  inner_join(data_scenarios %>% mutate(simscenarios = row_number()), 
+             by = "simscenarios") %>% 
+  # transform(p.surv.true = ifelse(det.abund == 'L', 0.3, 
+  #                                ifelse(det.abund == 'M', 0.5, 
+  #                                       ifelse(det.abund == 'H', 0.8, NA)))) %>%
+  # transform(mean.p.true = ifelse(det.MR == 'L', 0.3, 
+  #                                ifelse(det.MR == 'M', 0.5, 
+  #                                       ifelse(det.MR == 'H', 0.8, NA)))) %>%
+  # transform(fec.cv = (fec.obs-fec.true)^2,
+  #           phiad.cv = (phiad.obs-phiad.true)^2,
+  #           phi1.cv = (phi1.obs-phi1.true)^2,
+  #           mean.p.cv = (mean.p-mean.p.true)^2,
+  #           p.surv.cv = (p.surv-p.surv.true)^2) %>%
+  dplyr::select(lambda.scenario, scenario, simscenarios, 
+                param, cv_mean,
+                det.MR, det.abund, det.prod) %>%
+  reshape2::melt(id.vars = c('lambda.scenario', 'scenario', 'simscenarios', 'param', 'det.MR', 'det.abund', 'det.prod')) %>%
+  group_by(lambda.scenario, det.MR, det.abund, det.prod, param) %>%
+  dplyr::summarize(mean.cv = mean(value), .groups = 'keep') %>% # TODO - added sqrt, check
+  rename(variable = param) %>% 
+  transform(variable = factor(variable, levels = c('phiad', 'phi1', 'fec', 
+                                                   'psurv', 'meanp'),
+                              labels = c('Adult survival', 'First-year survival', 'Fecundity',
+                                         'Count survey detection', 'MR detection'))) %>%
+  transform(lambda.scenario = factor(lambda.scenario,
+                                     levels = c("Decreasing", "Stable", "Increasing"))) %>%
+  transform(det.MR = factor(det.MR, levels = c('L', 'M', 'H'),labels = c('Low', 'Medium', 'High'))) %>%
+  transform(det.abund = factor(det.abund, levels = c('L', 'M', 'H'), labels = c('Low', 'Medium', 'High'))) %>%
+  transform(det.prod = factor(det.prod, levels = c('L', 'M', 'H'), labels = c('Low', 'Medium', 'High'))) %>%
+  transform(missing.MR = ifelse(is.na(det.MR), 1, 0),
+            missing.prod = ifelse(is.na(det.prod), 1, 0)) %>%
+  transform(num.miss = missing.MR + missing.prod) %>%
+  transform(dataset = ifelse(is.na(det.MR)&!is.na(det.prod), 'Abundance & Productivity', 
+                             ifelse(!is.na(det.MR)&is.na(det.prod), 'Abundance & Survival',
+                                    ifelse(is.na(det.MR)&is.na(det.prod), 'Abundance Only', 'Full IPM'))))
+
+###average over two layers of detection (det.MR and det.prod)
+cv.few <- cv.vals %>%
+  group_by(variable, det.abund, lambda.scenario, dataset) %>%
+  dplyr::summarize(cv = mean(mean.cv), .groups = 'keep') %>%
+  #transform(det.abund = factor(det.abund, levels = c('L', 'M', 'H'), labels = c('Low', 'Medium', 'High'))) %>%
+  transform(lambda.scenario = factor(lambda.scenario, 
+                                     levels = c("Decreasing", "Stable", "Increasing"))) %>%
+  transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'),
+                             labels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only')))
+# transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only'),
+#                            labels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only')))
+
+########data-generating values
+cv.vals.sc <- all.stats %>%
+  inner_join(data_scenarios %>% mutate(simscenarios = row_number()), 
+             by = "simscenarios") %>% 
+  filter(param %nin% c("meanp", "psurv")) %>% 
+  # transform(fec.cv = (fec.obs-fec.true)^2,
+  #           phiad.cv = (phiad.obs-phiad.true)^2,
+  #           phi1.cv = (phi1.obs-phi1.true)^2) %>%
+  dplyr::select(lambda.scenario, scenario, simscenarios, 
+                param, cv_mean, 
+                det.MR, det.abund, det.prod) %>%
+  #reshape2::melt(id.vars = c('lambda.scenario', 'scenario', 'det.MR', 'det.abund', 'det.prod')) %>%
+  rename(variable = param) %>% 
+  #group_by(lambda.scenario, scenario, simscenarios, det.MR, det.abund, det.prod, variable) %>%
+  #dplyr::summarize(mean.cv = mean(value), .groups = 'keep') %>% # TODO changed here, check
+  #dplyr::summarize(cv = sd(value)/value, .groups = 'keep') %>% # CV version
+  transform(variable = factor(variable, levels = c('phiad', 'phi1', 'fec'),
+                              labels = c('Adult survival', 'First-year survival', 'Fecundity'))) %>%
+  transform(lambda.scenario = factor(lambda.scenario,
+                                     levels = c("Decreasing", "Stable", "Increasing"))) %>%
+  transform(det.MR = factor(det.MR, levels = c('L', 'M', 'H'), labels = c('Low', 'Medium', 'High'))) %>%
+  transform(det.abund = factor(det.abund, levels = c('L', 'M', 'H'), labels = c('Low', 'Medium', 'High'))) %>%
+  transform(det.prod = factor(det.prod, levels = c('L', 'M', 'H'), labels = c('Low', 'Medium', 'High'))) %>%
+  transform(missing.MR = ifelse(is.na(det.MR), 1, 0),
+            missing.prod = ifelse(is.na(det.prod), 1, 0)) %>%
+  transform(num.miss = missing.MR + missing.prod) %>%
+  transform(dataset = ifelse(is.na(det.MR)&!is.na(det.prod), 'Abundance & Productivity', 
+                             ifelse(!is.na(det.MR)&is.na(det.prod), 'Abundance & Survival',
+                                    ifelse(is.na(det.MR)&is.na(det.prod), 'Abundance Only', 'Full IPM')))) %>% 
+  rename("value" = "cv_mean")
+
+cv.dem <- cv.vals.sc %>%
+  inner_join(scenarios %>% 
+               arrange(trend) %>% 
+               mutate(scenario = c(1:3, 1:3, 1:3), #janky but try for now 
+                      lambda.scenario = case_when(
+                        trend == "increase" ~ "Increasing",
+                        trend == "decline" ~ "Decreasing",
+                        TRUE ~ "Stable"
+                      )) %>% 
+               rename(phi1.true = phi1, 
+                      phiad.true = phiad, 
+                      fec.true = fec), 
+             by = c("lambda.scenario", "scenario")) %>% 
+  # merge(true_vals, by = c('lambda.scenario', 'scenario')) %>%
+  # transform(variable = factor(variable, levels = c('phiad.cv', 'phi1.cv', 'fec.cv'),
+  #                             labels = c('Adult survival', 'Juv survival', 'Fecundity'))) %>% 
+  # transform(lambda.scenario = factor(lambda.scenario, 
+  #                                    levels = c("Decreasing", "Stable", "Increasing"))) %>%
+  # transform(fec_cat = ifelse(fec.true < fec_lims[1], 'L', ifelse(fec.true > fec_lims[2], 'H', 'M')),
+  #           phiad_cat = ifelse(phiad.true < phiad_lims[1], 'L', ifelse(phiad.true > phiad_lims[2], 'H', 'M')),
+  #           phi1_cat = ifelse(phi1.true < phi1_lims[1], 'L', ifelse(phi1.true > phi1_lims[2], 'H', 'M'))) %>%
+  # transform(fec_cat = factor(fec_cat, levels = c('L', 'M', 'H'),  labels = c('Low', 'Medium', 'High')),
+  #           phiad_cat = factor(phiad_cat, levels = c('L', 'M', 'H'), labels = c('Low', 'Medium', 'High')),
+  #           phi1_cat = factor(phi1_cat, levels = c('L', 'M', 'H'),
+  #                             labels = c('True first-year survival: Low', 
+  #                                        'True first-year survival: Medium', 
+  #                                        'True first-year survival: High'))) %>%
+  transform(lambda.scenario = factor(lambda.scenario, 
+                                     levels = c("Decreasing", "Stable", "Increasing"))) %>%
+  transform(life_hist = factor(life_hist, levels = c("slow", "mod", "fast"), 
+                               labels = c("Slow", "Moderate", "Fast"))) %>%
+  transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'),
+                             labels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only')))
+# transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only'),
+#                            labels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only')))
+
+
+#facet by both fec and juv true vals
+plot.vals.cv <- cv.dem %>%
+  group_by(variable, life_hist, lambda.scenario, dataset) %>% # TODO changed here
+  dplyr::summarize(value = mean(value), .groups = 'keep')
 
 ######################################################
 ##################### Lambda #########################
@@ -606,8 +730,9 @@ a2 <- ggplot(rmse.few %>% filter(variable %nin% obs.pars), aes(x = factor(det.ab
                                  lambda.scenario = lambda.labs)) +
   scale_fill_gradient2(name = "RMSE",
                        #mid = "white", high = rainbow2[2], midpoint = 0) +
-                       low = "white", mid = rainbow2[3], high = rainbow2[2],
-                       midpoint = 0.5) + # TODO - note change here 
+                       #low = "white", mid = rainbow2[3], high = rainbow2[2]) + #,
+                       low = "white", high = rainbow2[2]) + #,
+                       #midpoint = 0.5) + # TODO - note change here 
   theme_light() +
   scale_y_discrete(labels = c(expression(phi["2"]), expression(phi["1"]), expression(f))) +
   scale_x_discrete(labels = c("L", "M", "H")) +
@@ -629,10 +754,43 @@ a2 <- ggplot(rmse.few %>% filter(variable %nin% obs.pars), aes(x = factor(det.ab
         panel.spacing.x = unit(0.75, "line"))
 a2
 
+## CV heat map
+a3 <- ggplot(cv.few %>% filter(variable %nin% obs.pars), aes(x = factor(det.abund), y = variable, fill = cv)) +
+  geom_tile(color = 'grey50') +
+  xlab('Count survey detection') + ylab('') +
+  #facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
+  facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', 
+             labeller = labeller(dataset = dataset.labs, 
+                                 lambda.scenario = lambda.labs)) +
+  scale_fill_gradient2(name = "CV",
+                       #mid = "white", high = rainbow2[2], midpoint = 0) +
+                       low = "white", high = rainbow2[2]) + #,
+                       #midpoint = 0.5) + # TODO - note change here 
+  theme_light() +
+  scale_y_discrete(labels = c(expression(phi["2"]), expression(phi["1"]), expression(f))) +
+  scale_x_discrete(labels = c("L", "M", "H")) +
+  theme(legend.position = 'top',
+        #legend.title = element_text(size = 11, vjust = 0.75),
+        legend.title = element_text(size = 10, vjust = 0.75),
+        legend.text = element_text(size = 12),
+        axis.text = element_text(size = 10, vjust = 0.75),
+        axis.title = element_text(size = 10, vjust = 0.75),
+        strip.text = element_text(color = "black", size = 8),
+        axis.ticks.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        #strip.text = element_text(color = "black"),
+        strip.background = element_rect(fill = NA, color = "black"),
+        axis.text.x = element_text(angle = 0, vjust = 1.5),
+        panel.border = element_rect(color = "black", fill = NA),  
+        panel.spacing.x = unit(0.75, "line"))
+a3
+
 ## combine
-plot_grid(a1, a2, ncol = 2, rel_widths = c(0.55, 0.45), labels = "AUTO",
+plot_grid(a1, a2, a3, nrow = 3, labels = "AUTO",
           align = "hv", label_size = 12)
-ggsave(width = 6.5, height = 6, here("figures", "fig3_NEW.png"))
+ggsave(width = 6.5, height = 18, here("figures", "fig3_NEW.png"))
 
 
 #### Figure 4: RMSE and bias ecological parameters x true fecundity ####
@@ -683,13 +841,14 @@ b1
 ## RMSE heat map
 b2 <- ggplot(plot.vals.rmse, aes(x = life_hist, y = factor(variable), fill = value)) +
   geom_tile(color = 'grey50') +
-  xlab('Life History Type') + ylab('Relative bias') +
+  xlab('Life History Type') + ylab('') +
   facet_grid(dataset~lambda.scenario, drop = T, scales = 'free_x'#, 
              #labeller = labeller(dataset = dataset.labs, phi1_cat = phi1_cat_lab)
              ) + #label_wrap_gen()) +
   #scale_fill_gradient2(name = "RMSE", mid = "white", high = rainbow2[2], midpoint = 0) +
-  scale_fill_gradient2(name = "RMSE", low = "white", mid = rainbow2[3], high = rainbow2[2],
-                       midpoint = 1, limits = c(0, 2), breaks = c(0, 0.5, 1, 1.5, 2)) +
+  scale_fill_gradient2(name = "RMSE", low = "white", high = rainbow2[2],
+                       n.breaks = 4) +
+                       #midpoint = 1, limits = c(0, 2), breaks = c(0, 0.5, 1, 1.5, 2)) +
   theme_light() +
   scale_y_discrete(labels = c(expression(φ["2"]), expression(φ["1"]), expression(f))) +
   #scale_x_discrete(labels = c("L", "M", "H")) +
@@ -709,9 +868,38 @@ b2 <- ggplot(plot.vals.rmse, aes(x = life_hist, y = factor(variable), fill = val
         panel.spacing.x = unit(0.75, "line"))
 b2
 
+## CV heat map
+b3 <- ggplot(plot.vals.cv, aes(x = life_hist, y = factor(variable), fill = value)) +
+  geom_tile(color = 'grey50') +
+  xlab('Life History Type') + ylab('') +
+  facet_grid(dataset~lambda.scenario, drop = T, scales = 'free_x'#, 
+             #labeller = labeller(dataset = dataset.labs, phi1_cat = phi1_cat_lab)
+  ) + #label_wrap_gen()) +
+  #scale_fill_gradient2(name = "RMSE", mid = "white", high = rainbow2[2], midpoint = 0) +
+  scale_fill_gradient2(name = "CV", low = "white", high = rainbow2[2]) + #,
+                      # midpoint = 0.5) +
+  theme_light() +
+  scale_y_discrete(labels = c(expression(φ["2"]), expression(φ["1"]), expression(f))) +
+  #scale_x_discrete(labels = c("L", "M", "H")) +
+  theme(legend.position = 'top',
+        legend.title = element_text(size = 10, vjust = 0.75),
+        legend.text = element_text(size = 10),
+        axis.text = element_text(size = 10, vjust = 0.75),
+        axis.title = element_text(size = 10, vjust = 0.75),
+        axis.ticks.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.text = element_text(color = "black", size = 8),
+        strip.background = element_rect(fill = NA, color = "black"),
+        axis.text.x = element_text(angle = 0, vjust = 1.5),
+        panel.border = element_rect(color = "black", fill = NA),  
+        panel.spacing.x = unit(0.75, "line"))
+b3
+
 ## combine
-plot_grid(b1, b2, ncol = 2, labels = "AUTO", align = "hv", label_size = 12)
-ggsave(width = 6.5, height = 6, here("figures", "fig4_NEW.png"))
+plot_grid(b1, b2, b3, nrow = 3, labels = "AUTO", align = "hv", label_size = 12)
+ggsave(width = 6.5, height = 18, here("figures", "fig4_NEW.png"))
 
 
 #### Figure 5: Lambda trends ####
@@ -777,7 +965,7 @@ d2 <- ggplot(rmse.few %>% filter(variable %in% obs.pars), aes(x = factor(det.abu
   xlab('Count survey detection') + ylab('') +
   facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
   scale_fill_gradient2(name = "RMSE",
-                       mid = "white", high = rainbow2[2], midpoint = 0, n.breaks = 3) +
+                       mid = "white", high = rainbow2[2], n.breaks = 3) +
   # breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2")) +
   theme_light() +
   theme(legend.position = 'top',
@@ -793,8 +981,31 @@ d2 <- ggplot(rmse.few %>% filter(variable %in% obs.pars), aes(x = factor(det.abu
         panel.spacing.x = unit(0.75, "line"))
 d2
 
+## CV heat map
+d3 <- ggplot(cv.few %>% filter(variable %in% obs.pars), aes(x = factor(det.abund), y = variable, fill = cv)) +
+  geom_tile(color = 'grey50') +
+  xlab('Count survey detection') + ylab('') +
+  facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
+  scale_fill_gradient2(name = "CV",
+                       mid = "white", high = rainbow2[2], n.breaks = 4) +
+  # breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2")) +
+  theme_light() +
+  theme(legend.position = 'top',
+        legend.title = element_text(size = 11, vjust = 0.75),
+        axis.ticks.y = element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.text = element_text(color = "black"),
+        strip.background = element_rect(fill = NA, color = "black"),
+        axis.text.x = element_text(angle = 0, vjust = 1.5),
+        panel.border = element_rect(color = "black", fill = NA),  
+        panel.spacing.x = unit(0.75, "line"))
+d3
+
 ## combine
-plot_grid(d1, d2, ncol = 2, labels = "AUTO", align = "h", label_size = 16)
-ggsave(width = 15, height = 8, here("figures", "fig6_NEW.png"))
+plot_grid(d1, d2, d3, nrow = 3, labels = "AUTO", align = "hv", label_size = 12)
+ggsave(width = 6.5, height = 18, here("figures", "fig6_NEW.png"))
 
 # TODO - the widths are not working on the figures
+# need some aesthetic adjustments
