@@ -79,14 +79,14 @@ high.dat <- row.high %>%
 
 all.dat <- bind_rows(low.dat, med.dat, high.dat)
 
-all.meds <- all.dat %>%
-  dplyr::select('phi1.obs', 'phi1.true', 'phiad.obs', 'phiad.true', 'fec.obs', 'fec.true',
-                "p.surv", "mean.p",
-                'sims', 'scenario', 'simscenarios', 'lambda.scenario') %>%
-  reshape2::melt(id.vars = c('lambda.scenario', 'sims', 'scenario', 'simscenarios')) %>%
-  group_by(lambda.scenario, scenario, simscenarios, variable) %>%
-  dplyr::summarize(median = median(value), .groups = 'keep') %>%
-  reshape2::dcast(lambda.scenario + scenario + simscenarios ~ variable, value.var = 'median') 
+# all.meds <- all.dat %>%
+#   dplyr::select('phi1.obs', 'phi1.true', 'phiad.obs', 'phiad.true', 'fec.obs', 'fec.true',
+#                 "p.surv", "mean.p",
+#                 'sims', 'scenario', 'simscenarios', 'lambda.scenario') %>%
+#   reshape2::melt(id.vars = c('lambda.scenario', 'sims', 'scenario', 'simscenarios')) %>%
+#   group_by(lambda.scenario, scenario, simscenarios, variable) %>%
+#   dplyr::summarize(median = median(value), .groups = 'keep') %>%
+#   reshape2::dcast(lambda.scenario + scenario + simscenarios ~ variable, value.var = 'median') 
 # NOTE stopping here for now - returning to manuscript figs
 
 # first chunk in figures.Rmd - move over here
@@ -94,24 +94,61 @@ all.meds <- all.dat %>%
 # all.meds <- read.csv(file = here::here('figures', 'Processed csvs', 'all.meds.csv'), 
 #                      header = T, stringsAsFactors = F)
 
-all.sds <- all.dat %>%
-  dplyr::select('phi1.obs', 'phiad.obs', 'fec.obs',
-                "p.surv", "mean.p",
+# summarize
+  # medians
+  # sds
+  # cvs
+  # error - do this separately
+all.stats.sims <- all.dat %>%
+  inner_join(data_scenarios %>% mutate(simscenarios = row_number()), 
+             by = "simscenarios") %>% 
+  transform(psurv.true = ifelse(det.abund == 'L', 0.3, 
+                                 ifelse(det.abund == 'M', 0.5, 
+                                        ifelse(det.abund == 'H', 0.8, NA)))) %>%
+  transform(meanp.true = ifelse(det.MR == 'L', 0.3, 
+                                 ifelse(det.MR == 'M', 0.5, 
+                                        ifelse(det.MR == 'H', 0.8, NA)))) %>%
+  rename("psurv.obs" = "p.surv", "meanp.obs" = "mean.p") %>% 
+  dplyr::select('phi1.obs', 'phi1.true', 'phiad.obs', 'phiad.true', 'fec.obs', 'fec.true',
+                "psurv.obs", "psurv.true", "meanp.obs", "meanp.true",
                 'sims', 'scenario', 'simscenarios', 'lambda.scenario') %>%
-  reshape2::melt(id.vars = c('lambda.scenario', 'sims', 'scenario', 'simscenarios')) %>%
-  group_by(lambda.scenario, scenario, simscenarios, sims, variable) %>%
-  dplyr::summarize(sd = sd(value), .groups = 'keep') %>%
-  reshape2::dcast(lambda.scenario + scenario + simscenarios ~ variable, value.var = 'sd') %>% 
-  rename("phi1.sd" = "phi1.obs", "phiad.sd" = "phiad.obs", "fec.sd" = "fec.obs", 
-         "p.surv.sd" = "p.surv", "mean.p.sd" = "mean.p") %>% 
-  left_join(all.meds) %>% 
-  mutate(
-    `phi1.cv` = `phi1.sd`/`phi1.obs`, 
-    `phiad.cv` = `phiad.sd`/`phiad.obs`,
-    `fec.cv` = `fec.sd`/`fec.obs`,
-    `p.surv.cv` = `p.surv.sd`/`p.surv`,
-    `mean.p.cv` = `mean.p.sd`/`mean.p`
+  group_by(lambda.scenario, scenario, simscenarios, sims) %>% 
+  mutate(iter = row_number()) %>% 
+  pivot_longer(-c(lambda.scenario, scenario, simscenarios, sims, iter)) %>% 
+  separate_wider_delim(name, delim = ".", names = c("param", "type")) %>% 
+  pivot_wider(id_cols = c(lambda.scenario, scenario, simscenarios, sims, param, iter), 
+              names_from = type, values_from = value) %>% 
+  mutate(error = (obs - true)) %>% 
+  group_by(lambda.scenario, scenario, simscenarios, sims, param) %>% 
+  dplyr::summarize(
+    median = median(obs), 
+    sd = sd(obs), 
+    cv = sd(obs)/mean(obs),
+    rb = (mean(obs) - mean(true)) / mean(true), # NOTE using mean(true) tho it doesnt vary within group
+    rmse = sqrt(mean(error^2))
+    )
+# ok - so this has the stats per model run (i.e., replicate/sim)
+
+# now we want to get these things averaged across replicates 
+# (so, average cv, average rb, average rmse) 
+# also keeping intervals for these 
+all.stats <- all.stats.sims %>% 
+  select(lambda.scenario, scenario, simscenarios, sims, param, cv, rb, rmse) %>% 
+  group_by(lambda.scenario, scenario, simscenarios, param) %>% 
+  dplyr::summarize(
+    across(
+      c(cv, rb, rmse),
+      list(
+        mean = ~ mean(.),
+        lower = ~ quantile(., 0.025, na.rm = TRUE),
+        upper = ~ quantile(., 0.975, na.rm = TRUE)
+      ),
+      .names = "{.col}_{.fn}"
+    ),
+    .groups = "drop"
   )
+
+# Now we want to grab the average RB, RMSE, and CV across replicates
 
 ######################################################
 ##################### Bias ###########################
@@ -126,27 +163,30 @@ det.prod <- factor(x = c("L", "M", "H", "NA"))
 lambda <- factor(x = c("L", "M", "H"))
 data_scenarios <- readRDS(here("data", "data_scenarios.RDS"))
 
-rel.bias <- all.meds %>%
-  inner_join(data_scenarios %>% mutate(simscenarios = row_number()), 
-             by = "simscenarios") %>% 
-  transform(p.surv.true = ifelse(det.abund == 'L', 0.3, 
-                                 ifelse(det.abund == 'M', 0.5, 
-                                        ifelse(det.abund == 'H', 0.8, NA)))) %>%
-  transform(mean.p.true = ifelse(det.MR == 'L', 0.3, 
-                                 ifelse(det.MR == 'M', 0.5, 
-                                        ifelse(det.MR == 'H', 0.8, NA)))) %>%
+# rel.bias
+rel.bias <- all.stats %>%
+  inner_join(data_scenarios %>% mutate(simscenarios = row_number()),
+             by = "simscenarios") %>%
+  # transform(p.surv.true = ifelse(det.abund == 'L', 0.3, 
+  #                                ifelse(det.abund == 'M', 0.5, 
+  #                                       ifelse(det.abund == 'H', 0.8, NA)))) %>%
+  # transform(mean.p.true = ifelse(det.MR == 'L', 0.3, 
+  #                                ifelse(det.MR == 'M', 0.5, 
+  #                                       ifelse(det.MR == 'H', 0.8, NA)))) %>%
   #calculate relative bias, mean across scenarios
-  transform(phi1.bias = (phi1.obs-phi1.true)/phi1.true,
-            phiad.bias = (phiad.obs-phiad.true)/phiad.true,
-            fec.bias = (fec.obs-fec.true)/fec.true,
-            p.surv.bias = (p.surv-p.surv.true)/p.surv.true,
-            mean.p.bias = (mean.p-mean.p.true)/mean.p.true) %>%
-  dplyr::select('lambda.scenario', 'scenario',
-                'phi1.bias', 'phiad.bias', 'fec.bias', 'det.MR', 'det.abund', 'det.prod', 'mean.p.bias', 'p.surv.bias') %>%
-  reshape2::melt(id.vars = c('lambda.scenario', 'scenario', 'det.MR', 'det.abund', 'det.prod')) %>%
-  group_by(lambda.scenario, det.MR, det.abund, det.prod, variable) %>%
+  # transform(phi1.bias = (phi1.obs-phi1.true)/phi1.true,
+  #           phiad.bias = (phiad.obs-phiad.true)/phiad.true,
+  #           fec.bias = (fec.obs-fec.true)/fec.true,
+  #           p.surv.bias = (p.surv-p.surv.true)/p.surv.true,
+  #           mean.p.bias = (mean.p-mean.p.true)/mean.p.true) %>%
+  dplyr::select('lambda.scenario', 'scenario', 'simscenarios',
+                "param", "rb_mean",
+                'det.MR', 'det.abund', 'det.prod') %>%
+  reshape2::melt(id.vars = c('lambda.scenario', 'scenario', "simscenarios", "param", 'det.MR', 'det.abund', 'det.prod')) %>%
+  group_by(lambda.scenario, det.MR, det.abund, det.prod, param) %>%
   dplyr::summarize(bias = mean(value), .groups = 'keep') %>%
-  transform(variable = factor(variable, levels = c('phiad.bias', 'phi1.bias', 'fec.bias', 'p.surv.bias', 'mean.p.bias'),
+  rename(variable = param) %>% 
+  transform(variable = factor(variable, levels = c('phiad', 'phi1', 'fec', 'psurv', 'meanp'),
                               labels = c('Adult survival', 'First-year survival', 'Fecundity', 'Count survey detection', 'MR detection'))) %>%
   transform(lambda.scenario = factor(lambda.scenario,
                                      levels = c("Decreasing", "Stable", "Increasing"))) %>%
@@ -168,37 +208,40 @@ rel.bias.few <- rel.bias %>%
   transform(det.abund = factor(det.abund, levels = c('L', 'M', 'H'), labels = c('Low', 'Medium', 'High'))) %>%
   transform(lambda.scenario = factor(lambda.scenario, 
                                      levels = c("Decreasing", "Stable", "Increasing"))) %>%
-  transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only'),
-                             labels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only')))
+  transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'),
+                             labels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only')))
+  # transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only'),
+  #                            labels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only')))
 
 # TODO - go back to figures.RMD to make this object
 # all.meds.sc <- read.csv(file = here::here('figures', 'Processed csvs', 'all.meds.sc.csv'), 
 #                         header = T, stringsAsFactors = F)
 #get posterior medians; same as above except keep 'scenario' in group_by
-all.meds.sc <- all.dat %>%
-  dplyr::select('phi1.obs', 'phi1.true', 'phiad.obs', 'phiad.true', 'fec.obs', 'fec.true',
-                'sims', 'scenario', 'simscenarios', 'lambda.scenario') %>%
-  reshape2::melt(id.vars = c('sims', 'scenario', 'simscenarios', 'lambda.scenario')) %>%
-  group_by(lambda.scenario, scenario, simscenarios, variable) %>%
-  dplyr::summarize(median = median(value)) %>%
-  reshape2::dcast(lambda.scenario + scenario + simscenarios ~ variable, value.var = 'median') %>%
-  #calculate relative bias
-  transform(phi1.bias = (phi1.obs-phi1.true)/phi1.true,
-            phiad.bias = (phiad.obs-phiad.true)/phiad.true,
-            fec.bias = (fec.obs-fec.true)/fec.true)
+# all.meds.sc <- all.dat %>%
+#   dplyr::select('phi1.obs', 'phi1.true', 'phiad.obs', 'phiad.true', 'fec.obs', 'fec.true',
+#                 'sims', 'scenario', 'simscenarios', 'lambda.scenario') %>%
+#   reshape2::melt(id.vars = c('sims', 'scenario', 'simscenarios', 'lambda.scenario')) %>%
+#   group_by(lambda.scenario, scenario, simscenarios, variable) %>%
+#   dplyr::summarize(median = median(value)) %>%
+#   reshape2::dcast(lambda.scenario + scenario + simscenarios ~ variable, value.var = 'median') %>%
+#   #calculate relative bias
+#   transform(phi1.bias = (phi1.obs-phi1.true)/phi1.true,
+#             phiad.bias = (phiad.obs-phiad.true)/phiad.true,
+#             fec.bias = (fec.obs-fec.true)/fec.true)
 # FROM HERE - back to manuscript figs
 
 ## just bias; same as above, keep 'scenario'
 #rel.bias.sc <- all_meds_sc %>%
-rel.bias.sc <- all.meds.sc %>%
+rel.bias.sc <- all.stats %>%
   inner_join(data_scenarios %>% mutate(simscenarios = row_number()), 
              by = "simscenarios") %>% 
-  transform(phi1.bias = (phi1.obs-phi1.true)/phi1.true,
-            phiad.bias = (phiad.obs-phiad.true)/phiad.true,
-            fec.bias = (fec.obs-fec.true)/fec.true) %>%
-  dplyr::select('lambda.scenario', 'scenario', 
-                'phi1.bias', 'phiad.bias', 'fec.bias', 'det.MR', 'det.abund', 'det.prod') %>%
-  reshape2::melt(id.vars = c('lambda.scenario', 'scenario', 'det.MR', 'det.abund', 'det.prod')) %>%
+  filter(param %nin% c("meanp", "psurv")) %>% 
+  # transform(phi1.bias = (phi1.obs-phi1.true)/phi1.true,
+  #           phiad.bias = (phiad.obs-phiad.true)/phiad.true,
+  #           fec.bias = (fec.obs-fec.true)/fec.true) %>%
+  dplyr::select('lambda.scenario', 'scenario', "simscenarios", "param", "rb_mean",
+                'det.MR', 'det.abund', 'det.prod') %>%
+  #reshape2::melt(id.vars = c('lambda.scenario', 'scenario', 'det.MR', 'det.abund', 'det.prod')) %>%
   transform(lambda.scenario = factor(lambda.scenario,
                                      levels = c("Decreasing", "Stable", "Increasing"))) %>%
   transform(det.MR = factor(det.MR, levels = c('L', 'M', 'H'), labels = c('Low', 'Medium', 'High'))) %>%
@@ -209,7 +252,8 @@ rel.bias.sc <- all.meds.sc %>%
   transform(num.miss = missing.MR + missing.prod) %>%
   transform(dataset = ifelse(is.na(det.MR)&!is.na(det.prod), 'Abundance & Productivity', 
                              ifelse(!is.na(det.MR)&is.na(det.prod), 'Abundance & Survival',
-                                    ifelse(is.na(det.MR)&is.na(det.prod), 'Abundance Only', 'Full IPM'))))
+                                    ifelse(is.na(det.MR)&is.na(det.prod), 'Abundance Only', 'Full IPM')))) %>% 
+  rename("variable" = 'param', "value" = "rb_mean")
 
 # TODO - AEB doesnt think we need this section here because we have fewer scenario ####
 #load saved true values
@@ -236,7 +280,7 @@ rel.bias.dem <- rel.bias.sc %>%
                       fec.true = fec), 
              by = c("lambda.scenario", "scenario")) %>% 
   #merge(true_vals, by = c('lambda.scenario', 'scenario')) %>%
-  transform(variable = factor(variable, levels = c('phiad.bias', 'phi1.bias', 'fec.bias'),
+  transform(variable = factor(variable, levels = c('phiad', 'phi1', 'fec'),
                               labels = c('Adult survival', 'First-year survival', 'Fecundity'))) %>% 
   transform(lambda.scenario = factor(lambda.scenario, 
                                      levels = c("Decreasing", "Stable", "Increasing"))) %>%
@@ -255,8 +299,10 @@ rel.bias.dem <- rel.bias.sc %>%
                                      levels = c("Decreasing", "Stable", "Increasing"))) %>%
   transform(life_hist = factor(life_hist, levels = c("slow", "mod", "fast"), 
                                      labels = c("Slow", "Moderate", "Fast"))) %>%
-  transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only'),
-                             labels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only')))
+  transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'),
+                             labels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only')))
+# transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only'),
+#                            labels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only')))
 
 #facet by both fec and juv true vals
 plot.vals <- rel.bias.dem %>%
@@ -313,8 +359,10 @@ rmse.few <- rmse.vals %>%
   #transform(det.abund = factor(det.abund, levels = c('L', 'M', 'H'), labels = c('Low', 'Medium', 'High'))) %>%
   transform(lambda.scenario = factor(lambda.scenario, 
                                      levels = c("Decreasing", "Stable", "Increasing"))) %>%
-  transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only'),
-                             labels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only')))
+  transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'),
+                             labels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only')))
+# transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only'),
+#                            labels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only')))
 
 ########data-generating values
 rmse.vals.sc <- all.meds %>%
@@ -374,8 +422,10 @@ rmse.dem <- rmse.vals.sc %>%
                                      levels = c("Decreasing", "Stable", "Increasing"))) %>%
   transform(life_hist = factor(life_hist, levels = c("slow", "mod", "fast"), 
                                labels = c("Slow", "Moderate", "Fast"))) %>%
-  transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only'),
-                             labels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only')))
+  transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'),
+                             labels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only')))
+# transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only'),
+#                            labels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only')))
 
 
 #facet by both fec and juv true vals
@@ -475,8 +525,10 @@ dplyr::summarize(value = mean(value), .groups = "keep") %>%
   mutate(det.MR = factor(det.MR, levels = c("L", "M", "H"), labels = c("Low", "Medium", "High"))) %>% 
   transform(lambda = factor(lambda, levels = c("L", "M", "H"), 
                             labels = c("Decreasing", "Stable", "Increasing"))) %>%
-  transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only'),
-                             labels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only'))) %>% 
+  transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'),
+                             labels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'))) %>% 
+# transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only'),
+#                            labels = c('Full IPM', 'Abundance & Productivity', 'Abundance & Survival', 'Abundance Only')))
   mutate(intercept = case_when(
     lambda == "Decreasing" ~ 0.95, 
     lambda == "Stable" ~ 1,
