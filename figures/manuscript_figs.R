@@ -4,6 +4,8 @@
 ## 15 Oct 2021
 ## Updated by A Bratt
 ## 8 Jan 2026
+## Updated by A Warlick
+## 8 Jan 2026
 
 ##################### Libraries ###########################
 
@@ -13,7 +15,7 @@ library(dplyr)
 library(cowplot)
 library(ggplot2)
 library(coda)
-library(captioner)
+# library(captioner)
 library(knitr)
 library(reshape2)
 library(here)
@@ -54,11 +56,10 @@ data_scenarios <- readRDS(here("data", "data_scenarios.RDS"))
 
 ##################### Data Prep ###########################
 
-# TODO change file path for user
 # NOTE - this is slow, files are large
-row.low <- read.csv(file = "C:/Users/AbbyBratt/Desktop/IPM SIM results/lowout.csv")
-row.med <- read.csv(file = "C:/Users/AbbyBratt/Desktop/IPM SIM results/medout.csv")
-row.high <- read.csv(file = "C:/Users/AbbyBratt/Desktop/IPM SIM results/highout.csv")
+row.low <- read.csv(file = here('results', 'lowout.csv'))
+row.med <- read.csv(file = here('results', 'medout.csv'))
+row.high <- read.csv(file = here('results', 'highout.csv'))
 
 low.dat <- row.low %>%
   dplyr::rename(phi1 = `mean.phi.1.`, phiad = `mean.phi.2.`) %>% 
@@ -81,6 +82,10 @@ high.dat <- row.high %>%
 all.dat <- bind_rows(low.dat, med.dat, high.dat)
 
 # summarize medians, sd, cvs, relative bias, and error at the model (sim) level
+##scenario: life history (fast, slow, mod); TODO check factor levels?
+##simscenario: sampling scenario 1-48 combos of detection and datasets available
+##sims: replicate
+##lambda.scenario: decreasing, stable, increasing
 all.stats.sims <- all.dat %>%
   inner_join(data_scenarios %>% mutate(simscenarios = row_number()), 
              by = "simscenarios") %>% 
@@ -210,7 +215,7 @@ rel.bias.dem <- rel.bias.sc %>%
   transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'),
                              labels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only')))
 
-# facet by both fec and juv true vals
+# facet by both fec and juv true vals; average over all detection levels
 plot.vals <- rel.bias.dem %>%
   group_by(variable, life_hist, lambda.scenario, dataset) %>% 
   dplyr::summarize(value = mean(value), .groups = 'keep') 
@@ -390,12 +395,11 @@ plot.vals.cv <- cv.dem %>%
 
 ##################### LAMBDA #########################
 
-# TODO change this for each user
-row.low <- read_csv(file = "C:/Users/AbbyBratt/Desktop/IPM SIM results/row_low.csv") %>% 
+row.low <- read_csv(file = here('results', 'row_low_geo.csv')) %>% 
   transform(lambda.scenario = 'Decreasing')
-row.med <- read_csv(file = "C:/Users/AbbyBratt/Desktop/IPM SIM results/row_med.csv") %>%
+row.med <- read_csv(file = here('results', 'row_med_geo.csv')) %>%
   transform(lambda.scenario = 'Stable')
-row.high <- read_csv(file = "C:/Users/AbbyBratt/Desktop/IPM SIM results/row_high.csv") %>% 
+row.high <- read_csv(file = here('results', 'row_high_geo.csv')) %>% 
   transform(lambda.scenario = 'Increasing')
 
 # Reformat for plotting
@@ -534,8 +538,6 @@ toplot.lh <- toplot %>%
 
 ################### FIGURES ##########################
 
-# TODO might need some adjustments
-
 #### Figure 3: RMSE and bias ecological paramters x count survey detection ####
 dataset.labs <- c("Full IPM", "Abundance & Prod.", "Abundance & Surv.", "Abundance Only")
 names(dataset.labs) <- c("Full IPM", "Abundance & Productivity", "Abundance & Survival", "Abundance Only")
@@ -549,15 +551,14 @@ a1 <- ggplot(rel.bias.few  %>% filter(variable %nin% obs.pars),
   geom_point() + 
   geom_line() +
   geom_hline(aes(yintercept = 0), linetype = 'dotted') +
-  #xlab('Count survey detection') + ylab('Relative bias') +
   #facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
   #ylim(c(-1.75, 1.75)) +
   scale_x_discrete(labels = c("L", "M", "H")) +
   xlab('Count survey detection') + 
   ylab('Relative bias') +
-  facet_grid(dataset~lambda.scenario, scales = 'free_x', 
+  facet_grid(dataset~lambda.scenario, scales = 'free', 
              labeller = labeller(dataset = dataset.labs, lambda.scenario = lambda.labs)) +
-  scale_y_continuous(limits = c(-1.2, 1.2), breaks = c(-1,0,1)) +
+  # scale_y_continuous(limits = c(-1.2, 1.2), breaks = c(-1,0,1)) +
   theme_bw() +
   theme(legend.position = 'top',
         #plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
@@ -585,7 +586,8 @@ a1
 
 
 ##### RMSE heat map ####
-a2 <- ggplot(rmse.few %>% filter(variable %nin% obs.pars), aes(x = factor(det.abund), y = variable, fill = rmse)) +
+a2 <- ggplot(rmse.few %>% filter(variable %nin% obs.pars), aes(x = factor(det.abund), 
+                                                               y = variable, fill = rmse)) +
   geom_tile(color = 'grey50') +
   xlab('Count survey detection') + ylab('') +
   #facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
@@ -616,6 +618,48 @@ a2 <- ggplot(rmse.few %>% filter(variable %nin% obs.pars), aes(x = factor(det.ab
         axis.text.x = element_text(angle = 0, vjust = 1.5),
         panel.border = element_rect(color = "black", fill = NA),  
         panel.spacing.x = unit(0.75, "line"))
+a2
+
+### RMSE dot plot 
+a2 <- ggplot(rmse.few %>% filter(variable %nin% obs.pars), 
+             aes(x = det.abund, y = rmse, col = factor(variable), group = factor(variable),
+                 shape = factor(variable))) +
+  geom_point() + geom_line() +
+  # geom_tile(color = 'grey50') +
+  xlab('Count survey detection') + ylab('RMSE') +
+  #facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
+  facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', 
+             labeller = labeller(dataset = dataset.labs, 
+                                 lambda.scenario = lambda.labs)) +
+  scale_fill_gradient2(name = "RMSE",
+                       #mid = "white", high = rainbow2[2], midpoint = 0) +
+                       #low = "white", mid = rainbow2[3], high = rainbow2[2]) + #,
+                       low = "white", high = rainbow2[2]) + #,
+  #midpoint = 0.5) + # TODO - note change here 
+  theme_bw() +
+  theme(legend.position = 'top',
+        #plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
+        #strip.text = element_text(color = "black"),
+        legend.text = element_text(size = 12),
+        axis.text = element_text(size = 10, vjust = 0.75),
+        axis.title = element_text(size = 10, vjust = 0.75),
+        strip.text = element_text(color = "black", size = 8),
+        strip.background = element_rect(fill = NA, color = "black"),
+        axis.text.x = element_text(angle = 0, vjust = 1.5),
+        panel.border = element_rect(color = "black", fill = NA),  
+        #panel.spacing.x = unit(0.75, "line")) +
+        #scale_color_manual(values = rainbow2[-c(1,4)], name = '') +
+        #scale_shape_manual(values = c(15, 16, 17), name = '')
+        panel.spacing.x = unit(0.75, "line"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  scale_x_discrete(labels = c("L", "M", "H")) +
+  scale_color_manual(values = rainbow2[-c(1,4)], name = '', 
+                     labels = c(expression(phi["2"]), 
+                                expression(phi["1"]), expression(f))) +
+  scale_shape_manual(values = c(15, 16, 17), name = '',
+                     labels = c(expression(phi["2"]),
+                                expression(phi["1"]), expression(f)))
 a2
 
 ##### CV heat map ####
@@ -651,10 +695,56 @@ a3 <- ggplot(cv.few %>% filter(variable %nin% obs.pars), aes(x = factor(det.abun
         panel.spacing.x = unit(0.75, "line"))
 a3
 
+### CV dot plot 
+a3 <- ggplot(cv.few %>% filter(variable %nin% obs.pars), 
+             aes(x = det.abund, y = cv, col = factor(variable), group = factor(variable),
+                 shape = factor(variable))) +
+  geom_point() + geom_line() +
+  # geom_tile(color = 'grey50') +
+  xlab('Count survey detection') + ylab('Coefficient of variation (CV)') +
+  #facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
+  facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', 
+             labeller = labeller(dataset = dataset.labs, 
+                                 lambda.scenario = lambda.labs)) +
+  scale_fill_gradient2(name = "CV",
+                       #mid = "white", high = rainbow2[2], midpoint = 0) +
+                       #low = "white", mid = rainbow2[3], high = rainbow2[2]) + #,
+                       low = "white", high = rainbow2[2]) + #,
+  #midpoint = 0.5) + # TODO - note change here 
+  theme_bw() +
+  theme(legend.position = 'top',
+        #plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
+        #strip.text = element_text(color = "black"),
+        legend.text = element_text(size = 12),
+        axis.text = element_text(size = 10, vjust = 0.75),
+        axis.title = element_text(size = 10, vjust = 0.75),
+        strip.text = element_text(color = "black", size = 8),
+        strip.background = element_rect(fill = NA, color = "black"),
+        axis.text.x = element_text(angle = 0, vjust = 1.5),
+        panel.border = element_rect(color = "black", fill = NA),  
+        #panel.spacing.x = unit(0.75, "line")) +
+        #scale_color_manual(values = rainbow2[-c(1,4)], name = '') +
+        #scale_shape_manual(values = c(15, 16, 17), name = '')
+        panel.spacing.x = unit(0.75, "line"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  scale_x_discrete(labels = c("L", "M", "H")) +
+  scale_color_manual(values = rainbow2[-c(1,4)], name = '', 
+                     labels = c(expression(phi["2"]), 
+                                expression(phi["1"]), expression(f))) +
+  scale_shape_manual(values = c(15, 16, 17), name = '',
+                     labels = c(expression(phi["2"]),
+                                expression(phi["1"]), expression(f)))
+a3
+
 ##### Combine ####
-plot_grid(a1, a2, a3, nrow = 3, labels = "AUTO",
+# plot_grid(a1, a2, a3, nrow = 3, labels = "AUTO",
+#           align = "hv", label_size = 12)
+# ggsave(width = 6.5, height = 18, here("figures", 'final', "fig3.png"))
+
+plot_grid(a1, a2, a3, nrow = 2, labels = "AUTO",
           align = "hv", label_size = 12)
-ggsave(width = 6.5, height = 18, here("figures", "fig3_NEW.png"))
+ggsave(width = 8, height = 12, here("figures", 'final', "fig3.png"))
 
 
 #### Figure 4: RMSE and bias ecological parameters x true fecundity ####
@@ -673,7 +763,7 @@ b1 <- ggplot(plot.vals, aes(x = life_hist, y = value, col = factor(variable), gr
   geom_point() + geom_line() +
   geom_hline(aes(yintercept = 0), linetype = 'dotted') +
   #scale_x_discrete(labels = c("L", "M", "H")) +
-  xlab('Life History Type') + ylab('Relative bias') +
+  xlab('Life history type') + ylab('Relative bias') +
   facet_grid(dataset~lambda.scenario, scales = 'free_x') + #, 
   #labeller = labeller(dataset = dataset.labs, phi1_cat = phi1_cat_lab)) +
   #labeller = label_wrap_gen()) +
@@ -691,7 +781,7 @@ b1 <- ggplot(plot.vals, aes(x = life_hist, y = value, col = factor(variable), gr
         #plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
         strip.text = element_text(color = "black", size = 8),
         strip.background = element_rect(fill = NA, color = "black"),
-        axis.text.x = element_text(angle = 0, vjust = 1.5),
+        axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
         panel.border = element_rect(color = "black", fill = NA),  
         panel.spacing.x = unit(0.75, "line"),
         panel.grid.major = element_blank(),
@@ -701,67 +791,140 @@ b1 <- ggplot(plot.vals, aes(x = life_hist, y = value, col = factor(variable), gr
 b1
 
 ##### RMSE heat map ####
-b2 <- ggplot(plot.vals.rmse, aes(x = life_hist, y = factor(variable), fill = value)) +
-  geom_tile(color = 'grey50') +
-  xlab('Life History Type') + ylab('') +
-  facet_grid(dataset~lambda.scenario, drop = T, scales = 'free_x'#, 
-             #labeller = labeller(dataset = dataset.labs, phi1_cat = phi1_cat_lab)
-  ) + #label_wrap_gen()) +
-  #scale_fill_gradient2(name = "RMSE", mid = "white", high = rainbow2[2], midpoint = 0) +
-  scale_fill_gradient2(name = "RMSE", low = "white", high = rainbow2[2],
-                       n.breaks = 4) +
-  #midpoint = 1, limits = c(0, 2), breaks = c(0, 0.5, 1, 1.5, 2)) +
-  theme_light() +
-  scale_y_discrete(labels = c(expression(φ["2"]), expression(φ["1"]), expression(f))) +
-  #scale_x_discrete(labels = c("L", "M", "H")) +
+# b2 <- ggplot(plot.vals.rmse, aes(x = life_hist, y = factor(variable), fill = value)) +
+#   geom_tile(color = 'grey50') +
+#   xlab('Life history type') + ylab('') +
+#   facet_grid(dataset~lambda.scenario, drop = T, scales = 'free_x'#, 
+#              #labeller = labeller(dataset = dataset.labs, phi1_cat = phi1_cat_lab)
+#   ) + #label_wrap_gen()) +
+#   #scale_fill_gradient2(name = "RMSE", mid = "white", high = rainbow2[2], midpoint = 0) +
+#   scale_fill_gradient2(name = "RMSE", low = "white", high = rainbow2[2],
+#                        n.breaks = 4) +
+#   #midpoint = 1, limits = c(0, 2), breaks = c(0, 0.5, 1, 1.5, 2)) +
+#   theme_light() +
+#   scale_y_discrete(labels = c(expression(φ["2"]), expression(φ["1"]), expression(f))) +
+#   #scale_x_discrete(labels = c("L", "M", "H")) +
+#   theme(legend.position = 'top',
+#         legend.title = element_text(size = 10, vjust = 0.75),
+#         legend.text = element_text(size = 10),
+#         axis.text = element_text(size = 10, vjust = 0.75),
+#         axis.title = element_text(size = 10, vjust = 0.75),
+#         axis.ticks.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank(),
+#         strip.text = element_text(color = "black", size = 8),
+#         strip.background = element_rect(fill = NA, color = "black"),
+#         axis.text.x = element_text(angle = 0, vjust = 1.5),
+#         panel.border = element_rect(color = "black", fill = NA),  
+#         panel.spacing.x = unit(0.75, "line"))
+# b2
+
+#dot plot
+b2 <- ggplot(plot.vals.rmse, 
+             aes(x = life_hist, y = value, col = factor(variable), group = factor(variable),
+                 shape = factor(variable))) +
+  geom_point() + geom_line() +
+  # geom_tile(color = 'grey50') +
+  xlab('Life history type') + ylab('RMSE') +
+  #facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
+  facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', 
+             labeller = labeller(dataset = dataset.labs, 
+                                 lambda.scenario = lambda.labs)) +
+  scale_fill_gradient2(name = "RMSE",
+                       #mid = "white", high = rainbow2[2], midpoint = 0) +
+                       #low = "white", mid = rainbow2[3], high = rainbow2[2]) + #,
+                       low = "white", high = rainbow2[2]) + #,
+  #midpoint = 0.5) + # TODO - note change here 
+  scale_color_manual(values = rainbow2[-c(1,4)], name = '',
+                     labels = c(expression(phi["2"]), expression(phi["1"]), expression(f))) +
+  scale_shape_manual(values = c(15, 16, 17), name = '',
+                     labels = c(expression(phi["2"]), expression(phi["1"]), expression(f))) +
+  theme_bw() +
   theme(legend.position = 'top',
-        legend.title = element_text(size = 10, vjust = 0.75),
-        legend.text = element_text(size = 10),
+        legend.text = element_text(size = 12),
         axis.text = element_text(size = 10, vjust = 0.75),
         axis.title = element_text(size = 10, vjust = 0.75),
-        axis.ticks.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
+        #plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
         strip.text = element_text(color = "black", size = 8),
         strip.background = element_rect(fill = NA, color = "black"),
-        axis.text.x = element_text(angle = 0, vjust = 1.5),
+        axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
         panel.border = element_rect(color = "black", fill = NA),  
-        panel.spacing.x = unit(0.75, "line"))
+        panel.spacing.x = unit(0.75, "line"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
 b2
 
 ##### CV heat map ####
-b3 <- ggplot(plot.vals.cv, aes(x = life_hist, y = factor(variable), fill = value)) +
-  geom_tile(color = 'grey50') +
-  xlab('Life History Type') + ylab('') +
-  facet_grid(dataset~lambda.scenario, drop = T, scales = 'free_x'#, 
-             #labeller = labeller(dataset = dataset.labs, phi1_cat = phi1_cat_lab)
-  ) + #label_wrap_gen()) +
-  #scale_fill_gradient2(name = "RMSE", mid = "white", high = rainbow2[2], midpoint = 0) +
-  scale_fill_gradient2(name = "CV", low = "white", high = rainbow2[2]) + #,
-  # midpoint = 0.5) +
-  theme_light() +
-  scale_y_discrete(labels = c(expression(φ["2"]), expression(φ["1"]), expression(f))) +
-  #scale_x_discrete(labels = c("L", "M", "H")) +
+# b3 <- ggplot(plot.vals.cv, aes(x = life_hist, y = factor(variable), fill = value)) +
+#   geom_tile(color = 'grey50') +
+#   xlab('Life history type') + ylab('') +
+#   facet_grid(dataset~lambda.scenario, drop = T, scales = 'free_x'#, 
+#              #labeller = labeller(dataset = dataset.labs, phi1_cat = phi1_cat_lab)
+#   ) + #label_wrap_gen()) +
+#   #scale_fill_gradient2(name = "RMSE", mid = "white", high = rainbow2[2], midpoint = 0) +
+#   scale_fill_gradient2(name = "CV", low = "white", high = rainbow2[2]) + #,
+#   # midpoint = 0.5) +
+#   theme_light() +
+#   scale_y_discrete(labels = c(expression(φ["2"]), expression(φ["1"]), expression(f))) +
+#   #scale_x_discrete(labels = c("L", "M", "H")) +
+#   theme(legend.position = 'top',
+#         legend.title = element_text(size = 10, vjust = 0.75),
+#         legend.text = element_text(size = 10),
+#         axis.text = element_text(size = 10, vjust = 0.75),
+#         axis.title = element_text(size = 10, vjust = 0.75),
+#         axis.ticks.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank(),
+#         strip.text = element_text(color = "black", size = 8),
+#         strip.background = element_rect(fill = NA, color = "black"),
+#         axis.text.x = element_text(angle = 0, vjust = 1.5),
+#         panel.border = element_rect(color = "black", fill = NA),  
+#         panel.spacing.x = unit(0.75, "line"))
+# b3
+
+## dot plot
+b3 <- ggplot(plot.vals.cv, 
+             aes(x = life_hist, y = value, col = factor(variable), group = factor(variable),
+                 shape = factor(variable))) +
+  geom_point() + geom_line() +
+  # geom_tile(color = 'grey50') +
+  xlab('Life history type') + ylab('Coefficient of variation (CV)') +
+  #facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
+  facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', 
+             labeller = labeller(dataset = dataset.labs, 
+                                 lambda.scenario = lambda.labs)) +
+  scale_fill_gradient2(name = "CV",
+                       #mid = "white", high = rainbow2[2], midpoint = 0) +
+                       #low = "white", mid = rainbow2[3], high = rainbow2[2]) + #,
+                       low = "white", high = rainbow2[2]) + #,
+  #midpoint = 0.5) + # TODO - note change here 
+  scale_color_manual(values = rainbow2[-c(1,4)], name = '',
+                     labels = c(expression(phi["2"]), expression(phi["1"]), expression(f))) +
+  scale_shape_manual(values = c(15, 16, 17), name = '',
+                     labels = c(expression(phi["2"]), expression(phi["1"]), expression(f))) +
+  theme_bw() +
   theme(legend.position = 'top',
-        legend.title = element_text(size = 10, vjust = 0.75),
-        legend.text = element_text(size = 10),
+        legend.text = element_text(size = 12),
         axis.text = element_text(size = 10, vjust = 0.75),
         axis.title = element_text(size = 10, vjust = 0.75),
-        axis.ticks.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
+        #plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
         strip.text = element_text(color = "black", size = 8),
         strip.background = element_rect(fill = NA, color = "black"),
-        axis.text.x = element_text(angle = 0, vjust = 1.5),
+        axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
         panel.border = element_rect(color = "black", fill = NA),  
-        panel.spacing.x = unit(0.75, "line"))
+        panel.spacing.x = unit(0.75, "line"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
 b3
 
 ##### Combine ####
-plot_grid(b1, b2, b3, nrow = 3, labels = "AUTO", align = "hv", label_size = 12)
-ggsave(width = 6.5, height = 18, here("figures", "fig4_NEW.png"))
+# plot_grid(b1, b2, b3, nrow = 3, labels = "AUTO", align = "hv", label_size = 12)
+# ggsave(width = 6.5, height = 18, here("figures", "fig4_NEW.png"))
+
+plot_grid(b1, b2, b3, nrow = 2, labels = "AUTO", align = "hv", label_size = 12)
+ggsave(width = 11, height = 15, here("figures", 'final', "fig4.png"))
 
 
 #### Figure 5: Lambda trends ####
@@ -820,11 +983,11 @@ c2
 
 ##### Combine ####
 plot_grid(c1, c2, ncol = 2, labels = "AUTO", align = "hv", label_size = 12)
-ggsave(width = 15, height = 6, here("figures", "fig5_NEW.png"))
+ggsave(width = 10, height = 7.5, here("figures", 'final', "fig5.png"))
 
 ################### Appendix #########################
 
-#### Figure 6: RMSE and bias observation parameters x count survey detection ####
+#### Figure 6: RMSE, CV, bias of estimated observation parameters x count survey detection ####
 
 ##### Bias dot plot ####
 d1 <- ggplot(rel.bias.few  %>% filter(variable %in% obs.pars), 
@@ -835,6 +998,7 @@ d1 <- ggplot(rel.bias.few  %>% filter(variable %in% obs.pars),
   xlab('Count survey detection') + ylab('Relative bias') +
   facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
   ylim(c(-0.3, 0.3)) +
+  scale_x_discrete(labels = c("L", "M", "H")) +
   theme_bw() +
   theme(legend.position = 'top',
         plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
@@ -845,53 +1009,157 @@ d1 <- ggplot(rel.bias.few  %>% filter(variable %in% obs.pars),
         panel.spacing.x = unit(0.75, "line")) +
   scale_color_manual(values = rainbow2[c(2,3)], name = '') +
   scale_shape_manual(values = c(15,16), name = '')
-d1
+# d1
 
-
-##### RMSE heat map ####
-d2 <- ggplot(rmse.few %>% filter(variable %in% obs.pars), aes(x = factor(det.abund), y = variable, fill = rmse)) +
-  geom_tile(color = 'grey50') +
-  xlab('Count survey detection') + ylab('') +
-  facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
-  scale_fill_gradient2(name = "RMSE",
-                       mid = "white", high = rainbow2[2], n.breaks = 3) +
-  # breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2")) +
-  theme_light() +
+##### RMSE dot ####
+d2 <- ggplot(rmse.few  %>% filter(variable %in% obs.pars), 
+             aes(x = det.abund, y = rmse, col = factor(variable), group = factor(variable),
+                 shape = factor(variable))) +
+  geom_point() + geom_line() +
+  geom_hline(aes(yintercept = 0), linetype = 'dotted') +
+  xlab('Count survey detection') + ylab('RMSE') +
+  facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
+  scale_x_discrete(labels = c("L", "M", "H")) +
+  theme_bw() +
   theme(legend.position = 'top',
-        legend.title = element_text(size = 11, vjust = 0.75),
-        axis.ticks.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
+        plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
         strip.text = element_text(color = "black"),
         strip.background = element_rect(fill = NA, color = "black"),
         axis.text.x = element_text(angle = 0, vjust = 1.5),
         panel.border = element_rect(color = "black", fill = NA),  
-        panel.spacing.x = unit(0.75, "line"))
-d2
+        panel.spacing.x = unit(0.75, "line")) +
+  scale_color_manual(values = rainbow2[c(2,3)], name = '') +
+  scale_shape_manual(values = c(15,16), name = '')
+# d2
 
-##### CV heat map ####
-d3 <- ggplot(cv.few %>% filter(variable %in% obs.pars), aes(x = factor(det.abund), y = variable, fill = cv)) +
-  geom_tile(color = 'grey50') +
-  xlab('Count survey detection') + ylab('') +
-  facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
-  scale_fill_gradient2(name = "CV",
-                       mid = "white", high = rainbow2[2], n.breaks = 4) +
-  # breaks = c(-0.2, 0, 0.2), n.breaks = 3, labels = c("-0.2", "0", "0.2")) +
-  theme_light() +
+##### CV dot ####
+d3 <- ggplot(cv.few  %>% filter(variable %in% obs.pars), 
+             aes(x = det.abund, y = cv, col = factor(variable), group = factor(variable),
+                 shape = factor(variable))) +
+  geom_point() + geom_line() +
+  geom_hline(aes(yintercept = 0), linetype = 'dotted') +
+  xlab('Count detection survey') + ylab('Coefficient of variation (CV)') +
+  facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
+  scale_x_discrete(labels = c("L", "M", "H")) +
+  theme_bw() +
   theme(legend.position = 'top',
-        legend.title = element_text(size = 11, vjust = 0.75),
-        axis.ticks.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
+        plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
         strip.text = element_text(color = "black"),
         strip.background = element_rect(fill = NA, color = "black"),
         axis.text.x = element_text(angle = 0, vjust = 1.5),
         panel.border = element_rect(color = "black", fill = NA),  
-        panel.spacing.x = unit(0.75, "line"))
-d3
+        panel.spacing.x = unit(0.75, "line")) +
+  scale_color_manual(values = rainbow2[c(2,3)], name = '') +
+  scale_shape_manual(values = c(15,16), name = '')
+# d3
 
 ##### Combine ####
-plot_grid(d1, d2, d3, nrow = 3, labels = "AUTO", align = "hv", label_size = 12)
-ggsave(width = 6.5, height = 18, here("figures", "fig6_NEW.png"))
+plot_grid(d1, d2, d3, nrow = 2, labels = "AUTO", align = "hv", label_size = 12)
+ggsave(width = 12, height = 15, here("figures", 'final', "fig6.png"))
+
+#### Amanda is trying things ####
+## curious about emphasizing model structure/datasets included
+
+dataset.labs <- c("Full IPM", "Abundance & Prod.", "Abundance & Surv.", "Abundance Only")
+names(dataset.labs) <- c("Full IPM", "Abundance & Productivity", "Abundance & Survival", "Abundance Only")
+lambda.labs <- c("Decrease", "Stable", "Increase")
+names(lambda.labs) <- c("Decreasing", "Stable", "Increasing")
+
+##### Bias 
+ggplot(rel.bias.few  %>% filter(variable %nin% obs.pars), 
+             aes(x = det.abund, y = bias, col = factor(dataset), group = factor(dataset),
+                 shape = factor(dataset))) +
+  geom_point() + 
+  geom_line() +
+  geom_hline(aes(yintercept = 0), linetype = 'dotted') +
+  #facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
+  #ylim(c(-1.75, 1.75)) +
+  scale_x_discrete(labels = c("L", "M", "H")) +
+  xlab('Count survey detection') + 
+  ylab('Relative bias') +
+  facet_grid(lambda.scenario~variable, scales = 'free_x')
+
+
+### RMSE dot plot 
+ggplot(rmse.few  %>% filter(variable %nin% obs.pars), 
+       aes(x = det.abund, y = rmse, col = factor(dataset), group = factor(dataset),
+           shape = factor(dataset))) +
+  geom_point() + 
+  geom_line() +
+  geom_hline(aes(yintercept = 0), linetype = 'dotted') +
+  #facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
+  #ylim(c(-1.75, 1.75)) +
+  scale_x_discrete(labels = c("L", "M", "H")) +
+  xlab('Count survey detection') + 
+  ylab('RMSE') +
+  facet_grid(lambda.scenario~variable, scales = 'free_x')
+
+### CV dot plot 
+ggplot(cv.few  %>% filter(variable %nin% obs.pars), 
+       aes(x = det.abund, y = cv, col = factor(dataset), group = factor(dataset),
+           shape = factor(dataset))) +
+  geom_point() + 
+  geom_line() +
+  geom_hline(aes(yintercept = 0), linetype = 'dotted') +
+  #facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
+  #ylim(c(-1.75, 1.75)) +
+  scale_x_discrete(labels = c("L", "M", "H")) +
+  xlab('Count survey detection') + 
+  ylab('CV') +
+  facet_grid(lambda.scenario~variable, scales = 'free_x')
+
+### and what about the 'power' of MR.det?
+test.bias <- rel.bias.sc  %>% 
+  group_by(lambda.scenario, scenario, variable, det.MR, det.abund, det.prod, dataset) %>%
+  dplyr::summarize(value = mean(value)) %>%
+  filter(dataset == 'Full IPM')
+                  
+ggplot(test.bias, 
+       aes(x = det.MR, y = value, col = factor(variable), group = factor(variable),
+           shape = factor(variable))) +
+  geom_point() + 
+  geom_line() +
+  geom_hline(aes(yintercept = 0), linetype = 'dotted') +
+  #facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
+  #ylim(c(-1.75, 1.75)) +
+  scale_x_discrete(labels = c("L", "M", "H")) +
+  xlab('MR detection') + 
+  ylab('Relative bias') +
+  facet_nested(lambda.scenario + det.prod~det.abund + scenario, scales = 'free_x')
+
+test.rmse <- rmse.vals.sc  %>% 
+  group_by(lambda.scenario, scenario, variable, det.MR, det.abund, det.prod, dataset) %>%
+  dplyr::summarize(value = mean(value)) %>%
+  filter(dataset == 'Full IPM' & scenario == 2)
+
+ggplot(test.rmse, 
+       aes(x = det.MR, y = value, col = factor(variable), group = factor(variable),
+           shape = factor(variable))) +
+  geom_point() + 
+  geom_line() +
+  geom_hline(aes(yintercept = 0), linetype = 'dotted') +
+  #facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
+  #ylim(c(-1.75, 1.75)) +
+  scale_x_discrete(labels = c("L", "M", "H")) +
+  xlab('MR detection') + 
+  ylab('RMSE') +
+  facet_nested(lambda.scenario + det.prod~det.abund, scales = 'free_x')
+
+test.cv <- cv.vals.sc  %>% 
+  group_by(lambda.scenario, scenario, variable, det.MR, det.abund, det.prod, dataset) %>%
+  dplyr::summarize(value = mean(value)) %>%
+  filter(dataset == 'Full IPM' & scenario == 2)
+
+ggplot(test.cv, 
+       aes(x = det.MR, y = value, col = factor(variable), group = factor(variable),
+           shape = factor(variable))) +
+  geom_point() + 
+  geom_line() +
+  geom_hline(aes(yintercept = 0), linetype = 'dotted') +
+  #facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
+  #ylim(c(-1.75, 1.75)) +
+  scale_x_discrete(labels = c("L", "M", "H")) +
+  xlab('MR detection') + 
+  ylab('CV') +
+  facet_nested(lambda.scenario + det.prod~det.abund, scales = 'free_x')
+

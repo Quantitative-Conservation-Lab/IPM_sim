@@ -8,14 +8,15 @@ library(here)
 library(purrr)
 library(beepr)
 
-# TODO needs adjusted for user
-# set working directory
-setwd("C:/Users/AbbyBratt/Desktop/IPM SIM results/")
-
 # load data ####
-highout <- read_csv("highout.csv")
-medout <- read_csv("medout.csv")
-lowout <- read_csv("lowout.csv")
+row.high <- read_csv(here('results', "highout.csv"))
+row.med <- read_csv(here('results', "medout.csv"))
+row.low <- read_csv(here('results', "lowout.csv"))
+
+#added these bc I already had the others loaded from manuscript_figs.R (AJW)
+highout <- row.high
+medout <- row.med
+lowout <- row.low
 
 # function to compute quantiles of every variable in dataframe ####
 p <- c(0.025, 0.5, 0.975)
@@ -97,7 +98,7 @@ for (i in 1:14) { # number of years
     mutate("geomean.{i}" :=  NA_real_)
 }
 
-beep(sound = 8)
+# beep(sound = 8)
 rm("highout", "medout", "lowout")
 
 # compute geometric means #######
@@ -127,6 +128,6 @@ for(i in 1:dim(row.high)[1]) {
 }
 
 # save objects  #######
-write_csv(row.low, "row_low.csv")
-write_csv(row.med, "row_med.csv")
-write_csv(row.high, "row_high.csv")
+write_csv(row.low, here('results', "row_low_geo.csv"))
+write_csv(row.med, here('results', "row_med_geo.csv"))
+write_csv(row.high, here('results', "row_high_geo.csv"))
