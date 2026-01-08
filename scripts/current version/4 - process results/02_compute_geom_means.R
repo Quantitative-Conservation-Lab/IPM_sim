@@ -8,7 +8,7 @@ library(here)
 library(purrr)
 library(beepr)
 
-# TODO needs checked
+# TODO needs adjusted for user
 # set working directory
 setwd("C:/Users/AbbyBratt/Desktop/IPM SIM results/")
 
@@ -126,7 +126,7 @@ for(i in 1:dim(row.high)[1]) {
   }
 }
 
-# save objects
+# save objects  #######
 write_csv(row.low, "row_low.csv")
 write_csv(row.med, "row_med.csv")
 write_csv(row.high, "row_high.csv")
