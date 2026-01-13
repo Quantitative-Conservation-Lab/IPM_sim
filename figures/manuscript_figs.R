@@ -556,9 +556,9 @@ a1 <- ggplot(rel.bias.few  %>% filter(variable %nin% obs.pars),
   scale_x_discrete(labels = c("L", "M", "H")) +
   xlab('Count survey detection') + 
   ylab('Relative bias') +
-  facet_grid(dataset~lambda.scenario, scales = 'free', 
+  facet_grid(dataset~lambda.scenario, scales = 'free_x', 
              labeller = labeller(dataset = dataset.labs, lambda.scenario = lambda.labs)) +
-  # scale_y_continuous(limits = c(-1.2, 1.2), breaks = c(-1,0,1)) +
+  scale_y_continuous(limits = c(-1.2, 1.2), breaks = c(-1,0,1)) +
   theme_bw() +
   theme(legend.position = 'top',
         #plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
@@ -586,39 +586,39 @@ a1
 
 
 ##### RMSE heat map ####
-a2 <- ggplot(rmse.few %>% filter(variable %nin% obs.pars), aes(x = factor(det.abund), 
-                                                               y = variable, fill = rmse)) +
-  geom_tile(color = 'grey50') +
-  xlab('Count survey detection') + ylab('') +
-  #facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
-  facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', 
-             labeller = labeller(dataset = dataset.labs, 
-                                 lambda.scenario = lambda.labs)) +
-  scale_fill_gradient2(name = "RMSE",
-                       #mid = "white", high = rainbow2[2], midpoint = 0) +
-                       #low = "white", mid = rainbow2[3], high = rainbow2[2]) + #,
-                       low = "white", high = rainbow2[2]) + #,
-  #midpoint = 0.5) + # TODO - note change here 
-  theme_light() +
-  scale_y_discrete(labels = c(expression(phi["2"]), expression(phi["1"]), expression(f))) +
-  scale_x_discrete(labels = c("L", "M", "H")) +
-  theme(legend.position = 'top',
-        #legend.title = element_text(size = 11, vjust = 0.75),
-        legend.title = element_text(size = 10, vjust = 0.75),
-        legend.text = element_text(size = 12),
-        axis.text = element_text(size = 10, vjust = 0.75),
-        axis.title = element_text(size = 10, vjust = 0.75),
-        strip.text = element_text(color = "black", size = 8),
-        axis.ticks.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        #strip.text = element_text(color = "black"),
-        strip.background = element_rect(fill = NA, color = "black"),
-        axis.text.x = element_text(angle = 0, vjust = 1.5),
-        panel.border = element_rect(color = "black", fill = NA),  
-        panel.spacing.x = unit(0.75, "line"))
-a2
+# a2 <- ggplot(rmse.few %>% filter(variable %nin% obs.pars), aes(x = factor(det.abund), 
+#                                                                y = variable, fill = rmse)) +
+#   geom_tile(color = 'grey50') +
+#   xlab('Count survey detection') + ylab('') +
+#   #facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
+#   facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', 
+#              labeller = labeller(dataset = dataset.labs, 
+#                                  lambda.scenario = lambda.labs)) +
+#   scale_fill_gradient2(name = "RMSE",
+#                        #mid = "white", high = rainbow2[2], midpoint = 0) +
+#                        #low = "white", mid = rainbow2[3], high = rainbow2[2]) + #,
+#                        low = "white", high = rainbow2[2]) + #,
+#   #midpoint = 0.5) + # TODO - note change here 
+#   theme_light() +
+#   scale_y_discrete(labels = c(expression(phi["2"]), expression(phi["1"]), expression(f))) +
+#   scale_x_discrete(labels = c("L", "M", "H")) +
+#   theme(legend.position = 'top',
+#         #legend.title = element_text(size = 11, vjust = 0.75),
+#         legend.title = element_text(size = 10, vjust = 0.75),
+#         legend.text = element_text(size = 12),
+#         axis.text = element_text(size = 10, vjust = 0.75),
+#         axis.title = element_text(size = 10, vjust = 0.75),
+#         strip.text = element_text(color = "black", size = 8),
+#         axis.ticks.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank(),
+#         #strip.text = element_text(color = "black"),
+#         strip.background = element_rect(fill = NA, color = "black"),
+#         axis.text.x = element_text(angle = 0, vjust = 1.5),
+#         panel.border = element_rect(color = "black", fill = NA),  
+#         panel.spacing.x = unit(0.75, "line"))
+# a2
 
 ### RMSE dot plot 
 a2 <- ggplot(rmse.few %>% filter(variable %nin% obs.pars), 
@@ -627,7 +627,6 @@ a2 <- ggplot(rmse.few %>% filter(variable %nin% obs.pars),
   geom_point() + geom_line() +
   # geom_tile(color = 'grey50') +
   xlab('Count survey detection') + ylab('RMSE') +
-  #facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
   facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', 
              labeller = labeller(dataset = dataset.labs, 
                                  lambda.scenario = lambda.labs)) +
@@ -663,37 +662,37 @@ a2 <- ggplot(rmse.few %>% filter(variable %nin% obs.pars),
 a2
 
 ##### CV heat map ####
-a3 <- ggplot(cv.few %>% filter(variable %nin% obs.pars), aes(x = factor(det.abund), y = variable, fill = cv)) +
-  geom_tile(color = 'grey50') +
-  xlab('Count survey detection') + ylab('') +
-  #facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
-  facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', 
-             labeller = labeller(dataset = dataset.labs, 
-                                 lambda.scenario = lambda.labs)) +
-  scale_fill_gradient2(name = "CV",
-                       #mid = "white", high = rainbow2[2], midpoint = 0) +
-                       low = "white", high = rainbow2[2]) + #,
-  #midpoint = 0.5) + # TODO - note change here 
-  theme_light() +
-  scale_y_discrete(labels = c(expression(phi["2"]), expression(phi["1"]), expression(f))) +
-  scale_x_discrete(labels = c("L", "M", "H")) +
-  theme(legend.position = 'top',
-        #legend.title = element_text(size = 11, vjust = 0.75),
-        legend.title = element_text(size = 10, vjust = 0.75),
-        legend.text = element_text(size = 12),
-        axis.text = element_text(size = 10, vjust = 0.75),
-        axis.title = element_text(size = 10, vjust = 0.75),
-        strip.text = element_text(color = "black", size = 8),
-        axis.ticks.y = element_blank(),
-        axis.ticks.x = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        #strip.text = element_text(color = "black"),
-        strip.background = element_rect(fill = NA, color = "black"),
-        axis.text.x = element_text(angle = 0, vjust = 1.5),
-        panel.border = element_rect(color = "black", fill = NA),  
-        panel.spacing.x = unit(0.75, "line"))
-a3
+# a3 <- ggplot(cv.few %>% filter(variable %nin% obs.pars), aes(x = factor(det.abund), y = variable, fill = cv)) +
+#   geom_tile(color = 'grey50') +
+#   xlab('Count survey detection') + ylab('') +
+#   #facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
+#   facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free', 
+#              labeller = labeller(dataset = dataset.labs, 
+#                                  lambda.scenario = lambda.labs)) +
+#   scale_fill_gradient2(name = "CV",
+#                        #mid = "white", high = rainbow2[2], midpoint = 0) +
+#                        low = "white", high = rainbow2[2]) + #,
+#   #midpoint = 0.5) + # TODO - note change here 
+#   theme_light() +
+#   scale_y_discrete(labels = c(expression(phi["2"]), expression(phi["1"]), expression(f))) +
+#   scale_x_discrete(labels = c("L", "M", "H")) +
+#   theme(legend.position = 'top',
+#         #legend.title = element_text(size = 11, vjust = 0.75),
+#         legend.title = element_text(size = 10, vjust = 0.75),
+#         legend.text = element_text(size = 12),
+#         axis.text = element_text(size = 10, vjust = 0.75),
+#         axis.title = element_text(size = 10, vjust = 0.75),
+#         strip.text = element_text(color = "black", size = 8),
+#         axis.ticks.y = element_blank(),
+#         axis.ticks.x = element_blank(),
+#         panel.grid.major = element_blank(),
+#         panel.grid.minor = element_blank(),
+#         #strip.text = element_text(color = "black"),
+#         strip.background = element_rect(fill = NA, color = "black"),
+#         axis.text.x = element_text(angle = 0, vjust = 1.5),
+#         panel.border = element_rect(color = "black", fill = NA),  
+#         panel.spacing.x = unit(0.75, "line"))
+# a3
 
 ### CV dot plot 
 a3 <- ggplot(cv.few %>% filter(variable %nin% obs.pars), 
@@ -764,11 +763,11 @@ b1 <- ggplot(plot.vals, aes(x = life_hist, y = value, col = factor(variable), gr
   geom_hline(aes(yintercept = 0), linetype = 'dotted') +
   #scale_x_discrete(labels = c("L", "M", "H")) +
   xlab('Life history type') + ylab('Relative bias') +
-  facet_grid(dataset~lambda.scenario, scales = 'free_x') + #, 
+  facet_grid(dataset~lambda.scenario, scales = 'free') + #, 
   #labeller = labeller(dataset = dataset.labs, phi1_cat = phi1_cat_lab)) +
   #labeller = label_wrap_gen()) +
   #ylim(c(-1.75, 1.75)) +
-  scale_y_continuous(limits = c(-1.75, 1.75), breaks = c(-1.5,0,1.5)) +
+  # scale_y_continuous(limits = c(-1.75, 1.75), breaks = c(-1.5,0,1.5)) +
   scale_color_manual(values = rainbow2[-c(1,4)], name = '',
                      labels = c(expression(phi["2"]), expression(phi["1"]), expression(f))) +
   scale_shape_manual(values = c(15, 16, 17), name = '',
@@ -789,7 +788,7 @@ b1 <- ggplot(plot.vals, aes(x = life_hist, y = value, col = factor(variable), gr
 #scale_color_manual(values = rainbow2[-c(1,4)], name = '') +
 #scale_shape_manual(values = c(15, 16, 17), name = '')
 b1
-
+# 
 ##### RMSE heat map ####
 # b2 <- ggplot(plot.vals.rmse, aes(x = life_hist, y = factor(variable), fill = value)) +
 #   geom_tile(color = 'grey50') +
@@ -1109,23 +1108,31 @@ ggplot(cv.few  %>% filter(variable %nin% obs.pars),
   facet_grid(lambda.scenario~variable, scales = 'free_x')
 
 ### and what about the 'power' of MR.det?
+### and now trying to understand why bias in phi1 *increases* with increasing det.MR? 
 test.bias <- rel.bias.sc  %>% 
   group_by(lambda.scenario, scenario, variable, det.MR, det.abund, det.prod, dataset) %>%
   dplyr::summarize(value = mean(value)) %>%
-  filter(dataset == 'Full IPM')
-                  
-ggplot(test.bias, 
-       aes(x = det.MR, y = value, col = factor(variable), group = factor(variable),
-           shape = factor(variable))) +
+  #phi1 has the most/only bias in full IPM - exploring
+  filter(dataset == 'Full IPM' & variable == 'phi1') %>%
+  #check this
+  transform(scenario = factor(scenario, levels = c(1,3,2),
+                              labels = c('fast', 'mod', 'slow')))
+
+#doesn't seem to vary over det.prod               
+ggplot(test.bias %>% filter(det.prod == 'High'), 
+       aes(x = det.MR, y = value, col = factor(lambda.scenario), 
+           group = factor(lambda.scenario),
+           shape = factor(lambda.scenario))) +
   geom_point() + 
   geom_line() +
   geom_hline(aes(yintercept = 0), linetype = 'dotted') +
-  #facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
   #ylim(c(-1.75, 1.75)) +
   scale_x_discrete(labels = c("L", "M", "H")) +
   xlab('MR detection') + 
   ylab('Relative bias') +
-  facet_nested(lambda.scenario + det.prod~det.abund + scenario, scales = 'free_x')
+  # facet_nested(det.prod~det.abund + scenario, scales = 'free_x')
+  facet_nested(scenario~det.abund, scales = 'free_x') +
+  theme_bw()
 
 test.rmse <- rmse.vals.sc  %>% 
   group_by(lambda.scenario, scenario, variable, det.MR, det.abund, det.prod, dataset) %>%
