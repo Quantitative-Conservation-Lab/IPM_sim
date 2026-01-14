@@ -252,7 +252,7 @@ simData <- function(indfates, n.years,
       #detection of true marked individuals:
       #since inital marking is constant prob
       #and resight is constant prob
-      #phi.1 #probability you were marked as 1 year old
+      #p.1 #probability you were marked as 1 year old
       #p.ad #probability you were marked as adult
       in.mark.a<-ch.a<-matrix(0,nrow=mr_ind.a, ncol=mr_t.a)
       for(i in 1:mr_ind.a){
@@ -338,7 +338,7 @@ simData <- function(indfates, n.years,
       }#where 3 is chick, 1 is 1yearold, 2 is adult in add_age_chtrue
       #since inital marking is constant prob
       #and resight is constant prob
-      #phi.1 #probability you were marked as 1 year old
+      #p.1 #probability you were marked as 1 year old
       #p.ad #probability you were marked as adult
       in.mark.j<-ch.j<-matrix(0,nrow=mr_ind.j, ncol=mr_t.j)
       for(i in 1:mr_ind.j){

@@ -1113,13 +1113,13 @@ test.bias <- rel.bias.sc  %>%
   group_by(lambda.scenario, scenario, variable, det.MR, det.abund, det.prod, dataset) %>%
   dplyr::summarize(value = mean(value)) %>%
   #phi1 has the most/only bias in full IPM - exploring
-  filter(dataset == 'Full IPM' & variable == 'phi1') %>%
+  filter(dataset == 'Full IPM' & det.prod == 'High') %>%
   #check this
   transform(scenario = factor(scenario, levels = c(1,3,2),
                               labels = c('fast', 'mod', 'slow')))
 
 #doesn't seem to vary over det.prod               
-ggplot(test.bias %>% filter(det.prod == 'High'), 
+ggplot(test.bias %>% filter(variable == 'phiad'), 
        aes(x = det.MR, y = value, col = factor(lambda.scenario), 
            group = factor(lambda.scenario),
            shape = factor(lambda.scenario))) +
@@ -1134,39 +1134,93 @@ ggplot(test.bias %>% filter(det.prod == 'High'),
   facet_nested(scenario~det.abund, scales = 'free_x') +
   theme_bw()
 
-test.rmse <- rmse.vals.sc  %>% 
-  group_by(lambda.scenario, scenario, variable, det.MR, det.abund, det.prod, dataset) %>%
-  dplyr::summarize(value = mean(value)) %>%
-  filter(dataset == 'Full IPM' & scenario == 2)
+ggplot(test.bias %>% filter(variable == 'phi1'), 
+       aes(x = det.MR, y = value, col = factor(lambda.scenario), 
+           group = factor(lambda.scenario),
+           shape = factor(lambda.scenario))) +
+  geom_point() + 
+  geom_line() +
+  geom_hline(aes(yintercept = 0), linetype = 'dotted') +
+  #ylim(c(-1.75, 1.75)) +
+  scale_x_discrete(labels = c("L", "M", "H")) +
+  xlab('MR detection') + 
+  ylab('Relative bias') +
+  # facet_nested(det.prod~det.abund + scenario, scales = 'free_x')
+  facet_nested(scenario~det.abund, scales = 'free_x') +
+  theme_bw()
 
-ggplot(test.rmse, 
-       aes(x = det.MR, y = value, col = factor(variable), group = factor(variable),
+ggplot(test.bias %>% filter(lambda.scenario == 'Stable'), 
+       aes(x = det.MR, y = value, col = factor(variable), 
+           group = factor(variable),
            shape = factor(variable))) +
   geom_point() + 
   geom_line() +
   geom_hline(aes(yintercept = 0), linetype = 'dotted') +
-  #facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
   #ylim(c(-1.75, 1.75)) +
   scale_x_discrete(labels = c("L", "M", "H")) +
   xlab('MR detection') + 
-  ylab('RMSE') +
-  facet_nested(lambda.scenario + det.prod~det.abund, scales = 'free_x')
+  ylab('Relative bias') +
+  # facet_nested(det.prod~det.abund + scenario, scales = 'free_x')
+  facet_nested(scenario~det.abund, scales = 'free_x') +
+  theme_bw()
 
-test.cv <- cv.vals.sc  %>% 
+###what about not in the full IPM?
+test.bias2 <- rel.bias.sc  %>% 
   group_by(lambda.scenario, scenario, variable, det.MR, det.abund, det.prod, dataset) %>%
   dplyr::summarize(value = mean(value)) %>%
-  filter(dataset == 'Full IPM' & scenario == 2)
+  #phi1 has the most/only bias in full IPM - exploring
+  filter(scenario == 2) 
 
-ggplot(test.cv, 
-       aes(x = det.MR, y = value, col = factor(variable), group = factor(variable),
+ggplot(test.bias2 %>% filter(lambda.scenario == 'Stable' & !is.na(det.MR)) %>%
+         filter(det.prod == 'Medium'), 
+       aes(x = det.MR, y = value, col = factor(variable), 
+           group = factor(variable),
            shape = factor(variable))) +
   geom_point() + 
   geom_line() +
   geom_hline(aes(yintercept = 0), linetype = 'dotted') +
-  #facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
   #ylim(c(-1.75, 1.75)) +
   scale_x_discrete(labels = c("L", "M", "H")) +
   xlab('MR detection') + 
-  ylab('CV') +
-  facet_nested(lambda.scenario + det.prod~det.abund, scales = 'free_x')
+  ylab('Relative bias') +
+  # facet_nested(det.prod~det.abund + scenario, scales = 'free_x')
+  facet_nested(dataset~det.abund, scales = 'free') +
+  theme_bw()
 
+# test.rmse <- rmse.vals.sc  %>% 
+#   group_by(lambda.scenario, scenario, variable, det.MR, det.abund, det.prod, dataset) %>%
+#   dplyr::summarize(value = mean(value)) %>%
+#   filter(dataset == 'Full IPM' & scenario == 2)
+# 
+# ggplot(test.rmse, 
+#        aes(x = det.MR, y = value, col = factor(variable), group = factor(variable),
+#            shape = factor(variable))) +
+#   geom_point() + 
+#   geom_line() +
+#   geom_hline(aes(yintercept = 0), linetype = 'dotted') +
+#   #facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
+#   #ylim(c(-1.75, 1.75)) +
+#   scale_x_discrete(labels = c("L", "M", "H")) +
+#   xlab('MR detection') + 
+#   ylab('RMSE') +
+#   facet_nested(lambda.scenario + det.prod~det.abund, scales = 'free_x')
+# 
+# test.cv <- cv.vals.sc  %>% 
+#   group_by(lambda.scenario, scenario, variable, det.MR, det.abund, det.prod, dataset) %>%
+#   dplyr::summarize(value = mean(value)) %>%
+#   filter(dataset == 'Full IPM' & scenario == 2)
+# 
+# ggplot(test.cv, 
+#        aes(x = det.MR, y = value, col = factor(variable), group = factor(variable),
+#            shape = factor(variable))) +
+#   geom_point() + 
+#   geom_line() +
+#   geom_hline(aes(yintercept = 0), linetype = 'dotted') +
+#   #facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
+#   #ylim(c(-1.75, 1.75)) +
+#   scale_x_discrete(labels = c("L", "M", "H")) +
+#   xlab('MR detection') + 
+#   ylab('CV') +
+#   facet_nested(lambda.scenario + det.prod~det.abund, scales = 'free_x')
+
+#
