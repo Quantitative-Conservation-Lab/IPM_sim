@@ -556,9 +556,9 @@ a1 <- ggplot(rel.bias.few  %>% filter(variable %nin% obs.pars),
   scale_x_discrete(labels = c("L", "M", "H")) +
   xlab('Count survey detection') + 
   ylab('Relative bias') +
-  facet_grid(dataset~lambda.scenario, scales = 'free_x', 
+  facet_grid(dataset~lambda.scenario, scales = 'free', 
              labeller = labeller(dataset = dataset.labs, lambda.scenario = lambda.labs)) +
-  scale_y_continuous(limits = c(-1.2, 1.2), breaks = c(-1,0,1)) +
+  # scale_y_continuous(limits = c(-1.2, 1.2), breaks = c(-1,0,1)) +
   theme_bw() +
   theme(legend.position = 'top',
         #plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
@@ -827,7 +827,7 @@ b2 <- ggplot(plot.vals.rmse,
   # geom_tile(color = 'grey50') +
   xlab('Life history type') + ylab('RMSE') +
   #facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
-  facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', 
+  facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free', 
              labeller = labeller(dataset = dataset.labs, 
                                  lambda.scenario = lambda.labs)) +
   scale_fill_gradient2(name = "RMSE",
@@ -891,7 +891,7 @@ b3 <- ggplot(plot.vals.cv,
   # geom_tile(color = 'grey50') +
   xlab('Life history type') + ylab('Coefficient of variation (CV)') +
   #facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', labeller = label_wrap_gen()) +
-  facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free_x', 
+  facet_grid(dataset ~ lambda.scenario, drop = T, scales = 'free', 
              labeller = labeller(dataset = dataset.labs, 
                                  lambda.scenario = lambda.labs)) +
   scale_fill_gradient2(name = "CV",
