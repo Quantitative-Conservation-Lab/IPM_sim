@@ -138,6 +138,8 @@ simPopTrajectory <- function(n.years, age.init,
     } #i loop over population size at time t
     
     #see how many chicks were produced and add them to the population to track
+    #question for Hannah.... this counts 'if you've ever been alive'? 
+    #if 50 in first year, add chicks, then.... does this get rid of chicks that die? 
     chickst[t]<-sum(indfates[3,t,], na.rm=T)
     inpop[t+1]<-inpop[t]+chickst[t]
     #question for hannah; what's this 'if' statement accomplishing?
