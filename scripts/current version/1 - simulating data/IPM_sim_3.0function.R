@@ -20,7 +20,7 @@ simPopTrajectory <- function(n.years, age.init,
   # states: [1yrolds, Adult, chicks, Dead]
   # indfates is an array [states,year,individual]
   
-  # fate of juveniles
+  # fate of juveniles; question/check for Hannah - line 25 is 'time' and all the others are 'time+1'
   oneyr_fatefn<-function(ind,time){
     indfates[3,time,ind]<-rpois(1,fec) # number of chicks produced by ind. in current year
     zsurv1<-rbinom(1,1,phi.ad)
@@ -51,7 +51,7 @@ simPopTrajectory <- function(n.years, age.init,
   chickfatefn<-function(ind, time){
     zsurv1<-rbinom(1,1,phi.1)
     indfates[1,time+1,ind]<-ifelse(zsurv1==1,1,NA) #do they survive to become 1yrolds
-    indfates[4,time+1,ind]<-ifelse(zsurv1==0, 1,NA) #or die?
+    indfates[4,time+1,ind]<-ifelse(zsurv1==0,1,NA) #or die?
     indfates[2,time+1,ind]<-NA #not adult yet
     indfates[3,time+1,ind]<-NA
     return(indfates[,(time+1),ind])
@@ -106,6 +106,7 @@ simPopTrajectory <- function(n.years, age.init,
 
   #simulate their fates
   #set up array for individuals
+  #first dimension is age groups; j, adult, chicks, dead
   indfates<-array(dim=c(4, nplus1.years, no.ani.max))
   #add in the stable age distribution to start from, given our total starting population
   age1<-round(sum(age.init)*sad[1])
@@ -132,17 +133,19 @@ simPopTrajectory <- function(n.years, age.init,
       }else if(tempstep[i,t]==2){ #if adults
         indfates[,(t:(t+1)),i]<-adfatefn(ind = i, time = t)#[,(t:(t+1))]
       } else if(tempstep[i,t]==3){ #if dead
-        indfates[,((t+1)),i]<-deadfn(ind = i, time = t)#[,(t:(t+1))]
+        indfates[,(t+1),i]<-deadfn(ind = i, time = t)#[,(t:(t+1))]
       }
     } #i loop over population size at time t
+    
     #see how many chicks were produced and add them to the population to track
     chickst[t]<-sum(indfates[3,t,], na.rm=T)
     inpop[t+1]<-inpop[t]+chickst[t]
+    #question for hannah; what's this 'if' statement accomplishing?
     if(inpop[t+1]>inpop[t]){
       indfates[3,t,(inpop[t]+1):inpop[t+1]]<-1
       for(i in (inpop[t]+1):inpop[t+1]){
         #if chicks were produced, do they survive
-        indfates[,((t+1)),i]<-chickfatefn(ind = i, time = t)#[,(t:(t+1))]
+        indfates[,(t+1),i]<-chickfatefn(ind = i, time = t)#[,(t:(t+1))]
       }
     }else{}
   }
@@ -329,7 +332,7 @@ simData <- function(indfates, n.years,
         ch.true.j[i,first.j[i]:last.j[i]]<-1
       }
       
-      #code to track the ages, 3 is for chicks, 2 1years, 2 adults
+      #code to track the ages, 3 is for chicks, 1 1years, 2 adults
       add_age_chtrue.j<-matrix(0,nrow=mr_ind.j, ncol=mr_t.j)
       for(i in 1:mr_ind.j){
         for(x in (first.j[i]):last.j[i]){
@@ -462,10 +465,10 @@ temptrue<-simPopTrajectory(n.years=10,
                            age.init=c(20,20),
                            phi.1=0.5,phi.ad=0.6,
                            f=1)
-temp<-simData(indfates = temptrue$indfates, 
+temp.high<-simData(indfates = temptrue$indfates, 
               n.years=10,
-              p.1=0.6,
-              p.ad=0.6,
+              p.1=0.85,
+              p.ad=0.85,
               p.prod=0.6,
               n.sam=0.6,
               p.count=0.6,
