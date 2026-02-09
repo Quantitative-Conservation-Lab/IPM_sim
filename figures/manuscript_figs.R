@@ -515,7 +515,8 @@ toplot <- bind_rows(toplot1, toplot2, toplot3) %>%
   mutate(det.abund = factor(det.abund, levels = c("L", "M", "H"), labels = c("Low", "Medium", "High"))) %>% 
   mutate(det.prod = factor(det.prod, levels = c("L", "M", "H"), labels = c("Low", "Medium", "High"))) %>% 
   mutate(det.MR = factor(det.MR, levels = c("L", "M", "H"), labels = c("Low", "Medium", "High"))) %>% 
-  transform(lambda.scenario = factor(lambda,
+  transform(lambda.scenario = factor(lambda.scenario,
+                                     levels = c("Decreasing", "Stable", "Increasing"),
                                      labels = c("Decreasing", "Stable", "Increasing"))) %>%
   transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'),
                              labels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'))) 
