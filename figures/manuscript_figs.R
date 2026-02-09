@@ -32,6 +32,7 @@ library(tidybayes)
 
 rainbow2 <- c("violetred4", "dodgerblue3", 'deepskyblue1', "#4aaaa5", "#a3d39c", "#f6b61c", "chocolate2", "red3")
 
+#demographic scenarios: lambda, life history, vital rate combos
 scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>% 
   separate_wider_delim(cols = scenario, delim = ",", 
                        names = c("life_hist", "trend")) %>% 
@@ -80,6 +81,16 @@ high.dat <- row.high %>%
   transform(lambda.scenario = 'Increasing')
 
 all.dat <- bind_rows(low.dat, med.dat, high.dat)
+
+#checking MR.det in all.dat
+# debug.dat <- all.dat %>%
+#   filter(trend == 'stable' & life_hist == 'mod') %>%
+#   dplyr::select(mean.p, phi1.obs, phi1.true, simscenarios) %>%
+#   filter(simscenarios %in% c(1,7)) %>%
+#   transform(bias = (phi1.obs-phi1.true)/phi1.true) %>%
+#   group_by(simscenarios) %>%
+#   dplyr::summarize(mean_bias = mean(bias))
+    
 
 # summarize medians, sd, cvs, relative bias, and error at the model (sim) level
 ##scenario: life history (fast, slow, mod); TODO check factor levels?
@@ -191,6 +202,7 @@ rel.bias.sc <- all.stats %>%
   rename("variable" = 'param', "value" = "rb_mean")
 
 # merge back onto bias df so can have something to name/view the 'scenarios' 
+# check here 1:3
 rel.bias.dem <- rel.bias.sc %>%
   inner_join(scenarios %>% 
                arrange(trend) %>% 
@@ -1171,7 +1183,29 @@ test.bias2 <- rel.bias.sc  %>%
   #phi1 has the most/only bias in full IPM - exploring
   filter(scenario == 2) 
 
-ggplot(test.bias2 %>% filter(lambda.scenario == 'Stable' & !is.na(det.MR)) %>%
+ggplot(test.bias2 %>% filter(lambda.scenario == 'Stable') %>%
+         filter(det.prod == 'Medium'), 
+       aes(x = det.MR, y = value, col = factor(variable), 
+           group = factor(variable),
+           shape = factor(variable))) +
+  geom_point() + 
+  geom_line() +
+  geom_hline(aes(yintercept = 0), linetype = 'dotted') +
+  #ylim(c(-1.75, 1.75)) +
+  scale_x_discrete(labels = c("L", "M", "H")) +
+  xlab('MR detection') + 
+  ylab('Relative bias') +
+  # facet_nested(det.prod~det.abund + scenario, scales = 'free_x')
+  facet_nested(dataset~det.abund, scales = 'free') +
+  theme_bw()
+
+test.cv2 <- cv.vals.sc  %>% 
+  group_by(lambda.scenario, scenario, variable, det.MR, det.abund, det.prod, dataset) %>%
+  dplyr::summarize(value = mean(value)) %>%
+  #phi1 has the most/only bias in full IPM - exploring
+  filter(scenario == 2) 
+
+ggplot(test.cv2 %>% filter(lambda.scenario == 'Stable') %>%
          filter(det.prod == 'Medium'), 
        aes(x = det.MR, y = value, col = factor(variable), 
            group = factor(variable),
