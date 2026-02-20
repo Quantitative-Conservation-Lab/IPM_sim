@@ -15,7 +15,10 @@ scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>%
 # low.lam.combos <- readRDS(here("data","low.lam.params.RDS"))
 # med.lam.combos <- readRDS(here("data","med.lam.params.RDS"))
 # high.lam.combos <- readRDS(here("data","high.lam.params.RDS"))
-# TODO fix hard coding
+
+
+#HAS: just picked on, could do whichever
+
 # low.lam.params <- scenarios %>% 
 #   filter(trend == "decline")
 med.lam.params <- scenarios %>% 
@@ -23,14 +26,7 @@ med.lam.params <- scenarios %>%
 # high.lam.params <- scenarios %>% 
 #   filter(trend == "increase")
 
-# source functions
-# TODO - don't source from here? or do? what is easier to avoid hardcoding
-# source(here("scripts", "current version",
-#             "0 - preparing scenarios", "compute_time_calc.R"))
 
-# source(here("scripts", "current version",
-#             "1 - simulating data", "IPM_sim_2.0function.R"))
-#changed to latest simulate script
 source(here("scripts", "current version",
             "1 - simulating data", "IPM_sim_3.0function.R"))
 source(here("scripts", "current version",
@@ -38,24 +34,7 @@ source(here("scripts", "current version",
 source(here("scripts", "current version",
             "3 - run models", "run_scenarios_helperFns.R"))
 
-# TODO cut this bit
-# determine priority score for scenarios
-# scenarios %>% mutate(priority = NA_integer_)
-# for (i in 1:nrow(scenarios)) {
-#   tmp <- scenarios[i, 1:3]
-#   tmp <- tmp[!is.na(tmp)]
-#   scenarios[i, "priority"] <- length(unique(tmp))
-# }
-# scenarios <- scenarios %>% arrange(priority) %>% # save in prioritized order
-#   transform(simscenarios = 1:144)
 
-# write.csv(scenarios, here::here('data', 'scenario_ID.csv'), row.names = F)
-
-# which.prio.1 <- which(scenarios$priority == 1)
-# which.prio.2 <- which(scenarios$priority == 2)
-# which.prio.3 <- which(scenarios$priority == 3)
-
-# TODO note hardcoding here. this seems like an ok place to define it though
 # detection levels
 detect.l <- 0.3
 detect.m <- 0.5
@@ -66,8 +45,7 @@ detect <- c(detect.l, detect.m, detect.h)
 data_scenarios <- readRDS(here("data", "data_scenarios.RDS"))
 
 # MCMC settings #######
-# TODO this is defined differently elsewhere
-# does it need to be longer for convergence, especially given stricter cutoff
+
 nb <- 100000#0 #burn-in # TODO play with this
 ni <- nb + nb #total iterations
 nt <- 10  #thin
@@ -81,10 +59,23 @@ nc <- 3  #chains
 #j is sims per
 
 i<-1
-j<-3
+j<-4
 
-medpopTraj <- readRDS(here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
+#HAS: here I'm not using the already created true pops
+#but can turn that back on
+#medpopTraj <- readRDS(here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
 
+#HAS: here I am setting phi1 and phiad equal to see if that 
+# fixes the issues - if it does then may need to redo some of the 
+#sim code
+
+temptrue<-simPopTrajectory(n.years=15,
+                           age.init=c(150,150),
+                           phi.1=0.35,phi.ad=0.35,
+                           f=2)
+#check whether phi1=phiad removes the bias
+
+#below, just picking detection levels for the non-mr data
 d<-17
 # translate detection levels into numbes
 det.levels <- data_scenarios[d, 1:3]
@@ -96,7 +87,8 @@ det.numeric[which(det.numeric== "NA")] <- NA
 
 #only look at full IPM
 
-medpopDat <- simData (indfates = medpopTraj$indfates,
+#Simulating data collection from 'truth'
+medpopDat <- simData (indfates = temptrue$indfates,# medpopTraj$indfates,
                       n.years = 15,
                       #n.data.types = c(0.25,0.25,0.25),
                       #remove n.data.types (not needed in newest)
@@ -104,12 +96,18 @@ medpopDat <- simData (indfates = medpopTraj$indfates,
                       #HAS: removed ADonly
                       p.1 =1,# as.numeric(det.numeric[2]), #
                       p.ad = 1,#as.numeric(det.numeric[2]), #
-                      p.count = 0.25,#as.numeric(det.numeric[1]), #
-                      p.prod = 0.25,#as.numeric(det.numeric[3]), #
+                      p.count = as.numeric(det.numeric[1]), #
+                      p.prod = as.numeric(det.numeric[3]), #
                       BinMod = T,
                       n.sam = 3,
                       sig = 0,
                       productivity = T)
+
+#HAS: lazy coding here, just changing the 'truth'
+comb <- med.lam.params[i,]
+comb$phi1<-0.35
+comb$phiad<-0.35
+comb$fec<-2
 
 runIPMmod <- function(nb, ni, nt, nc,
                       popDat, popTraj,
@@ -166,9 +164,10 @@ runIPMmod <- function(nb, ni, nt, nc,
 }
 
 popDat <- medpopDat
-popTraj <- medpopTraj
+#HAS: for popTraj, can change back to those already created sims
+#here, just using that phi1=phiad trajectory from above
+popTraj <- temptrue#medpopTraj
 
-comb <- med.lam.params[i,]
 
 # run model and save results ####
 medout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, 
@@ -177,14 +176,18 @@ medout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc,
 
 medout1<-data.frame(do.call(rbind, medout))
 
-hist(medout1$N1.5.)
-abline(v=medpopTraj$Nouts[1,5], col="red")
 
+hist(medout1$N1.5.)
+#abline(v=medpopTraj$Nouts[1,5], col="red")
+abline(v=temptrue$Nouts[1,5])
 
 hist(medout1$mean.phi.1.)
+abline(v=comb$phi1, col="red")
+
+hist(medout1$mean.phi.2.)
 abline(v=comb$phiad, col="red")
 
-hist(medout1$Nad.5.)
-abline(v=medpopTraj$Nouts[2,5], col="red")
-
+hist(medout1$Nad.10.)
+#abline(v=medpopTraj$Nouts[2,10], col="red")
+abline(v=temptrue$Nouts[2,10], col="red")
 
