@@ -58,9 +58,10 @@ data_scenarios <- readRDS(here("data", "data_scenarios.RDS"))
 ##################### Data Prep ###########################
 
 # NOTE - this is slow, files are large
-row.low <- read.csv(file = here('results', 'lowout.csv'))
-row.med <- read.csv(file = here('results', 'medout.csv'))
-row.high <- read.csv(file = here('results', 'highout.csv'))
+row.low <- read.csv(file = here('results', 'testing', 'lowout.csv'))
+# row.med <- read.csv(file = here('results', 'medout.csv'))
+row.med <- read.csv(file = here('results', 'testing', 'medout.csv'))
+row.high <- read.csv(file = here('results', 'testing', 'highout.csv'))
 
 low.dat <- row.low %>%
   dplyr::rename(phi1 = `mean.phi.1.`, phiad = `mean.phi.2.`) %>% 
@@ -83,13 +84,13 @@ high.dat <- row.high %>%
 all.dat <- bind_rows(low.dat, med.dat, high.dat)
 
 #checking MR.det in all.dat
-# debug.dat <- all.dat %>%
-#   filter(trend == 'stable' & life_hist == 'mod') %>%
-#   dplyr::select(mean.p, phi1.obs, phi1.true, simscenarios) %>%
-#   filter(simscenarios %in% c(1,7)) %>%
-#   transform(bias = (phi1.obs-phi1.true)/phi1.true) %>%
-#   group_by(simscenarios) %>%
-#   dplyr::summarize(mean_bias = mean(bias))
+debug.dat <- all.dat %>%
+  # filter(trend == 'stable' & life_hist == 'mod') %>%
+  dplyr::select(mean.p, phi1.obs, phi1.true, simscenarios) %>%
+  # filter(simscenarios %in% c(1,7)) %>%
+  transform(bias = (phi1.obs-phi1.true)/phi1.true) %>%
+  group_by(simscenarios) %>%
+  dplyr::summarize(mean_bias = mean(bias))
     
 
 # summarize medians, sd, cvs, relative bias, and error at the model (sim) level
@@ -1077,50 +1078,7 @@ names(dataset.labs) <- c("Full IPM", "Abundance & Productivity", "Abundance & Su
 lambda.labs <- c("Decrease", "Stable", "Increase")
 names(lambda.labs) <- c("Decreasing", "Stable", "Increasing")
 
-##### Bias 
-ggplot(rel.bias.few  %>% filter(variable %nin% obs.pars), 
-             aes(x = det.abund, y = bias, col = factor(dataset), group = factor(dataset),
-                 shape = factor(dataset))) +
-  geom_point() + 
-  geom_line() +
-  geom_hline(aes(yintercept = 0), linetype = 'dotted') +
-  #facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
-  #ylim(c(-1.75, 1.75)) +
-  scale_x_discrete(labels = c("L", "M", "H")) +
-  xlab('Count survey detection') + 
-  ylab('Relative bias') +
-  facet_grid(lambda.scenario~variable, scales = 'free_x')
-
-
-### RMSE dot plot 
-ggplot(rmse.few  %>% filter(variable %nin% obs.pars), 
-       aes(x = det.abund, y = rmse, col = factor(dataset), group = factor(dataset),
-           shape = factor(dataset))) +
-  geom_point() + 
-  geom_line() +
-  geom_hline(aes(yintercept = 0), linetype = 'dotted') +
-  #facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
-  #ylim(c(-1.75, 1.75)) +
-  scale_x_discrete(labels = c("L", "M", "H")) +
-  xlab('Count survey detection') + 
-  ylab('RMSE') +
-  facet_grid(lambda.scenario~variable, scales = 'free_x')
-
-### CV dot plot 
-ggplot(cv.few  %>% filter(variable %nin% obs.pars), 
-       aes(x = det.abund, y = cv, col = factor(dataset), group = factor(dataset),
-           shape = factor(dataset))) +
-  geom_point() + 
-  geom_line() +
-  geom_hline(aes(yintercept = 0), linetype = 'dotted') +
-  #facet_grid(dataset~lambda.scenario, scales = 'free_x', labeller = label_wrap_gen()) +
-  #ylim(c(-1.75, 1.75)) +
-  scale_x_discrete(labels = c("L", "M", "H")) +
-  xlab('Count survey detection') + 
-  ylab('CV') +
-  facet_grid(lambda.scenario~variable, scales = 'free_x')
-
-### and what about the 'power' of MR.det?
+### what about the 'power' of MR.det?
 ### and now trying to understand why bias in phi1 *increases* with increasing det.MR? 
 test.bias <- rel.bias.sc  %>% 
   group_by(lambda.scenario, scenario, variable, det.MR, det.abund, det.prod, dataset) %>%
@@ -1132,10 +1090,9 @@ test.bias <- rel.bias.sc  %>%
                               labels = c('fast', 'mod', 'slow')))
 
 #doesn't seem to vary over det.prod               
-ggplot(test.bias %>% filter(variable == 'phiad'), 
-       aes(x = det.MR, y = value, col = factor(lambda.scenario), 
-           group = factor(lambda.scenario),
-           shape = factor(lambda.scenario))) +
+ggplot(test.bias %>% filter(lambda.scenario == 'Stable'), 
+       aes(x = det.MR, y = value, col = variable, 
+           group = variable)) +
   geom_point() + 
   geom_line() +
   geom_hline(aes(yintercept = 0), linetype = 'dotted') +
@@ -1143,8 +1100,8 @@ ggplot(test.bias %>% filter(variable == 'phiad'),
   scale_x_discrete(labels = c("L", "M", "H")) +
   xlab('MR detection') + 
   ylab('Relative bias') +
-  # facet_nested(det.prod~det.abund + scenario, scales = 'free_x')
-  facet_nested(scenario~det.abund, scales = 'free_x') +
+  facet_nested(det.prod~det.abund + scenario, scales = 'free_x')
+  # facet_nested(scenario~det.abund, scales = 'free_x') +
   theme_bw()
 
 ggplot(test.bias %>% filter(variable == 'phi1'), 

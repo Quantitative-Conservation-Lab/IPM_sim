@@ -59,33 +59,34 @@ high.lam.params <- scenarios %>%
 # scenario <- dim(scenarios)[1]
 
 scenarios.picked <- nrow(low.lam.params) # TODO note change here
-sims.per <- 50 # TODO - is this what we decided? didn't we discuss either less
+sims.per <- 20 # TODO - is this what we decided? didn't we discuss either less
 data_scenarios <- readRDS(here("data", "data_scenarios.RDS"))
 
 # SLOW TO RUN 
-for (i in 1:scenarios.picked) { #scenarios picked
+for (i in 3:scenarios.picked) { #scenarios picked
   for (j in 1:sims.per) { # sims per
     for (k in 1:nrow(data_scenarios)) { # simulation scenario
+    # for (k in c(1,4,7,27,30,33)) { # simulation scenario
       #if (i == 25 & j == 25 & k == 63) next
       print(paste(i, j, k), sep = " ")
       #if (scenarios[k, "lambda"] == "L") {
-        out_L <- readRDS(paste("lowout", "-", i, "-", j, "-", k, ".RDS", sep = ""))
+        out_L <- readRDS(here('results', paste("lowout", "-", i, "-", j, "-", k, ".RDS", sep = "")))
         tmp <- max(gelman.diag(out_L, multivariate = FALSE)[[1]][, 1])
         # TODO - consider whether *everything* needs to have converged
         # TODO - for things that didn't converge, should we report on what didn't converge?
         # TODO - do we need to run longer? in that case need to fix that DLL error
         if (!is.na(tmp) & tmp <= 1.1) {
-          out_L <- out_L %>% 
-            collapse_chains() %>% 
-            as.matrix() %>% 
-            as.data.frame() %>% 
+          out_L <- out_L %>%
+            collapse_chains() %>%
+            as.matrix() %>%
+            as.data.frame() %>%
             filter(row_number() %% 60 == 1) %>% # thin chains
-            mutate(scenario= i) %>% 
-            mutate(sims = j) %>% 
+            mutate(scenario= i) %>%
+            mutate(sims = j) %>%
             mutate(simscenarios = k)
           assign(paste("lowout", "-", i, "-", j, "-", k, sep = ""), out_L)
         }
-        out_M <- readRDS(paste("medout", "-", i, "-", j, "-", k, ".RDS", sep = ""))
+        out_M <- readRDS(here('results', paste("medout", "-", i, "-", j, "-", k, ".RDS", sep = "")))
         tmp <- max(gelman.diag(out_M, multivariate = FALSE)[[1]][, 1])
         if (!is.na(tmp) & tmp <= 1.1) {
           out_M <- out_M %>% 
@@ -98,16 +99,16 @@ for (i in 1:scenarios.picked) { #scenarios picked
             mutate(simscenarios = k)
           assign(paste("medout", "-", i, "-", j, "-", k, sep = ""), out_M)
         }
-        out_H <- readRDS(paste("highout", "-", i, "-", j, "-", k, ".RDS", sep = ""))
+        out_H <- readRDS(here('results', paste("highout", "-", i, "-", j, "-", k, ".RDS", sep = "")))
         tmp <- max(gelman.diag(out_H, multivariate = FALSE)[[1]][, 1])
         if (!is.na(tmp) & tmp <= 1.1) {
-          out_H <- out_H %>% 
-            collapse_chains() %>% 
-            as.matrix() %>% 
-            as.data.frame() %>% 
+          out_H <- out_H %>%
+            collapse_chains() %>%
+            as.matrix() %>%
+            as.data.frame() %>%
             filter(row_number() %% 60 == 1) %>% # thin chains
-            mutate(scenario= i) %>% 
-            mutate(sims = j) %>% 
+            mutate(scenario= i) %>%
+            mutate(sims = j) %>%
             mutate(simscenarios = k)
           assign(paste("highout", "-", i, "-", j, "-", k, sep = ""), out_H)
         }
@@ -151,9 +152,9 @@ row.low <- do.call(bind_rows, lapply( ls(patt="lowout"), get) )
 row.med <- do.call(bind_rows, lapply( ls(patt="medout"), get) )
 row.high <- do.call(bind_rows, lapply( ls(patt="highout"), get) )
 
-write.csv(row.high, file = "highout.csv")
-write.csv(row.med, file = "medout.csv")
-write.csv(row.low, file = "lowout.csv")
+write.csv(row.high, file = here('results', 'testing', "highout.csv"))
+write.csv(row.med, file = here('results', 'testing', "medout.csv"))
+write.csv(row.low, file = here('results', 'testing', "lowout.csv"))
 
 #rm(list = ls())
 

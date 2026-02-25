@@ -1,10 +1,10 @@
 library(tidyverse)
 library(here)
 
-results_dir <- here("loon_results")
+# results_dir <- here("loon_results")
 
 # Step 1: List files matching the more general pattern
-files <- list.files(results_dir, pattern = "^(highout|lowout|medout)-\\d+-\\d+-\\d+\\.RDS$", full.names = FALSE)
+files <- list.files(here('results'), pattern = "^(highout|lowout|medout)-\\d+-\\d+-\\d+\\.RDS$", full.names = FALSE)
 
 # Step 2: Extract the numbers as before
 extract_numbers <- function(filename) {

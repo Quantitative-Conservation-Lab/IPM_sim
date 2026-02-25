@@ -67,11 +67,12 @@ detect.h <- 0.8
 detect <- c(detect.l, detect.m, detect.h)
 
 data_scenarios <- readRDS(here("data", "data_scenarios.RDS"))
+scenarios.picked <- nrow(low.lam.params) # TODO note change here
 
 # MCMC settings #######
 # TODO this is defined differently elsewhere
 # does it need to be longer for convergence, especially given stricter cutoff
-nb <- 100000#0 #burn-in # TODO play with this
+nb <- 120000#0 #burn-in # TODO play with this
 ni <- nb + nb #total iterations
 nt <- 10  #thin
 nc <- 3  #chains
@@ -89,13 +90,13 @@ registerDoParallel(cl)
 # d is scenario number
 
 # TODO tidy this up and create a globals doc
-scenarios.picked <- nrow(low.lam.params) # TODO note change here
 sims.per <- 50 # TODO - is this what we decided? didn't we discuss either less
+sims.per <- 75
 
 # TODO this for loop requires some recoding given new structure of 
 # scenarios and data scenarios
 #foreach(i = 1:scenarios.picked) %dopar% { # loop over population trajectory  #####
-foreach(j = 1:sims.per) %dopar% { # loop over population trajectory  #####
+foreach(j = 20:sims.per) %dopar% { # loop over population trajectory  #####
     
   library(here)
   library(nimble)
@@ -106,10 +107,7 @@ foreach(j = 1:sims.per) %dopar% { # loop over population trajectory  #####
     medpopTraj <- readRDS(here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     highpopTraj <- readRDS(here("data", "highTrajectories", paste("highpopTraj", "-", i, "-", j, ".RDS", sep = "")))
     for (d in 1:dim(data_scenarios)[1]) { # loop over model scenario  #####
-    
-    # TESTING
-    # for (d in 1:10) { # loop over model scenario  #####
-    #   print(paste0(d, " out of ", 10))
+      # print(paste0(d, " out of ", 10))
       
       # translate detection levels into numbes
       det.levels <- data_scenarios[d, 1:3]
@@ -333,7 +331,7 @@ foreach(j = 1:sims.per) %dopar% { # loop over population trajectory  #####
                                 n.years = 15,
                                 #n.data.types = c(0.25,0.25,0.25),
                                 #remove n.data.types (not needed in newest)
-                                #ADonly = F, 
+                                #ADonly = F,
                                 #HAS: removed ADonly
                                 p.1 = as.numeric(det.numeric[2]), #
                                 p.ad = as.numeric(det.numeric[2]), #
@@ -345,9 +343,9 @@ foreach(j = 1:sims.per) %dopar% { # loop over population trajectory  #####
                                 productivity = T)
           popDat <- lowpopDat
           popTraj <- lowpopTraj
-          
+
           comb <- low.lam.params[i,] # TODO
-          
+
           # run model and save results ####
           lowout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
           saveRDS(lowout, here("results", paste("lowout-",i,"-",j,"-",d,".RDS", sep = "")))
@@ -377,29 +375,29 @@ foreach(j = 1:sims.per) %dopar% { # loop over population trajectory  #####
           saveRDS(medout, here("results", paste("medout-",i,"-",j,"-",d,".RDS", sep = "")))
           rm(medout)
        # } else if (det.levels[4] == "H") { # simulate high trajectory data #####
-          highpopDat <- simData (indfates = highpopTraj$indfates,
-                                 n.years = 15,
-                                 #n.data.types = c(0.25,0.25,0.25),
-                                 #remove n.data.types (not needed in newest)
-                                 #ADonly = F, 
-                                 #HAS: removed ADonly
-                                 p.1 = as.numeric(det.numeric[2]), #
-                                 p.ad = as.numeric(det.numeric[2]), #
-                                 p.count = as.numeric(det.numeric[1]), #
-                                 p.prod = as.numeric(det.numeric[3]), #
-                                 BinMod = T,
-                                 n.sam = 3,
-                                 sig = 0,
-                                 productivity = T)
-          popDat <- highpopDat
-          popTraj <- highpopTraj
-          
-          comb <- high.lam.params[i,]
-          
-          # run model and save results ####
-          highout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
-          saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
-          rm(highout)
+       highpopDat <- simData (indfates = highpopTraj$indfates,
+                              n.years = 15,
+                              #n.data.types = c(0.25,0.25,0.25),
+                              #remove n.data.types (not needed in newest)
+                              #ADonly = F,
+                              #HAS: removed ADonly
+                              p.1 = as.numeric(det.numeric[2]), #
+                              p.ad = as.numeric(det.numeric[2]), #
+                              p.count = as.numeric(det.numeric[1]), #
+                              p.prod = as.numeric(det.numeric[3]), #
+                              BinMod = T,
+                              n.sam = 3,
+                              sig = 0,
+                              productivity = T)
+       popDat <- highpopDat
+       popTraj <- highpopTraj
+
+       comb <- high.lam.params[i,]
+
+       # run model and save results ####
+       highout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
+       saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
+       rm(highout)
        # }
       } # else
     } # scenarios row (d)
