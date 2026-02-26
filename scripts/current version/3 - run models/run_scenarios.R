@@ -92,6 +92,7 @@ registerDoParallel(cl)
 # TODO tidy this up and create a globals doc
 sims.per <- 50 # TODO - is this what we decided? didn't we discuss either less
 sims.per <- 75
+sims.per <- 25
 
 # TODO this for loop requires some recoding given new structure of 
 # scenarios and data scenarios

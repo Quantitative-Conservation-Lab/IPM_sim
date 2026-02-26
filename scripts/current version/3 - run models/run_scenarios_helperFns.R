@@ -19,7 +19,7 @@ marray <- function(CH){
   } #i
   # Calculate the number of individuals that is never recaptured
   for (t in 1:n.occasions){
-    m.array[t,n.occasions+1] <- m.array[t,1] - sum(m.array[t,2:n.occasions])
+    m.array[t,(n.occasions+1)] <- m.array[t,1] - sum(m.array[t,2:n.occasions])
   }
   out <- m.array[1:(n.occasions-1),2:(n.occasions+1)]
   return(out)

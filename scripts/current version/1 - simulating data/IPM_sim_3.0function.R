@@ -343,20 +343,21 @@ simData <- function(indfates, n.years,
       }#where 3 is chick, 1 is 1yearold, 2 is adult in add_age_chtrue
       #since inital marking is constant prob
       #and resight is constant prob
-      #p.1 #probability you were marked as 1 year old
       #p.ad #probability you were marked as adult
+      #p.1 #probability of....? 
       in.mark.j<-ch.j<-matrix(0,nrow=mr_ind.j, ncol=mr_t.j)
       for(i in 1:mr_ind.j){
-        if(age.j[i]==3){
+        if(age.j[i]==3){ #hatchlings
           in.mark.j[i,first.j[i]]<-rbinom(1,1,p.1*ch.true.j[i,first.j[i]])
-        } else{
-          in.mark.j[i,first.j[i]]<-rbinom(1,1,p.ad*ch.true.j[i,first.j[i]])
-        }
+        } #else{ #breeders
+          # in.mark.j[i,first.j[i]]<-rbinom(1,1,p.ad*ch.true.j[i,first.j[i]])
+        #}
         if(first.j[i]==mr_t.j) next
         for(t in (first.j[i]+1):last.j[i]){
-          if(add_age_chtrue.j[i,t]==3){ 
-            in.mark.j[i,t]<-rbinom(1,1,p.1*ch.true.j[i,t])
-          }
+          # if(add_age_chtrue.j[i,t]==3){ 
+          #   in.mark.j[i,t]<-rbinom(1,1,p.ad*ch.true.j[i,t])
+          #   # in.mark.j[i,t]<-rbinom(1,1,p.1*ch.true.j[i,t])
+          # }
           in.mark.j[i,t]<-rbinom(1,1,p.ad*ch.true.j[i,t])
         }
         ch.j[i,]<-in.mark.j[i,]

@@ -20,9 +20,7 @@ IPMmod<-nimbleCode({
   Nad[1] <- round(nad.start)
 
   for (t in 2:nyears){
-    # N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
-    #ajw try
-    N1[t] ~ dbin(mean.phi[2], round((N1[t-1] + Nad[t-1]) * f[t-1]))
+    N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
     Nad[t] ~ dbin(mean.phi[2],(Ntot[t-1]))
   }
 
@@ -76,8 +74,7 @@ IPMmod<-nimbleCode({
     pr.j[t,nyears]<-1-sum(pr.j[t,1:(nyears-1)])
   }
   for(t in 1:(nyears)){
-    # phi.j[t]<-mean.phi[1]
-    phi.j[t]<-mean.phi[2]
+    phi.j[t]<-mean.phi[1]
     phi.a[t]<-mean.phi[2]
     p[t]<-mean.p
   }
