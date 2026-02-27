@@ -173,8 +173,7 @@ nonests<-nimbleCode({
     pr.j[t,nyears]<-1-sum(pr.j[t,1:(nyears-1)])
   }
   for(t in 1:(nyears)){
-    # phi.j[t]<-mean.phi[1]
-    phi.j[t]<-mean.phi[2]
+    phi.j[t]<-mean.phi[1]
     phi.a[t]<-mean.phi[2]
     p[t]<-mean.p
   }
