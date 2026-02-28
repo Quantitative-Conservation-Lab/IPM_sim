@@ -2,6 +2,8 @@
 
 library(here)
 library(nimble)
+library(MCMCvis)
+library(coda)
 
 rm(list=ls())
 
@@ -13,7 +15,7 @@ source(here("scripts/current version/1 - simulating data/SJC_IPMsim","create.eh.
 #                        Simulation Parameters                       #
 #                                                                    #    
 ######################################################################
-sims <- 25
+sims <- 1
 
 # Number of years
 yrs <- 10 
@@ -136,8 +138,8 @@ for(s in 1:sims){
   #Initial values 
   inits =  function() {list(mean.phi=runif(2),mean.p=runif(1))} 
   
-  ni <- 1000
-  nb <- 200
+  ni <- 10000
+  nb <- 2000
   nc <- 4
   nt <- 1
   
@@ -155,20 +157,19 @@ for(s in 1:sims){
     summary = TRUE,
     samplesAsCodaMCMC = TRUE)
   
-  ########################################################
-  #nimble output 
-  ########################################################
   
-  #check diagnostics
-  MCMCtrace(object = samples.marr.age,
-           pdf = FALSE,
-           ind = TRUE)
+  ########################################################
+  #nimble output  
+  ########################################################
+  MCMCtrace(object = samples.marr.age$samples,
+            pdf = FALSE,
+            ind = TRUE)
   
   #summary 
   samples.marr.age$summary$all.chains 
   
   #Gelman-Rubin diagnostic
-  gelman.diag(samples.marr.age)
+  gelman.diag(samples.marr.age$samples)
   
   all.results[s,,] <- marr.age$summary$all.chains
 
