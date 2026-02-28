@@ -64,7 +64,7 @@ for(s in 1:sims){
   fec.mat <- matrix(f,nrow=nrow(surv.mat),ncol=yrs)
   
   # Initial population size per age class 
-  Ni <- c(10000, 10000)
+  Ni <- c(1000, 1000)
       
   # Create the true population for this simulation and year  
   ind <- create.population(phi = surv.mat, f = fec.mat, Im = rep(0, yrs), Ni = Ni)
@@ -221,7 +221,7 @@ for(s in 1:sims){
     return(pprob)
   }
       
-  constants <- list(n.occasions = yrs, nsurvs=nsurvs, pNinit = disc.unif(1, 10000)) 
+  constants <- list(n.occasions = yrs, nsurvs=nsurvs, pNinit = disc.unif(1, 1000)) 
   
   # Bundle data                         
   data <- list(marr.j = marray[,,1], marr.a = marray[,,2], rel.j = rowSums(marray[,,1]), rel.a = rowSums(marray[,,2]), count = count, fledge = P$rep.agg[-c(yrs),1], broods = P$rep.agg[-c(yrs),2])
