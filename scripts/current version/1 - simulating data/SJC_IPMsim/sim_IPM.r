@@ -22,11 +22,6 @@ sims <- 2
 # Number of years
 yrs <- 10 
 
-#Proportion of breeding population in sample
-pbrood <- 0.05
-
-#Probability of detection for abundance surveys
-pobs <- 0.2
 
 ######################################################################
 #                                                                    #  
@@ -76,7 +71,8 @@ for(s in 1:sims){
   ######################################################################
       
   # Detection probability for the population survey
-  pobs <- pobs
+  #Probability of detection for abundance surveys
+  pobs <- 0.2
   nsurvs <- 2 #number of surveys per year 
   
   # Create the population survey data
@@ -110,9 +106,9 @@ for(s in 1:sims){
   #                                                                    #    
   ######################################################################
       
-  # Probability to find a brood whose reproductive ouput is recorded
-  pbrood <- pbrood
-      
+  # Proportion of breeding population in sample
+  pbrood <- 0.05
+  
   # Create productivity data
   P <- create.reproduction(ind$IND, rep(pbrood, yrs))
       
