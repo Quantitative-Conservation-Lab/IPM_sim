@@ -215,7 +215,7 @@ MCMCtrace(object = samples.marr.age$samples,
           ind = TRUE)
 
 #summary 
-samples.marr.age$summary$all.chains 
+out12$summary$all.chains 
 
 #Gelman-Rubin diagnostic
 gelman.diag(samples.marr.age$samples)
