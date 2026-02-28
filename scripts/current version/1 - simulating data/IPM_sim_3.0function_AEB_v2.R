@@ -205,130 +205,318 @@ simData <- function(indfates, n.years,
     ind_mr.a<-IND_MR[1:3,1:n.years,] 
     ind_mr.j<-IND_MR[1:3,1:n.years,] 
     
-    rm.a<-numeric(dim(ind_mr.a)[3]) #vector to remove individuals
-    rm.j<-numeric(dim(ind_mr.j)[3]) #vector to remove individuals
+    # Initialize removal vectors
+    rm.a <- numeric(dim(ind_mr.a)[3])
+    rm.j <- numeric(dim(ind_mr.j)[3])
+    
+    # CORRECTED LOGIC: Separate individuals based on WHEN they were first DETECTED/MARKED
     for(i in 1:dim(ind_mr.a)[3]){
       
+      # Find occasions when individual was ALIVE as a chick (state 3)
       # at least one occasion where there is an entry for chick and no entry for 1:2
-      if(sum(!is.na(ind_mr.j[3,,i]) & ind_mr.j[3,,i]==1 & apply(ind_mr.j[1:2,,i], 2, function(x)all(is.na(x))))){
-        if (rbinom(1,1,p.prod) == 1) {
-          rm.j[i]<-0 # don't remove, up for marking as a chick
+      alive_as_chick <- which(!is.na(ind_mr.j[3,,i]) & 
+                                ind_mr.j[3,,i] == 1 & 
+                                apply(ind_mr.j[1:2,,i], 2, function(x)all(is.na(x))))
+      
+      # Find occasions when individual was ALIVE as juvenile/adult (states 1-2) 
+      alive_as_adult_occasions <- which(!is.na(ind_mr.a[1:2,,i]), arr.ind = TRUE)
+      
+      # Simulate detection/marking events
+      detected_as_chick <- NULL
+      detected_as_adult <- NULL
+      
+      # Check if marked as chick 
+      if(length(alive_as_chick) > 0) {
+        for(occasion in alive_as_chick) {
+          if(rbinom(1, 1, p.1) == 1) {
+            detected_as_chick <- c(detected_as_chick, occasion)
+          }
+        }
+      }
+      
+      # Check if marked as adult (using p.ad probability) 
+      if(length(alive_as_adult_occasions) > 0) {
+        for(row_idx in 1:nrow(alive_as_adult_occasions)) {
+          occasion <- alive_as_adult_occasions[row_idx, 2]
+          if(rbinom(1, 1, p.ad) == 1) {
+            detected_as_adult <- c(detected_as_adult, occasion)
+          }
+        }
+      }
+      
+      # Determine assignment based on FIRST detection
+      if(length(detected_as_chick) > 0 & length(detected_as_adult) > 0) {
+        # Detected in both life stages - assign based on which came first
+        first_chick_detection <- min(detected_as_chick)
+        first_adult_detection <- min(detected_as_adult)
+        
+        if(first_chick_detection < first_adult_detection) {
+          # First detected as chick - goes to juvenile array
+          rm.a[i] <- 1  # Remove from adult
+          rm.j[i] <- 0  # Keep in juvenile
         } else {
-          rm.j[i] <- 1
+          # First detected as adult - goes to adult array
+          rm.j[i] <- 1  # Remove from juvenile  
+          rm.a[i] <- 0  # Keep in adult
         }
-      }else{
-        rm.j[i]<-1 # otherwise remove
-      }
-      # entry either as new or established breeder, 
-      # and is not in the juvenile array
-      if(length(which(!is.na(ind_mr.a[1:2,,i])))>0 & rm.j[i]==1){
-        rm.a[i]<-0
-      }else{
-        rm.a[i]<-1 # otherwise remove
-      }
-    }
-    
-    # sample subset
-    if(sum(rm.a>0)){
-      ind_mr.a<-ind_mr.a[,,-which(rm.a==1)]
-      # use some prob of capture same as subsequent resight...
-      samp.a<-sample(1:(dim(ind_mr.a)[3]), round(p.ad*(dim(ind_mr.a)[3]))) %>% sort()
-      ind_mr.a<-ind_mr.a[,,samp.a]
-    }else{}
-    if(sum(rm.j>0)){
-      ind_mr.j<-ind_mr.j[,,-which(rm.j==1)]
-      # AEB note - let's band from nests...
-      # samp.j<-sample(1:(dim(ind_mr.j)[3]), round(p.prod*(dim(ind_mr.j)[3]))) %>% sort()
-      # ind_mr.j<-ind_mr.j[,,samp.j]
-    }else{}
-    
-    age.a<-first.a<-last.a<-numeric() # age, first and last encounters
-    age.j<-first.j<-last.j<-numeric() # age, first and last encounters
-    
-    mr_t.a<-mr_t.j<-dim(ind_mr.a)[2]
-    mr_ind.a<-dim(ind_mr.a)[3]
-    mr_ind.j<-dim(ind_mr.j)[3]
-    for(i in 1:mr_ind.a){
-      g <- which(!is.na(ind_mr.a[1:2,,i]), arr.ind = TRUE) # ind that were seen
-      age.a[i] <- g[1,1] # age at marking
-      first.a[i] <- g[1,2] # first time seen
-      h <- which(ind_mr.a[1:2,,i]==1, arr.ind = TRUE) # last time seen
-      last.a[i] <- max(h[,2])
-    }
-    ch.true.a<-matrix(0,ncol=mr_t.a, nrow=mr_ind.a)
-    for(i in 1:mr_ind.a){
-      ch.true.a[i,first.a[i]:last.a[i]]<-1
-    }
-    for(i in 1:mr_ind.j){
-      g <- which(!is.na(ind_mr.j[3,,i]))
-      age.j[i] <- 3 #at marking (1=1year olds, 2=adults, 3= chicks)
-      first.j[i] <- g[1] 
-      h <- which(ind_mr.j[3,1:n.years,i]==1) 
-      last.j[i] <- max(h)
-    }
-    ch.true.j<-matrix(0,ncol=mr_t.j, nrow=mr_ind.j)
-    for(i in 1:mr_ind.j){
-      ch.true.j[i,first.j[i]:last.j[i]]<-1
-    }
-    
-    #detection of true marked individuals:
-    in.mark.a<-ch.a<-matrix(0,nrow=mr_ind.a, ncol=mr_t.a)
-    for(i in 1:mr_ind.a){
-      # AEB change - conditioning on first capture, no p.ad needed here
-      in.mark.a[i,first.a[i]]<-rbinom(1,1,ch.true.a[i,first.a[i]])
-      if(first.a[i]==mr_t.a | first.a[i] == last.a[i]) {
-        ch.a[i,]<-in.mark.a[i,]
+      } else if(length(detected_as_chick) > 0) {
+        # Only detected as chick - goes to juvenile array
+        rm.a[i] <- 1  # Remove from adult
+        rm.j[i] <- 0  # Keep in juvenile
+      } else if(length(detected_as_adult) > 0) {
+        # Only detected as adult - goes to adult array
+        rm.j[i] <- 1  # Remove from juvenile
+        rm.a[i] <- 0  # Keep in adult
       } else {
-        for(t in (first.a[i]+1):last.a[i]){
-          in.mark.a[i,t]<-rbinom(1,1,p.ad*ch.true.a[i,t])
-        }
-        ch.a[i,]<-in.mark.a[i,]
-      }
-    }
-    in.mark.j<-ch.j<-matrix(0,nrow=mr_ind.j, ncol=mr_t.j)
-    for(i in 1:mr_ind.j){
-      in.mark.j[i,first.j[i]]<-rbinom(1,1,ch.true.j[i,first.j[i]])
-      if(first.j[i]==mr_t.j | first.j[i] == last.j[i]) {
-        ch.j[i,]<-in.mark.j[i,]
-      } else {
-        for(t in (first.j[i]+1):last.j[i]){
-          in.mark.j[i,t]<-rbinom(1,1,p.ad*ch.true.j[i,t])
-        }
-        ch.j[i,]<-in.mark.j[i,]
+        # Never detected - remove from both
+        rm.a[i] <- 1
+        rm.j[i] <- 1
       }
     }
     
-    #code to track the ages
-    add_age_chtrue.a<-age_ch.a<-matrix(0,nrow=mr_ind.a, ncol=mr_t.a)
-    for(i in 1:mr_ind.a){
-      for(x in (first.a[i]):last.a[i]){
-        add_age_chtrue.a[i,x]<-as.numeric(which(!is.na(ind_mr.a[1:2,x,i])))
-        age_ch.a[i,x]<-add_age_chtrue.a[i,x]*ch.a[i,x]
+    # Apply removals
+    if(sum(rm.a < 1) > 0) {
+      ind_mr.a <- ind_mr.a[,, which(rm.a == 0)]
+    } else {
+      ind_mr.a <- array(dim = c(3, n.years, 0)) # Empty array
+    }
+    
+    if(sum(rm.j < 1) > 0) {
+      ind_mr.j <- ind_mr.j[,, which(rm.j == 0)]
+    } else {
+      ind_mr.j <- array(dim = c(3, n.years, 0)) # Empty array
+    }
+    
+    # Process adults marked as adults
+    if(dim(ind_mr.a)[3] > 0) {
+      age.a <- first.a <- last.a <- numeric(dim(ind_mr.a)[3])
+      
+      for(i in 1:dim(ind_mr.a)[3]) {
+        # Find when first seen as adult (states 1 or 2)
+        adult_sightings <- which(!is.na(ind_mr.a[1:2,,i]), arr.ind = TRUE)
+        if(nrow(adult_sightings) > 0) {
+          age.a[i] <- adult_sightings[1,1]  # Age class at first marking
+          first.a[i] <- adult_sightings[1,2]  # First time seen
+          last.a[i] <- max(adult_sightings[,2])  # Last time seen
+        }
       }
-    }
-    # AEB - cutting section removing those we never saw - should see everyone at first cap
-    firstobs.a<-lastobs.a<-numeric(length(ch.a[,1]))
-    for(i in 1:length(ch.a[,1])){
-      firstobs.a[i]<-min(which(ch.a[i,]==1))
-      lastobs.a[i]<-max(which(ch.a[i,]==1))
-    }
-    add_age_chtrue.j<-age_ch.j<-matrix(0,nrow=mr_ind.j, ncol=mr_t.j)
-    for(i in 1:mr_ind.j){
-      add_age_chtrue.j[i,first.j[i]] <- 3
-      if(first.j[i]==mr_t.j) next
-      add_age_chtrue.j[i,first.j[i]+1] <- 1
-      if((first.j[i]+1)==mr_t.j) next
-      add_age_chtrue.j[i,(first.j[i]+2):mr_t.j] <- 2
-      for(x in (first.j[i]):last.j[i]){
-        #add_age_chtrue[i,x]<-as.numeric(which(!is.na(ind_mr[,x,i])))[1]
-        age_ch.j[i,x]<-add_age_chtrue.j[i,x]*ch.j[i,x]
+      
+      # Create encounter histories for adults
+      ch.true.a <- matrix(0, ncol = n.years, nrow = dim(ind_mr.a)[3])
+      for(i in 1:dim(ind_mr.a)[3]) {
+        if(first.a[i] > 0 && last.a[i] > 0) {
+          ch.true.a[i, first.a[i]:last.a[i]] <- 1
+        }
       }
+      
+      # Apply detection process for adults
+      ch.a <- matrix(0, nrow = dim(ind_mr.a)[3], ncol = n.years)
+      for(i in 1:dim(ind_mr.a)[3]) {
+        if(first.a[i] > 0) {
+          # Certain detection at first capture
+          ch.a[i, first.a[i]] <- 1
+          
+          # Subsequent detections with probability p.ad
+          if(last.a[i] > first.a[i]) {
+            for(t in (first.a[i] + 1):last.a[i]) {
+              ch.a[i, t] <- rbinom(1, 1, p.ad * ch.true.a[i, t])
+            }
+          }
+        }
+      }
+    
+      # Age tracking for adults
+      age_ch.a <- matrix(0, nrow = dim(ind_mr.a)[3], ncol = n.years)
+      for(i in 1:dim(ind_mr.a)[3]) {
+        for(t in 1:n.years) {
+          if(ch.a[i, t] == 1 && !is.na(ind_mr.a[1, t, i])) {
+            age_ch.a[i, t] <- 1  # Juvenile when seen
+          } else if(ch.a[i, t] == 1 && !is.na(ind_mr.a[2, t, i])) {
+            age_ch.a[i, t] <- 2  # Adult when seen  
+          }
+        }
+      }
+      
+    } else {
+      ch.a <- NULL
+      age_ch.a <- NULL
     }
-    firstobs.j<-lastobs.j<-numeric(length(ch.j[,1]))
-    for(i in 1:length(ch.j[,1])){
-      firstobs.j[i]<-min(which(ch.j[i,]==1))
-      lastobs.j[i]<-max(which(ch.j[i,]==1))
+    
+    # Process individuals marked as chicks
+    if(dim(ind_mr.j)[3] > 0) {
+      age.j <- first.j <- last.j <- numeric(dim(ind_mr.j)[3])
+      
+      for(i in 1:dim(ind_mr.j)[3]) {
+        # Find when first seen as chick
+        chick_occasions <- which(!is.na(ind_mr.j[3,,i]) & ind_mr.j[3,,i] == 1)
+        if(length(chick_occasions) > 0) {
+          age.j[i] <- 3  # Marked as chick
+          first.j[i] <- min(chick_occasions)
+          
+          # Find last time alive (in any state)
+          all_alive <- which(apply(ind_mr.j[1:3,,i], 2, function(x) any(!is.na(x) & x == 1)))
+          if(length(all_alive) > 0) {
+            last.j[i] <- max(all_alive)
+          } else {
+            last.j[i] <- first.j[i]
+          }
+        }
+      }
+      
+      # Create encounter histories for juveniles
+      ch.j <- matrix(0, nrow = dim(ind_mr.j)[3], ncol = n.years)
+      for(i in 1:dim(ind_mr.j)[3]) {
+        if(first.j[i] > 0) {
+          # Certain detection when marked as chick
+          ch.j[i, first.j[i]] <- 1
+          
+          # Subsequent detections based on age-specific detection probabilities
+          if(last.j[i] > first.j[i]) {
+            for(t in (first.j[i] + 1):last.j[i]) {
+              alive_this_year <- any(!is.na(ind_mr.j[1:3, t, i]) & ind_mr.j[1:3, t, i] == 1)
+              if(alive_this_year) {
+                # Use appropriate detection probability based on age
+                if(!is.na(ind_mr.j[1, t, i]) && ind_mr.j[1, t, i] == 1) {
+                  # Juvenile (1-year-old)
+                  ch.j[i, t] <- rbinom(1, 1, p.1)
+                } else if(!is.na(ind_mr.j[2, t, i]) && ind_mr.j[2, t, i] == 1) {
+                  # Adult  
+                  ch.j[i, t] <- rbinom(1, 1, p.ad)
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      # Age tracking for juveniles
+      age_ch.j <- matrix(0, nrow = dim(ind_mr.j)[3], ncol = n.years)
+      for(i in 1:dim(ind_mr.j)[3]) {
+        for(t in 1:n.years) {
+          if(ch.j[i, t] == 1) {
+            if(t == first.j[i]) {
+              age_ch.j[i, t] <- 3  # Chick when first marked
+            } else if(!is.na(ind_mr.j[1, t, i]) && ind_mr.j[1, t, i] == 1) {
+              age_ch.j[i, t] <- 1  # Juvenile 
+            } else if(!is.na(ind_mr.j[2, t, i]) && ind_mr.j[2, t, i] == 1) {
+              age_ch.j[i, t] <- 2  # Adult
+            }
+          }
+        }
+      }
+      
+    } else {
+      ch.j <- NULL
+      age_ch.j <- NULL
     }
+    
+    # Calculate first and last observations
+    if(!is.null(ch.a)) {
+      firstobs.a <- apply(ch.a, 1, function(x) ifelse(any(x == 1), min(which(x == 1)), NA))
+      lastobs.a <- apply(ch.a, 1, function(x) ifelse(any(x == 1), max(which(x == 1)), NA))
+    } else {
+      firstobs.a <- NULL
+      lastobs.a <- NULL
+    }
+    
+    if(!is.null(ch.j)) {
+      firstobs.j <- apply(ch.j, 1, function(x) ifelse(any(x == 1), min(which(x == 1)), NA))
+      lastobs.j <- apply(ch.j, 1, function(x) ifelse(any(x == 1), max(which(x == 1)), NA))
+    } else {
+      firstobs.j <- NULL  
+      lastobs.j <- NULL
+    }
+    
+    
+    #######
+    
+    # age.a<-first.a<-last.a<-numeric() # age, first and last encounters
+    # age.j<-first.j<-last.j<-numeric() # age, first and last encounters
+    # 
+    # mr_t.a<-mr_t.j<-dim(ind_mr.a)[2]
+    # mr_ind.a<-dim(ind_mr.a)[3]
+    # mr_ind.j<-dim(ind_mr.j)[3]
+    # for(i in 1:mr_ind.a){
+    #   g <- which(!is.na(ind_mr.a[1:2,,i]), arr.ind = TRUE) # ind that were seen
+    #   age.a[i] <- g[1,1] # age at marking
+    #   first.a[i] <- g[1,2] # first time seen
+    #   h <- which(ind_mr.a[1:2,,i]==1, arr.ind = TRUE) # last time seen
+    #   last.a[i] <- max(h[,2])
+    # }
+    # ch.true.a<-matrix(0,ncol=mr_t.a, nrow=mr_ind.a)
+    # for(i in 1:mr_ind.a){
+    #   ch.true.a[i,first.a[i]:last.a[i]]<-1
+    # }
+    # for(i in 1:mr_ind.j){
+    #   g <- which(!is.na(ind_mr.j[3,,i]))
+    #   age.j[i] <- 3 #at marking (1=1year olds, 2=adults, 3= chicks)
+    #   first.j[i] <- g[1] 
+    #   h <- which(ind_mr.j[3,1:n.years,i]==1) 
+    #   last.j[i] <- max(h)
+    # }
+    # ch.true.j<-matrix(0,ncol=mr_t.j, nrow=mr_ind.j)
+    # for(i in 1:mr_ind.j){
+    #   ch.true.j[i,first.j[i]:last.j[i]]<-1
+    # }
+    # 
+    # #detection of true marked individuals:
+    # in.mark.a<-ch.a<-matrix(0,nrow=mr_ind.a, ncol=mr_t.a)
+    # for(i in 1:mr_ind.a){
+    #   # AEB change - conditioning on first capture, no p.ad needed here
+    #   in.mark.a[i,first.a[i]]<-rbinom(1,1,ch.true.a[i,first.a[i]])
+    #   if(first.a[i]==mr_t.a | first.a[i] == last.a[i]) {
+    #     ch.a[i,]<-in.mark.a[i,]
+    #   } else {
+    #     for(t in (first.a[i]+1):last.a[i]){
+    #       in.mark.a[i,t]<-rbinom(1,1,p.ad*ch.true.a[i,t])
+    #     }
+    #     ch.a[i,]<-in.mark.a[i,]
+    #   }
+    # }
+    # in.mark.j<-ch.j<-matrix(0,nrow=mr_ind.j, ncol=mr_t.j)
+    # for(i in 1:mr_ind.j){
+    #   in.mark.j[i,first.j[i]]<-rbinom(1,1,ch.true.j[i,first.j[i]])
+    #   if(first.j[i]==mr_t.j | first.j[i] == last.j[i]) {
+    #     ch.j[i,]<-in.mark.j[i,]
+    #   } else {
+    #     for(t in (first.j[i]+1):last.j[i]){
+    #       in.mark.j[i,t]<-rbinom(1,1,p.ad*ch.true.j[i,t])
+    #     }
+    #     ch.j[i,]<-in.mark.j[i,]
+    #   }
+    # }
+    # 
+    # #code to track the ages
+    # add_age_chtrue.a<-age_ch.a<-matrix(0,nrow=mr_ind.a, ncol=mr_t.a)
+    # for(i in 1:mr_ind.a){
+    #   for(x in (first.a[i]):last.a[i]){
+    #     add_age_chtrue.a[i,x]<-as.numeric(which(!is.na(ind_mr.a[1:2,x,i])))
+    #     age_ch.a[i,x]<-add_age_chtrue.a[i,x]*ch.a[i,x]
+    #   }
+    # }
+    # # AEB - cutting section removing those we never saw - should see everyone at first cap
+    # firstobs.a<-lastobs.a<-numeric(length(ch.a[,1]))
+    # for(i in 1:length(ch.a[,1])){
+    #   firstobs.a[i]<-min(which(ch.a[i,]==1))
+    #   lastobs.a[i]<-max(which(ch.a[i,]==1))
+    # }
+    # add_age_chtrue.j<-age_ch.j<-matrix(0,nrow=mr_ind.j, ncol=mr_t.j)
+    # for(i in 1:mr_ind.j){
+    #   add_age_chtrue.j[i,first.j[i]] <- 3
+    #   if(first.j[i]==mr_t.j) next
+    #   add_age_chtrue.j[i,first.j[i]+1] <- 1
+    #   if((first.j[i]+1)==mr_t.j) next
+    #   add_age_chtrue.j[i,(first.j[i]+2):mr_t.j] <- 2
+    #   for(x in (first.j[i]):last.j[i]){
+    #     #add_age_chtrue[i,x]<-as.numeric(which(!is.na(ind_mr[,x,i])))[1]
+    #     age_ch.j[i,x]<-add_age_chtrue.j[i,x]*ch.j[i,x]
+    #   }
+    # }
+    # firstobs.j<-lastobs.j<-numeric(length(ch.j[,1]))
+    # for(i in 1:length(ch.j[,1])){
+    #   firstobs.j[i]<-min(which(ch.j[i,]==1))
+    #   lastobs.j[i]<-max(which(ch.j[i,]==1))
+    # }
     
   } else {
     ch.a=NULL
@@ -402,10 +590,12 @@ simData <- function(indfates, n.years,
   
 }
 
+# TESTING ----
+
 temptrue.stable<-simPopTrajectory(n.years=15,
-                           age.init=c(200,200),
-                           phi.1=0.3,phi.ad=0.4,
-                           f=2)
+                                  age.init=c(100,100), # TODO explore larger sample sizes?
+                                  phi.1=0.3,phi.ad=0.4,
+                                  f=2)
 temp.data<-simData(indfates = temptrue.stable$indfates, 
                    n.years=15,
                    p.1=1,
@@ -428,10 +618,10 @@ comb <- c(0.3, 0.4, 2) %>% t() %>% as.data.frame()
 colnames(comb) <- c("phi1", "phiad", "fec") 
 detect <- c(0.5, 1) #p.surv, mean.p
 out <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, 
-                    popDat = temp.data, 
-                    popTraj = temptrue.stable, 
-                    comb, 
-                    detect)
+                 popDat = temp.data, 
+                 popTraj = temptrue.stable, 
+                 comb, 
+                 detect)
 
 library(postpack)
 summ <- post_summ(out, get_params(out), Rhat = TRUE, neff = TRUE) %>% 
@@ -459,10 +649,10 @@ comb <- c(0.3, 0.4, 2) %>% t() %>% as.data.frame()
 colnames(comb) <- c("phi1", "phiad", "fec") 
 detect <- c(0.5, 0.8) #p.surv, mean.p
 out2 <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, 
-                 popDat = temp.data, 
-                 popTraj = temptrue.stable, 
-                 comb, 
-                 detect)
+                  popDat = temp.data, 
+                  popTraj = temptrue.stable, 
+                  comb, 
+                  detect)
 
 library(postpack)
 summ2 <- post_summ(out2, get_params(out2), Rhat = TRUE, neff = TRUE) %>% 
@@ -475,7 +665,7 @@ summ2 <- post_summ(out2, get_params(out2), Rhat = TRUE, neff = TRUE) %>%
 # nope, that didn't work
 # TODO - also try running just the marray model
 
-marray(temp.data$ch.j) # seems to be increasing suspiciously...
+marray(temp.data$ch.j) # seems to be stable-ish
 marray(temp.data$ch.a)
 
 marrayonly<-nimbleCode({
@@ -485,7 +675,7 @@ marrayonly<-nimbleCode({
   #m-array, multinomial likelihood
   for(t in 1:(nyears-1)){
     marr.j[t,1:nyears]~dmulti(pr.j[t,1:nyears],R.j[t])
-    #marr.a[t,1:nyears]~dmulti(pr.a[t,1:nyears],R.a[t])
+    marr.a[t,1:nyears]~dmulti(pr.a[t,1:nyears],R.a[t])
   }
   
   # TODO
@@ -529,10 +719,10 @@ marrayonly<-nimbleCode({
 })
 
 #### DATA ####
-dat1 <- list(#marr.a = marray(temp.data$ch.a), 
-             marr.j=marray(temp.data$ch.j),
-             R.j=rowSums(marray(temp.data$ch.j))#, 
-             #R.a = rowSums(marray(temp.data$ch.a))
+dat1 <- list(marr.a = marray(temp.data$ch.a), 
+  marr.j=marray(temp.data$ch.j),
+  R.j=rowSums(marray(temp.data$ch.j)), 
+  R.a = rowSums(marray(temp.data$ch.a))
 )
 
 
@@ -562,17 +752,22 @@ Cmcmc1 <- compileNimble(Rmcmc1, project = Rmodel1)
 
 #### RUN MCMC ####
 out_marray <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1, thin=nt,
-                  setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE)
+                      setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE)
 
 post_summ(out_marray, get_params(out_marray), Rhat = TRUE, neff = TRUE) %>% 
   t() %>% 
   as.data.frame() %>% 
   rownames_to_column()
 
-# so these estimates are not right, but they are not right in a different way than the fullIPM...
-# the adult survival looks ok though...
+# alright - the full marray looks pretty good actually? 
+# needs to be tested with larger samples and more cases though...
+
 # TODO let's test with just the adult m array
 # ok this one looks pretty good for both mean p (0.8) and adult survival (0.4)
+# p a little high but plausible given sample size. 
+
 # TODO then just the juvenile m array
 # ok we're underestimating p for one thing
-# phi1 looks ok actually, if uncertain. oh wait - not converging actually...nvm
+# phi1 looks high and phiad looks low. what the heck
+# and p1 looks low. gonna try with more sample size. 
+# yeah, doesn't look good on its own. but it should??? odd bc the marrays look right now
