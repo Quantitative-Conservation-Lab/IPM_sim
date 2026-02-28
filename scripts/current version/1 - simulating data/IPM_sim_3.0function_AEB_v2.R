@@ -485,7 +485,7 @@ marrayonly<-nimbleCode({
   #m-array, multinomial likelihood
   for(t in 1:(nyears-1)){
     marr.j[t,1:nyears]~dmulti(pr.j[t,1:nyears],R.j[t])
-    marr.a[t,1:nyears]~dmulti(pr.a[t,1:nyears],R.a[t])
+    #marr.a[t,1:nyears]~dmulti(pr.a[t,1:nyears],R.a[t])
   }
   
   # TODO
@@ -529,8 +529,10 @@ marrayonly<-nimbleCode({
 })
 
 #### DATA ####
-dat1 <- list(marr.a = marray(temp.data$ch.a), 
-             marr.j=marray(temp.data$ch.j)
+dat1 <- list(#marr.a = marray(temp.data$ch.a), 
+             marr.j=marray(temp.data$ch.j),
+             R.j=rowSums(marray(temp.data$ch.j))#, 
+             #R.a = rowSums(marray(temp.data$ch.a))
 )
 
 
@@ -561,3 +563,16 @@ Cmcmc1 <- compileNimble(Rmcmc1, project = Rmodel1)
 #### RUN MCMC ####
 out_marray <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1, thin=nt,
                   setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE)
+
+post_summ(out_marray, get_params(out_marray), Rhat = TRUE, neff = TRUE) %>% 
+  t() %>% 
+  as.data.frame() %>% 
+  rownames_to_column()
+
+# so these estimates are not right, but they are not right in a different way than the fullIPM...
+# the adult survival looks ok though...
+# TODO let's test with just the adult m array
+# ok this one looks pretty good for both mean p (0.8) and adult survival (0.4)
+# TODO then just the juvenile m array
+# ok we're underestimating p for one thing
+# phi1 looks ok actually, if uncertain. oh wait - not converging actually...nvm
