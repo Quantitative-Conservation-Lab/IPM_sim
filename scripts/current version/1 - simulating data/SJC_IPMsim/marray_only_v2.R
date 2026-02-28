@@ -56,15 +56,15 @@ marray <- function(CH){
 #simulate data   
 ########################################################
 
-sims <- 5
+sims <- 25
 results <- array(NA,dim = c(3,5,sims))
 
 for(s in 1:sims){
   
 # Define parameter values
 n.occasions <- 12                        # Number of capture occasions
-marked.j <- rep(200, n.occasions-1)      # Annual number of newly marked juveniles
-marked.a <- rep(30, n.occasions-1)       # Annual number of newly marked adults
+marked.j <- rep(20000, n.occasions-1)      # Annual number of newly marked juveniles
+marked.a <- rep(3000, n.occasions-1)       # Annual number of newly marked adults
 phi.juv <- 0.3                           # Juvenile annual survival
 phi.ad <- 0.65                           # Adult annual survival
 p <- rep(0.5, n.occasions-1)             # Recapture
@@ -179,7 +179,7 @@ cjs12Code <- nimbleCode({
 
 # Bundle data and constants
 dataList <- list(marr.j=CH.J.marray, marr.a=CH.A.marray, rel.j=rowSums(CH.J.marray), rel.a=rowSums(CH.A.marray))
-constList <- list(n.occasions=dim(CH.J.marray)[2])  ;  str(constList)
+constList <- list(n.occasions=dim(CH.J.marray)[2])
 
 # Initial values
 inits <- function(){list(mean.phijuv=runif(1, 0, 1), mean.phiad=runif(1, 0, 1), mean.p=runif(1, 0, 1))}  
@@ -220,9 +220,12 @@ out12$summary$all.chains
 #Gelman-Rubin diagnostic
 gelman.diag(out12$samples)
 
-
 results[,,s] <- out12$summary$all.chains
+
+print(s)
 
 }
 dimnames(results)[[1]] <- c("mean.p","mean.phiad","mean.phijuv")
 dimnames(results)[[2]] <- c("Mean","Median","SD","95%Low","95%Upp")
+
+apply(results,c(1,2),mean)

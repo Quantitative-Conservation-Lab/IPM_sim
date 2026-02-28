@@ -58,7 +58,7 @@ marray <- function(CH){
 #data simulation
 ########################################################
 
-sims <- 3
+sims <- 25
 results <- array(NA,dim = c(3,5,sims))
 
 
@@ -66,8 +66,8 @@ for(s in 1:sims){
 
 # Define parameter values
 n.occasions <- 12 # Number of recapture occasions
-marked.j <- rep(200, n.occasions-1) # Annual number of newly marked juveniles
-marked.a <- rep(30, n.occasions-1) # Annual number of newly marked adults
+marked.j <- rep(20000, n.occasions-1) # Annual number of newly marked juveniles
+marked.a <- rep(3000, n.occasions-1) # Annual number of newly marked adults
 phi.juv <- 0.3 # Juvenile annual survival
 phi.ad <- 0.65 # Adult annual survival
 p <- rep(0.5, n.occasions-1) # Recapture
@@ -188,7 +188,7 @@ inits =  function() {list(mean.phi=runif(2),mean.p=runif(1))}
 
 ni <- 10000
 nb <- 2000
-nc <- 3
+nc <- 4
 nt <- 1
 
 ## run model 
@@ -215,7 +215,7 @@ MCMCtrace(object = samples.marr.age$samples,
           ind = TRUE)
 
 #summary 
-out12$summary$all.chains 
+samples.marr.age$summary$all.chains 
 
 #Gelman-Rubin diagnostic
 gelman.diag(samples.marr.age$samples)
