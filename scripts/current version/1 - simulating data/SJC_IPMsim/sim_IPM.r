@@ -44,8 +44,8 @@ dimnames(all.results)[[3]] <- c("Mean","Median","St.Dev.","95%CI_low","95%CI_upp
 for(s in 1:sims){
 
   # Age specific survival probabilities (juv, adult)
-  sj <- 0.33
-  sa <- 0.52
+  sj <- 0.35
+  sa <- 0.65
 
   # Fecundity parameters 
   f <- 1 
@@ -59,7 +59,7 @@ for(s in 1:sims){
   fec.mat <- matrix(f,nrow=nrow(surv.mat),ncol=yrs)
   
   # Initial population size per age class 
-  Ni <- c(1000, 1000)
+  Ni <- c(350, 650)
       
   # Create the true population for this simulation and year  
   ind <- create.population(phi = surv.mat, f = fec.mat, Im = rep(0, yrs), Ni = Ni)
