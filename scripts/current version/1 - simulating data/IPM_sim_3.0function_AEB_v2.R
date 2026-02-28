@@ -210,8 +210,12 @@ simData <- function(indfates, n.years,
     for(i in 1:dim(ind_mr.a)[3]){
       
       # at least one occasion where there is an entry for chick and no entry for 1:2
-      if(sum(!is.na(ind_mr.j[3,,i]) & apply(ind_mr.j[1:2,,i], 2, function(x)all(is.na(x))))){
-        rm.j[i]<-0 # don't remove, up for marking as a chick
+      if(sum(!is.na(ind_mr.j[3,,i]) & ind_mr.j[3,,i]==1 & apply(ind_mr.j[1:2,,i], 2, function(x)all(is.na(x))))){
+        if (rbinom(1,1,p.prod) == 1) {
+          rm.j[i]<-0 # don't remove, up for marking as a chick
+        } else {
+          rm.j[i] <- 1
+        }
       }else{
         rm.j[i]<-1 # otherwise remove
       }
@@ -227,13 +231,15 @@ simData <- function(indfates, n.years,
     # sample subset
     if(sum(rm.a>0)){
       ind_mr.a<-ind_mr.a[,,-which(rm.a==1)]
+      # use some prob of capture same as subsequent resight...
       samp.a<-sample(1:(dim(ind_mr.a)[3]), round(p.ad*(dim(ind_mr.a)[3]))) %>% sort()
       ind_mr.a<-ind_mr.a[,,samp.a]
     }else{}
     if(sum(rm.j>0)){
       ind_mr.j<-ind_mr.j[,,-which(rm.j==1)]
-      samp.j<-sample(1:(dim(ind_mr.j)[3]), round(p.1*(dim(ind_mr.j)[3]))) %>% sort()
-      ind_mr.j<-ind_mr.j[,,samp.j]
+      # AEB note - let's band from nests...
+      # samp.j<-sample(1:(dim(ind_mr.j)[3]), round(p.prod*(dim(ind_mr.j)[3]))) %>% sort()
+      # ind_mr.j<-ind_mr.j[,,samp.j]
     }else{}
     
     age.a<-first.a<-last.a<-numeric() # age, first and last encounters
@@ -270,7 +276,7 @@ simData <- function(indfates, n.years,
     for(i in 1:mr_ind.a){
       # AEB change - conditioning on first capture, no p.ad needed here
       in.mark.a[i,first.a[i]]<-rbinom(1,1,ch.true.a[i,first.a[i]])
-      if(first.a[i]==mr_t.a) {
+      if(first.a[i]==mr_t.a | first.a[i] == last.a[i]) {
         ch.a[i,]<-in.mark.a[i,]
       } else {
         for(t in (first.a[i]+1):last.a[i]){
@@ -282,7 +288,7 @@ simData <- function(indfates, n.years,
     in.mark.j<-ch.j<-matrix(0,nrow=mr_ind.j, ncol=mr_t.j)
     for(i in 1:mr_ind.j){
       in.mark.j[i,first.j[i]]<-rbinom(1,1,ch.true.j[i,first.j[i]])
-      if(first.j[i]==mr_t.j) {
+      if(first.j[i]==mr_t.j | first.j[i] == last.j[i]) {
         ch.j[i,]<-in.mark.j[i,]
       } else {
         for(t in (first.j[i]+1):last.j[i]){
@@ -397,7 +403,7 @@ simData <- function(indfates, n.years,
 }
 
 temptrue.stable<-simPopTrajectory(n.years=15,
-                           age.init=c(20,20),
+                           age.init=c(200,200),
                            phi.1=0.3,phi.ad=0.4,
                            f=2)
 temp.data<-simData(indfates = temptrue.stable$indfates, 
@@ -432,13 +438,14 @@ summ <- post_summ(out, get_params(out), Rhat = TRUE, neff = TRUE) %>%
   t() %>% 
   as.data.frame() %>% 
   rownames_to_column()
+# TODO seems to be confounding between phi1 and phi2?????
 
-# TODO - try again without perfect detection
+# trying again without perfect detection
 temp.data<-simData(indfates = temptrue.stable$indfates, 
                    n.years=15,
-                   p.1=1,
-                   p.ad=1,
-                   p.prod=1,
+                   p.1=0.8,
+                   p.ad=0.8,
+                   p.prod=0.5,
                    n.sam=3,
                    p.count=0.5,
                    BinMod=T)
@@ -450,18 +457,107 @@ nc <- 3  #chains
 
 comb <- c(0.3, 0.4, 2) %>% t() %>% as.data.frame()
 colnames(comb) <- c("phi1", "phiad", "fec") 
-detect <- c(0.5, 1) #p.surv, mean.p
-out <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, 
+detect <- c(0.5, 0.8) #p.surv, mean.p
+out2 <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, 
                  popDat = temp.data, 
                  popTraj = temptrue.stable, 
                  comb, 
                  detect)
 
 library(postpack)
-summ <- post_summ(out, get_params(out), Rhat = TRUE, neff = TRUE) %>% 
+summ2 <- post_summ(out2, get_params(out2), Rhat = TRUE, neff = TRUE) %>% 
   t() %>% 
   as.data.frame() %>% 
   rownames_to_column()
+# huh, now this looks better???
 
-#might need to divorce nest from mr, since can't fully track
-# then just put above and clean up
+# TODO maybe just need to try with larger sample sizes??
+# nope, that didn't work
+# TODO - also try running just the marray model
+
+marray(temp.data$ch.j) # seems to be increasing suspiciously...
+marray(temp.data$ch.a)
+
+marrayonly<-nimbleCode({
+  
+  # CAPTURE RECAPTURE #####
+  
+  #m-array, multinomial likelihood
+  for(t in 1:(nyears-1)){
+    marr.j[t,1:nyears]~dmulti(pr.j[t,1:nyears],R.j[t])
+    marr.a[t,1:nyears]~dmulti(pr.a[t,1:nyears],R.a[t])
+  }
+  
+  # TODO
+  # monitor pr.j and pr.a and see what the structure is
+  
+  # diagonal
+  for(t in 1:(nyears-1)){ # 1:14, 1:14
+    q[t]<-1-p[t]
+    pr.j[t,t]<-phi.j[t]*p[t]
+    pr.a[t,t]<-phi.a[t]*p[t]
+  }
+  #upper triangle
+  for(t in 1:(nyears-2)){ #1:13, 2:14
+    for(j in (t+1):(nyears-1)){
+      pr.j[t,j]<-phi.j[t]*prod(phi.a[(t+1):j])*prod(q[t:(j-1)])*p[j]
+      pr.a[t,j]<-prod(phi.a[t:j])*prod(q[t:(j-1)])*p[j]
+    }
+  }
+  #lower triangle
+  for (t in 2:(nyears-1)){ #2:14, 1:13
+    for(j in 1:(t-1)){
+      pr.j[t,j]<-0
+      pr.a[t,j]<-0
+    }
+  }
+  for(t in 1:(nyears-1)){
+    pr.a[t,nyears]<-1-sum(pr.a[t,1:(nyears-1)])
+    pr.j[t,nyears]<-1-sum(pr.j[t,1:(nyears-1)])
+  }
+  for(t in 1:(nyears)){
+    phi.j[t]<-mean.phi[1]
+    phi.a[t]<-mean.phi[2]
+    p[t]<-mean.p
+  }
+  
+  #priors for resight and adult or 1yo survival
+  mean.phi[1]~dunif(0,1) #surv 1 year olds
+  mean.phi[2]~dunif(0,1) #surv adults
+  mean.p~dunif(0,1) #resight prob
+  
+})
+
+#### DATA ####
+dat1 <- list(marr.a = marray(temp.data$ch.a), 
+             marr.j=marray(temp.data$ch.j)
+)
+
+
+#### CONSTANTS ####
+
+const1 <- list(nyears = 15)
+
+#### INITIAL VALUES ####
+#z.state <- state.data(popDat$ch)
+
+inits1 <- list(
+  mean.phi = c(comb$phi1, comb$phiad),#c(detect.h, detect.h),
+  mean.p = detect[2]
+)
+
+#### PARAMETERS TO MONITOR ####
+params1 <- c("mean.phi","mean.p")#,"N1","Nad","f","rho")#0.3764911
+
+#### COMPILE CONFIGURE AND BUILD ####
+Rmodel1 <- nimbleModel(code = marrayonly, constants = const1, data = dat1,
+                       check = FALSE, calculate = FALSE, inits = inits1)
+conf1 <- configureMCMC(Rmodel1, monitors = params1)#, thin = nt,
+#control = list(maxContractions = 1000))
+Rmcmc1 <- buildMCMC(conf1)
+Cmodel1 <- compileNimble(Rmodel1, showCompilerOutput = FALSE)
+Cmcmc1 <- compileNimble(Rmcmc1, project = Rmodel1)
+
+#### RUN MCMC ####
+out_marray <- runMCMC(Cmcmc1, niter = ni , nburnin = nb , nchains = nc, inits = inits1, thin=nt,
+                  setSeed = FALSE, progressBar = TRUE, samplesAsCodaMCMC = TRUE)
