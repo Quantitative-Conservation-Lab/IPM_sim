@@ -15,7 +15,7 @@ source(here("scripts/current version/1 - simulating data/SJC_IPMsim","create.eh.
 #                        Simulation Parameters                       #
 #                                                                    #    
 ######################################################################
-sims <- 1
+sims <- 25
 
 # Number of years
 yrs <- 10 
@@ -29,9 +29,9 @@ yrs <- 10
 # Record time 
 start.time <- Sys.time()
 
-all.results <- array(NA,dim = c(sims,3,5))
-dimnames(all.results)[[2]] <- c("mean.p","mean.phi[1]","mean.phi[2]")
-dimnames(all.results)[[3]] <- c("Mean","Median","St.Dev.","95%CI_low","95%CI_upp")
+all.results <- array(NA,dim = c(3,5,sims))
+dimnames(all.results)[[1]] <- c("mean.p","mean.phi[1]","mean.phi[2]")
+dimnames(all.results)[[2]] <- c("Mean","Median","St.Dev.","95%CI_low","95%CI_upp")
 
 # Start simulations 
 for(s in 1:sims){
@@ -51,7 +51,7 @@ for(s in 1:sims){
   fec.mat <- matrix(f,nrow=nrow(surv.mat),ncol=yrs)
   
   # Initial population size per age class 
-  Ni <- c(350, 650)
+  Ni <- c(3500, 6500)
       
   # Create the true population for this simulation and year  
   ind <- create.population(phi = surv.mat, f = fec.mat, Im = rep(0, yrs), Ni = Ni)
@@ -138,8 +138,8 @@ for(s in 1:sims){
   #Initial values 
   inits =  function() {list(mean.phi=runif(2),mean.p=runif(1))} 
   
-  ni <- 10000
-  nb <- 2000
+  ni <- 15000
+  nb <- 2500
   nc <- 4
   nt <- 1
   
@@ -171,8 +171,9 @@ for(s in 1:sims){
   #Gelman-Rubin diagnostic
   gelman.diag(samples.marr.age$samples)
   
-  all.results[s,,] <- marr.age$summary$all.chains
+  all.results[,,s] <- samples.marr.age$summary$all.chains
 
   print(s)
 }
 
+apply(all.results,c(1,2),mean)
