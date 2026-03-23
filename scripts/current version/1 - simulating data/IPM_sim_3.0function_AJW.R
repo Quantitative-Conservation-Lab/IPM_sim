@@ -10,7 +10,61 @@
 # phi.ad = adult survival,
 # f = fecundity
 
-# TODO tidy up a bit
+# Pick values for the function arguments
+nyears <- 20                                 # Number of years
+phi <- c(0.3, 0.55)                     # Age specific survival probabilities (juv, adult)
+f <- c(2.5, 2.5)    # Age-specific productivity (1y, older)
+Ni <- c(50, 50)                         # Initial pop. size for each age class (1y, older)
+
+# Apply the function and produce data overview
+# set.seed(111167)                        # To initialize the RNGs at the same place
+pop <- simPop(Ni=Ni, phi=phi, f=f, nYears=nyears)
+# str(pop)
+
+pop1 <- simPop(Ni=Ni, phi=phi, f=f, nYears=T)
+pop2 <- simPop(Ni=Ni, phi=phi, f=f, nYears=T)
+pop3 <- simPop(Ni=Ni, phi=phi, f=f, nYears=T)
+
+pop1$totBreeders
+
+# Pick a value of the observation error (SD) for the population survey
+# sigma <- 10
+pDetect <- 0.8
+
+# Create the population survey data and produce data overview
+# count <- simCountNorm(N=pop1$totB, sigma=sigma)
+Ncount <- simCountBin(N=pop1$totB, pDetect)
+str(count)
+
+# Pick values for capture and recapture probabilities
+cap <- 0.4                              # Initial capture probability (same for juv. and adults)
+recap <- 0.6                            # Recapture probability
+
+# Create the capture histories and produce data overview
+ch <- simCapHist(state=pop2$state, cap=cap, recap=recap, maxAge=2, verbose = F)
+
+# Create m-arrays
+marr <- marrayAge(ch$ch, ch$age)
+
+# Pick probability to find a brood
+pprod <- 0.3
+
+# Create productivity data; check females.only
+pro <- simProd(reprod=pop3$reprod, pInclude=pprod, females.only = T)
+str(pro)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 simPopTrajectory <- function(n.years, age.init,
@@ -419,6 +473,7 @@ simData <- function(indfates, n.years,
     }else{
       SUR[,u]<-rnorm(n.sam, TRUE_Count[,u], sig)
       }
+
   }
 
   ################### Create reproductive success data ###################
@@ -450,6 +505,8 @@ simData <- function(indfates, n.years,
     }
   }
   }
+  
+  
 
   return(list(ch.a=ch.a, ch.j=ch.j,
               age_ch.a=age_ch.a,

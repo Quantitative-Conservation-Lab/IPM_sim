@@ -6,7 +6,6 @@ library(foreach)
 library(doParallel)
 
 # load data
-# TODO - adjust as in previous file
 scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>% 
   separate_wider_delim(cols = scenario, delim = ",", 
                        names = c("life_hist", "trend")) %>% 
@@ -15,10 +14,7 @@ scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>%
     "phiad" = "S.A",
     "fec" = "f"
   )
-# low.lam.combos <- readRDS(here("data","low.lam.params.RDS"))
-# med.lam.combos <- readRDS(here("data","med.lam.params.RDS"))
-# high.lam.combos <- readRDS(here("data","high.lam.params.RDS"))
-# TODO fix hard coding
+ 
 low.lam.params <- scenarios %>% 
   filter(trend == "decline")
 med.lam.params <- scenarios %>% 

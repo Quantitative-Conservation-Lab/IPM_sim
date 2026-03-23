@@ -16,6 +16,7 @@ source(here("scripts/current version/1 - simulating data/SJC_IPMsim","create.eh.
 #                                                                    #    
 ######################################################################
 sims <- 25
+sims <- 1
 
 # Number of years
 yrs <- 10 
