@@ -25,47 +25,34 @@ marray <- function(CH){
   return(out)
 }
 
-#### MCMC SETTINGS ####
-nb <- 100000#0 #burn-in
-ni <- nb + nb #total iterations
-nt <- 10  #thin
-nc <- 3  #chains
-
 #### IPM ####
 
 runIPMmod <- function(nb, ni, nt, nc,
-                      popDat, popTraj,
-                      comb, detect) {
+                      #popDat, #popTraj,
+                      detect,
+                      comb) {
   #### DATA ####
-  dat1 <- list(y = popDat$SUR,
-               marr.a = marray(popDat$ch.a), 
-               marr.j=marray(popDat$ch.j), # TODO note hardcode
-               R.j=rowSums(marray(popDat$ch.j)), # TODO could try making same as adults for testig
-               R.a = rowSums(marray(popDat$ch.a)),
-               OBS_nestlings = popDat$OBS_nestlings,
-               R_obs = popDat$R_obs
-  )
-
+  dat1 <- list(y = surv_cnts,
+               marr.a = marr.a,
+               marr.j = marr.j,
+               R.j = rowSums(marr.j), 
+               R.a = rowSums(marr.a),
+               OBS_nestlings = obs_nestlings,
+               R_obs = obs_nests)
 
   #### CONSTANTS ####
 
-  const1 <- list(nyears = 15,
-                 n.sam = nrow(popDat$SUR))
+  const1 <- list(nyears = nyears,
+                 n.sam = n.sam)
 
   #### INITIAL VALUES ####
-  #z.state <- state.data(popDat$ch)
-
   inits1 <- list(
-    mean.phi = c(comb$phi1, comb$phiad),#c(detect.h, detect.h),
-    mean.p = detect[2],
-    p.surv = detect[1],
-    fec = comb$fec,#detect.h,
-    #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
-    #mean.p = runif(1,0,1),#detect.h,
-    #fec = runif(1,0,5),#detect.h,
-    #z=z.state,
-    n1.start=popTraj$Nouts[1,1], 
-    nad.start=popTraj$Nouts[2,1]
+    mean.phi = c(comb$phi1, comb$phiad),
+    mean.p = det.MR,
+    p.surv = det.abund,
+    fec = comb$fec,
+    n1.start = pop1$N[1,1],
+    nad.start = pop1$N[2,1]
   )
 
   #### PARAMETERS TO MONITOR ####
@@ -90,38 +77,31 @@ runIPMmod <- function(nb, ni, nt, nc,
 #### NO NESTS ####
 
 runnonests <- function(nb, ni, nt, nc,
-                      popDat, popTraj,
+                      #popDat, #popTraj,
                       comb, detect) {
 
-  dat1 <- list(y = popDat$SUR,
-               marr.a = marray(popDat$ch.a),
-               marr.j=marray(popDat$ch.j), # TODO note hardcode
-               R.j=rowSums(marray(popDat$ch.j)), 
-               R.a = rowSums(marray(popDat$ch.a))
-  )
+  dat1 <- list(y = surv_cnts,
+               marr.a = marr.a,
+               marr.j = marr.j,
+               R.j = rowSums(marr.j), 
+               R.a = rowSums(marr.a))
 
 
   #### CONSTANTS ####
 
-  const1 <- list(nyears = 15,
-                 n.sam = nrow(popDat$SUR)#,
-                 #n.ind = nrow(popDat$ch),
-                 #first = popDat$firstobs
-                 )
+  const1 <- list(nyears = nyears,
+                 n.sam = n.sam)
 
   #### INITIAL VALUES ####
   #z.state <- state.data(popDat$ch)
 
-  inits1 <- list(mean.phi = c(comb$phi1, comb$phiad),#c(detect.h, detect.h),
-                 mean.p = detect[2],
-                 p.surv = detect[1],
-                 fec = comb$fec,#detect.h,
-                 #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
-                 #mean.p = runif(1,0,1),#detect.h,
-                 #fec = runif(1,0,5),#detect.h,
-                 #z=z.state,
-                 n1.start=popTraj$Nouts[1,1],
-                 nad.start=popTraj$Nouts[2,1]
+  inits1 <- list(
+    mean.phi = c(comb$phi1, comb$phiad),
+    mean.p = det.MR,
+    p.surv = det.abund,
+    fec = comb$fec,
+    n1.start = pop1$N[1,1],
+    nad.start = pop1$N[2,1]
   )
 
   #### PARAMETERS TO MONITOR ####
@@ -147,34 +127,30 @@ runnonests <- function(nb, ni, nt, nc,
 #### NO MR ####
 
 runnomr <- function(nb, ni, nt, nc,
-                      popDat, popTraj,
+                      #popDat, #popTraj,
                       comb, detect) {
 
   #### DATA ####
-  dat1 <- list(y = popDat$SUR,
-               OBS_nestlings = popDat$OBS_nestlings,
-               R_obs = popDat$R_obs
-  )
+  dat1 <- list(y = surv_cnts,
+               OBS_nestlings = obs_nestlings,
+               R_obs = obs_nests)
 
 
   #### CONSTANTS ####
 
-  const1 <- list(nyears = 15,
-                 n.sam = nrow(popDat$SUR))
+  const1 <- list(nyears = nyears,
+                 n.sam = n.sam)
 
   #### INITIAL VALUES ####
   #z.state <- state.data(popDat$ch)
 
-  inits1 <- list(mean.phi = c(comb$phi1, comb$phiad),#c(detect.h, detect.h),
-                 #mean.p = detect.h,
-                 p.surv = detect[1],
-                 fec = comb$fec,#detect.h,
-                 #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
-                 #mean.p = runif(1,0,1),#detect.h,
-                 #fec = runif(1,0,5),#detect.h,
-                 #z=z.state,
-                 n1.start=popTraj$Nouts[1,1], 
-                 nad.start=popTraj$Nouts[2,1]
+  inits1 <- list(
+    mean.phi = c(comb$phi1, comb$phiad),
+    mean.p = det.MR,
+    p.surv = det.abund,
+    fec = comb$fec,
+    n1.start = pop1$N[1,1],
+    nad.start = pop1$N[2,1]
   )
 
   #### PARAMETERS TO MONITOR ####
@@ -201,32 +177,28 @@ runnomr <- function(nb, ni, nt, nc,
 #### ABUND ONLY ####
 
 runabundonly <- function(nb, ni, nt, nc,
-                      popDat, popTraj,
+                      #popDat, #popTraj,
                       comb, detect) {
 
   #### DATA ####
-  dat1 <- list(y = popDat$SUR
-  )
+  dat1 <- list(y = surv_cnts)
 
 
   #### CONSTANTS ####
 
-  const1 <- list(nyears = 15,
-                 n.sam = nrow(popDat$SUR))
+  const1 <- list(nyears = nyears,
+                 n.sam = n.sam)
 
   #### INITIAL VALUES ####
   #z.state <- state.data(popDat$ch)
 
-  inits1 <- list(mean.phi = c(comb$phi1, comb$phiad),#c(detect.h, detect.h),
-                 #mean.p = detect.h,
-                 p.surv = detect[1],
-                 fec = comb$fec,#detect.h,
-                 #mean.phi = runif(2,0,1),#c(detect.h, detect.h),
-                 #mean.p = runif(1,0,1),#detect.h,
-                 #fec = runif(1,0,5),#detect.h,
-                 #z=z.state,
-                 n1.start=popTraj$Nouts[1,1],
-                 nad.start=popTraj$Nouts[2,1]
+  inits1 <- list(
+    mean.phi = c(comb$phi1, comb$phiad),
+    mean.p = det.MR,
+    p.surv = det.abund,
+    fec = comb$fec,
+    n1.start = pop1$N[1,1],
+    nad.start = pop1$N[2,1]
   )
 
   #### PARAMETERS TO MONITOR ####

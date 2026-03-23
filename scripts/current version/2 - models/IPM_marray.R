@@ -5,10 +5,10 @@ library(here)
 library(nimble)
 
 # source initial value functions
-source(here("scripts", "current version", "2 - models", "IPMinitvalues.R"))
+#I don't think we're using this
+# source(here("scripts", "current version", "2 - models", "IPMinitvalues.R"))
 
 ###### FULL IPM ######
-# TODO needs tested, but has been updated
 IPMmod<-nimbleCode({
 
   # COUNTS #####
@@ -33,7 +33,6 @@ IPMmod<-nimbleCode({
   for(n in 1:n.sam){
     for (t in 1:nyears){
       #y[n,t]~dnorm(Ntot[t],sd=p.surv)
-      # TODO did the productivity change mess with the initial values?
       y[n,t] ~ dbin(p.surv,Ntot[t])
     }
   }
@@ -45,9 +44,6 @@ IPMmod<-nimbleCode({
     marr.j[t,1:nyears]~dmulti(pr.j[t,1:nyears],R.j[t])
     marr.a[t,1:nyears]~dmulti(pr.a[t,1:nyears],R.a[t])
   }
-  
-  # TODO
-  # monitor pr.j and pr.a and see what the structure is
   
   # diagonal
   for(t in 1:(nyears-1)){ # 1:14, 1:14
@@ -111,9 +107,7 @@ IPMmod<-nimbleCode({
 
 
 ##### NO NESTS #####
-
-# TODO m array needs tested here
-nonests<-nimbleCode({
+nonests <- nimbleCode({
 
   # COUNTS #####
 

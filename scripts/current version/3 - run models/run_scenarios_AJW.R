@@ -26,48 +26,40 @@ dem_scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>%
          "phiad" = "S.A",
          "fec" = "f")
  
-low.lam.params <- dem_scenarios %>% 
-  filter(trend == "decline")
-med.lam.params <- dem_scenarios %>% 
-  filter(trend == "stable")
-high.lam.params <- dem_scenarios %>% 
-  filter(trend == "increase")
-
 Ni <- c(150, 150)
 nyears <- 15
 
 # source functions
-# source(here("scripts", "current version",
-#             "1 - simulating data", "IPM_sim_3.0function.R"))
-
 source(here("scripts", "current version",
             "2 - models", "IPM_marray.R"))
 source(here("scripts", "current version",
-            "3 - run models", "run_scenarios_helperFns.R"))
+            "3 - run models", "run_scenarios_helperFns_AJW.R"))
 
 
 # MCMC settings #######
-nb <- 120000#0 #burn-in 
+nb <- 120000 #burn-in 
+# nb <- 50000 #burn-in 
 ni <- nb + nb #total iterations
 nt <- 10  #thin
 nc <- 3  #chains
 
-sims.per <- 100
-sims.per <- 2
+sims.per <- 30
+#for testing
+# dem_scenarios <- dem_scenarios[1:2,]
+# surv_scenarios <- surv_scenarios[1:4,]
+n.sam <- 3 #number of annual surveys for n-mixture abundance model
 
-cores=detectCores()
-cl <- makeCluster(nrow(low.lam.params), setup_strategy = "sequential") #not to overload your computer
+cores = detectCores()
+cl <- makeCluster(nrow(dem_scenarios), setup_strategy = "sequential") #not to overload your computer
 registerDoParallel(cl)
 
-# from scenario -> trajectory -> generate data -> fit all models
-# i is the unique trajectory (within trend)
-# d is scenario number
 
 #simulation replicates
-foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
+foreach(i = 21:sims.per) %dopar% { # loop over replicate sims  #####
     
   library(here)
   library(nimble)
+  library(IPMbook)
   
   #make true population trajectory data across demographic scenarios
   for (d in 1:nrow(dem_scenarios)) { #
@@ -86,8 +78,20 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
       det.prod <- surv_scenarios_num[s,'det.prod']
       det.MR <- surv_scenarios_num[s,'det.MR']
       
+      comb <- dem_scenarios[d,]
+      # detect <- surv_scenarios_num[]
+      
       # population survey data 
-      Ncount <- simCountBin(N=pop1$totB, pDetect = det.abund)
+      Nad_count <- simCountBin(N=pop1$N[2,], pDetect = det.abund)
+      N1_count <- simCountBin(N=pop1$N[1,], pDetect = det.abund)
+      
+      tot_count1 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
+      tot_count2 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
+      tot_count3 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
+      
+      surv_cnts <- rbind(tot_count1$count,
+                             tot_count2$count,
+                             tot_count3$count)
       
       # capture histories
       #check; not sure what to put for cap
@@ -102,46 +106,52 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
       
       # productivity data; check females.only
       if (!is.na(det.prod)) { 
-      pro <- simProd(reprod=pop3$reprod, pInclude = det.prod, females.only = TRUE,
+      nest_dat <- simProd(reprod = pop3$reprod, pInclude = det.prod, females.only = TRUE,
                      verbose = F)
+      obs_nestlings <- as.numeric(nest_dat$prod.agg[,'Juveniles'])
+      obs_nests <- as.numeric(nest_dat$prod.agg[,'Surveyed broods'])
       }
       
       ##run models
-      
-      comb <- dem_scenarios[d,]
-      
       #abundance data only
       if (is.na(det.prod) & is.na(det.MR)) { 
         
         out_abundOnly <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, 
-                               popDat, popTraj, comb, detect = det.abund)
+                               # popDat, popTraj, 
+                               comb, detect = det.abund)
         saveRDS(out_abundOnly, here("results",paste("out_abundOnly-",d,"-",s,"-",i,".RDS", sep = "")))
         rm(out_abundOnly) 
+        
+      } #abund only
         
       #missing productivity data
         else if (is.na(det.prod)) { 
           out_noProd <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, 
-                                   popDat, popTraj, comb, detect = det.abund)
+                                   # popDat, popTraj, 
+                                   comb, detect = det.abund)
           saveRDS(out_noProd, here("results", paste("out_noProd-",d,"-",s,"-",i,".RDS", sep = "")))
           rm(out_noProd)
+          
+        } #missing prod
       
       #missing MR data
         else if (is.na(det.MR)) { 
           out_noMR <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, 
-                              popDat, popTraj, comb, detect = det.abund)
+                              # popDat, popTraj, 
+                              comb, detect = det.abund)
           saveRDS(out_noMR, here("results", paste("out_noMR-",d,"-",s,"-",i,".RDS", sep = "")))
           rm(out_noMR)
+          
+        } #missing MR
         
       #full IPM
           else { 
             out_IPM <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, 
-                                 popDat, popTraj, comb, detect = det.abund)
+                                 # popDat, popTraj, 
+                                 comb, detect = det.abund)
             saveRDS(out_IPM, here("results", paste("out_IPM-",d,"-",s,"-",i,".RDS", sep = "")))
             rm(out_IPM)
-             }
-        }
-        }
-      }
+          }
     } #s
   } #d
 } #i
@@ -149,310 +159,5 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
   
 stopCluster(cl)
       
-      
-      
-#       
-#     
-#     # load relevant population trajectories ####
-#     lowpopTraj <- readRDS(here("data", "lowTrajectories", paste("lowpopTraj", "-", i, "-", j, ".RDS", sep = "")))
-#     medpopTraj <- readRDS(here("data", "medTrajectories", paste("medpopTraj", "-", i, "-", j, ".RDS", sep = "")))
-#     highpopTraj <- readRDS(here("data", "highTrajectories", paste("highpopTraj", "-", i, "-", j, ".RDS", sep = "")))
-#     
-#     for (d in 1:dim(surv_scenarios)[1]) { # loop over model scenario  #####
-#       # print(paste0(d, " out of ", 10))
-#       
-#       # translate detection levels into numbes
-#       det.levels <- data_scenarios[d, 1:3]
-#       det.numeric <- det.levels[1:3]
-#       det.numeric[which(det.numeric == "L")] <- detect.l
-#       det.numeric[which(det.numeric == "M")] <- detect.m
-#       det.numeric[which(det.numeric== "H")] <- detect.h
-#       det.numeric[which(det.numeric== "NA")] <- NA
-#       if (is.na(det.numeric[2]) & is.na(det.numeric[3])) { # ABUNDANCE ONLY #####
-#         #if (det.levels[4] == "L") { # simulate low trajectory data #####
-#           lowpopDat <- simData (indfates = lowpopTraj$indfates,
-#                                 n.years = 15,
-#                                 #n.data.types = c(0.25,0.25,0.25),
-#                                 #remove n.data.types (not needed in newest)
-#                                 #ADonly = F, 
-#                                 #HAS: removed ADonly
-#                                 p.1 = as.numeric(det.numeric[2]), #
-#                                 p.ad = as.numeric(det.numeric[2]), #
-#                                 p.count = as.numeric(det.numeric[1]), #
-#                                 p.prod = as.numeric(det.numeric[3]), #
-#                                 BinMod = T, # TODO could tidy these up as won't change
-#                                 n.sam = 3,
-#                                 sig = 0,
-#                                 productivity = T)
-#           popDat <- lowpopDat
-#           popTraj <- lowpopTraj
-#           comb <- low.lam.params[i,]
-#           # run model and save results ####
-#           lowout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
-#           saveRDS(lowout, here("results",paste("lowout-",i,"-",j,"-",d,".RDS", sep = "")))
-#           rm(lowout)
-#         #} else if (det.levels[4] == "M") { # simulate medium trajectory data #####
-#           medpopDat <- simData (indfates = medpopTraj$indfates,
-#                                 n.years = 15,
-#                                 #n.data.types = c(0.25,0.25,0.25),
-#                                 #remove n.data.types (not needed in newest)
-#                                 #ADonly = F, 
-#                                 #HAS: removed ADonly
-#                                 p.1 = as.numeric(det.numeric[2]), #
-#                                 p.ad = as.numeric(det.numeric[2]), #
-#                                 p.count = as.numeric(det.numeric[1]), #
-#                                 p.prod = as.numeric(det.numeric[3]), #
-#                                 BinMod = T,
-#                                 n.sam = 3,
-#                                 sig = 0,
-#                                 productivity = T)
-#           popDat <- medpopDat
-#           popTraj <- medpopTraj
-#           comb <- med.lam.params[i,]
-#           # run model and save results ####
-#           medout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
-#           saveRDS(medout, here("results", paste("medout-",i,"-",j,"-",d,".RDS", sep = "")))
-#           rm(medout)
-#         #} else if (det.levels[4] == "H") { # simulate high trajectory data #####
-#           highpopDat <- simData (indfates = highpopTraj$indfates,
-#                                  n.years = 15,
-#                                  #n.data.types = c(0.25,0.25,0.25),
-#                                  #remove n.data.types (not needed in newest)
-#                                  #ADonly = F, 
-#                                  #HAS: removed ADonly
-#                                  p.1 = as.numeric(det.numeric[2]), #
-#                                  p.ad = as.numeric(det.numeric[2]), #
-#                                  p.count = as.numeric(det.numeric[1]), #
-#                                  p.prod = as.numeric(det.numeric[3]), #
-#                                  BinMod = T,
-#                                  n.sam = 3,
-#                                  sig = 0,
-#                                  productivity = T)
-#           popDat <- highpopDat
-#           popTraj <- highpopTraj
-#           comb <- high.lam.params[i,]
-#           # run model and save results ####
-#           highout <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
-#           saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
-#           rm(highout)
-#         #}
-#       } else if (is.na(det.numeric[2])) { # NO MARK RECAPTURE ######
-#         #if (det.levels[4] == "L") { # simulate low trajectory data #####
-#           lowpopDat <- simData (indfates = lowpopTraj$indfates,
-#                                 n.years = 15,
-#                                 #n.data.types = c(0.25,0.25,0.25),
-#                                 #remove n.data.types (not needed in newest)
-#                                 #ADonly = F, 
-#                                 #HAS: removed ADonly
-#                                 p.1 = as.numeric(det.numeric[2]), #
-#                                 p.ad = as.numeric(det.numeric[2]), #
-#                                 p.count = as.numeric(det.numeric[1]), #
-#                                 p.prod = as.numeric(det.numeric[3]), #
-#                                 BinMod = T,
-#                                 n.sam = 3,
-#                                 sig = 0,
-#                                 productivity = T)
-#           popDat <- lowpopDat
-#           popTraj <- lowpopTraj
-#           comb <- low.lam.params[i,]
-#           # run model and save results ####
-#           lowout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
-#           saveRDS(lowout, here("results", paste("lowout-",i,"-",j,"-",d,".RDS", sep = "")))
-#           rm(lowout)
-#         #} else if (det.levels[4] == "M") { # simulate medium trajectory data #####
-#           medpopDat <- simData (indfates = medpopTraj$indfates,
-#                                 n.years = 15,
-#                                 #n.data.types = c(0.25,0.25,0.25),
-#                                 #remove n.data.types (not needed in newest)
-#                                 #ADonly = F, 
-#                                 #HAS: removed ADonly
-#                                 p.1 = as.numeric(det.numeric[2]), #
-#                                 p.ad = as.numeric(det.numeric[2]), #
-#                                 p.count = as.numeric(det.numeric[1]), #
-#                                 p.prod = as.numeric(det.numeric[3]), #
-#                                 BinMod = T,
-#                                 n.sam = 3,
-#                                 sig = 0,
-#                                 productivity = T)
-#           popDat <- medpopDat
-#           popTraj <- medpopTraj
-#           comb <- med.lam.params[i,]
-#           # run model and save results ####
-#           medout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
-#           saveRDS(medout, here("results", paste("medout-",i,"-",j,"-",d,".RDS", sep = "")))
-#           rm(medout)
-#         #} else if (det.levels[4] == "H") { # simulate high trajectory data #####
-#           highpopDat <- simData (indfates = highpopTraj$indfates,
-#                                  n.years = 15,
-#                                  #n.data.types = c(0.25,0.25,0.25),
-#                                  #remove n.data.types (not needed in newest)
-#                                  #ADonly = F, 
-#                                  #HAS: removed ADonly
-#                                  p.1 = as.numeric(det.numeric[2]), #
-#                                  p.ad = as.numeric(det.numeric[2]), #
-#                                  p.count = as.numeric(det.numeric[1]), #
-#                                  p.prod = as.numeric(det.numeric[3]), #
-#                                  BinMod = T,
-#                                  n.sam = 3,
-#                                  sig = 0,
-#                                  productivity = T)
-#           popDat <- highpopDat
-#           popTraj <- highpopTraj
-#           comb <- high.lam.params[i,]
-#           # run model and save results ####
-#           highout <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
-#           saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
-#           rm(highout)
-#         #}
-#       } else if (is.na(det.numeric[3])) { # NO NEST SURVIVAL ######
-#         #if (det.levels[4] == "L") { # simulate low trajectory data #####
-#           lowpopDat <- simData (indfates = lowpopTraj$indfates,
-#                                 n.years = 15,
-#                                 #n.data.types = c(0.25,0.25,0.25),
-#                                 #remove n.data.types (not needed in newest)
-#                                 #ADonly = F, 
-#                                 #HAS: removed ADonly
-#                                 p.1 = as.numeric(det.numeric[2]), #
-#                                 p.ad = as.numeric(det.numeric[2]), #
-#                                 p.count = as.numeric(det.numeric[1]), #
-#                                 p.prod = as.numeric(det.numeric[3]), #
-#                                 BinMod = T,
-#                                 n.sam = 3,
-#                                 sig = 0,
-#                                 productivity = T)
-#           popDat <- lowpopDat
-#           popTraj <- lowpopTraj
-#           
-#           # TODO change here
-#           # TODO will need to change the loop structure to deal w this
-#           #comb <- low.lam.params[i,]
-#           comb <- low.lam.params[i,]
-#           
-#           # run model and save results ####
-#           lowout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
-#           saveRDS(lowout, here("results", paste("lowout-",i,"-",j,"-",d,".RDS", sep = "")))
-#           rm(lowout)
-#         #} else if (det.levels[4] == "M") { # simulate medium trajectory data #####
-#           medpopDat <- simData (indfates = medpopTraj$indfates,
-#                                 n.years = 15,
-#                                 #n.data.types = c(0.25,0.25,0.25),
-#                                 #remove n.data.types (not needed in newest)
-#                                 #ADonly = F, 
-#                                 #HAS: removed ADonly
-#                                 p.1 = as.numeric(det.numeric[2]), #
-#                                 p.ad = as.numeric(det.numeric[2]), #
-#                                 p.count = as.numeric(det.numeric[1]), #
-#                                 p.prod = as.numeric(det.numeric[3]), #
-#                                 BinMod = T,
-#                                 n.sam = 3,
-#                                 sig = 0,
-#                                 productivity = T)
-#           popDat <- medpopDat
-#           popTraj <- medpopTraj
-#           comb <- med.lam.params[i,]
-#           # run model and save results ####
-#           medout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
-#           saveRDS(medout, here("results", paste("medout-",i,"-",j,"-",d,".RDS", sep = "")))
-#           rm(medout)
-#         #} else if (det.levels[4] == "H") { # simulate high trajectory data #####
-#           highpopDat <- simData (indfates = highpopTraj$indfates,
-#                                  n.years = 15,
-#                                  #n.data.types = c(0.25,0.25,0.25),
-#                                  #remove n.data.types (not needed in newest)
-#                                  #ADonly = F, 
-#                                  #HAS: removed ADonly
-#                                  p.1 = as.numeric(det.numeric[2]), #
-#                                  p.ad = as.numeric(det.numeric[2]), #
-#                                  p.count = as.numeric(det.numeric[1]), #
-#                                  p.prod = as.numeric(det.numeric[3]), #
-#                                  BinMod = T,
-#                                  n.sam = 3,
-#                                  sig = 0,
-#                                  productivity = T)
-#           popDat <- highpopDat
-#           popTraj <- highpopTraj
-#           comb <- high.lam.params[i,]
-#           # run model and save results ####
-#           highout <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
-#           saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
-#           rm(highout)
-#        # }
-#       } else { # FULL IPM ########
-#        # if (det.levels[4] == "L") { # simulate low trajectory data #####
-#           lowpopDat <- simData (indfates = lowpopTraj$indfates,
-#                                 n.years = 15,
-#                                 #n.data.types = c(0.25,0.25,0.25),
-#                                 #remove n.data.types (not needed in newest)
-#                                 #ADonly = F,
-#                                 #HAS: removed ADonly
-#                                 p.1 = as.numeric(det.numeric[2]), #
-#                                 p.ad = as.numeric(det.numeric[2]), #
-#                                 p.count = as.numeric(det.numeric[1]), #
-#                                 p.prod = as.numeric(det.numeric[3]), #
-#                                 BinMod = T,
-#                                 n.sam = 3,
-#                                 sig = 0,
-#                                 productivity = T)
-#           popDat <- lowpopDat
-#           popTraj <- lowpopTraj
-# 
-#           comb <- low.lam.params[i,] # TODO
-# 
-#           # run model and save results ####
-#           lowout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
-#           saveRDS(lowout, here("results", paste("lowout-",i,"-",j,"-",d,".RDS", sep = "")))
-#           rm(lowout)
-#        # } else if (det.levels[4] == "M") { # simulate medium trajectory data #####
-#           medpopDat <- simData (indfates = medpopTraj$indfates,
-#                                 n.years = 15,
-#                                 #n.data.types = c(0.25,0.25,0.25),
-#                                 #remove n.data.types (not needed in newest)
-#                                 #ADonly = F, 
-#                                 #HAS: removed ADonly
-#                                 p.1 = as.numeric(det.numeric[2]), #
-#                                 p.ad = as.numeric(det.numeric[2]), #
-#                                 p.count = as.numeric(det.numeric[1]), #
-#                                 p.prod = as.numeric(det.numeric[3]), #
-#                                 BinMod = T,
-#                                 n.sam = 3,
-#                                 sig = 0,
-#                                 productivity = T)
-#           popDat <- medpopDat
-#           popTraj <- medpopTraj
-#           
-#           comb <- med.lam.params[i,]
-#           
-#           # run model and save results ####
-#           medout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
-#           saveRDS(medout, here("results", paste("medout-",i,"-",j,"-",d,".RDS", sep = "")))
-#           rm(medout)
-#        # } else if (det.levels[4] == "H") { # simulate high trajectory data #####
-#        highpopDat <- simData (indfates = highpopTraj$indfates,
-#                               n.years = 15,
-#                               #n.data.types = c(0.25,0.25,0.25),
-#                               #remove n.data.types (not needed in newest)
-#                               #ADonly = F,
-#                               #HAS: removed ADonly
-#                               p.1 = as.numeric(det.numeric[2]), #
-#                               p.ad = as.numeric(det.numeric[2]), #
-#                               p.count = as.numeric(det.numeric[1]), #
-#                               p.prod = as.numeric(det.numeric[3]), #
-#                               BinMod = T,
-#                               n.sam = 3,
-#                               sig = 0,
-#                               productivity = T)
-#        popDat <- highpopDat
-#        popTraj <- highpopTraj
-# 
-#        comb <- high.lam.params[i,]
-# 
-#        # run model and save results ####
-#        highout <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, popDat, popTraj, comb, detect = as.numeric(det.numeric))
-#        saveRDS(highout, here("results", paste("highout-",i,"-",j,"-",d,".RDS", sep = "")))
-#        rm(highout)
-#        # }
-#       } # else
-#     } # scenarios row (d)
-#   } # sims per (j)
-# } # foreach - scenarios picked (i)
-
+# MCMCsummary(out_IPM, Rhat = 1.1)
+# gelman.diag(out_IPM)
