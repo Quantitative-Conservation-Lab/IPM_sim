@@ -328,18 +328,11 @@ cv.plot.vals <- cv.dem %>%
 
 ##################### LAMBDA #########################
 
-# row.low <- read_csv(file = here('results', 'row_low_geo.csv')) %>% 
-#   transform(lambda.scenario = 'Decreasing')
-# row.med <- read_csv(file = here('results', 'row_med_geo.csv')) %>%
-#   transform(lambda.scenario = 'Stable')
-# row.high <- read_csv(file = here('results', 'row_high_geo.csv')) %>% 
-#   transform(lambda.scenario = 'Increasing')
-
 lambda_dat <- read.csv(file = here('results', 'processed', 'lambda_geo.csv'), header = T, 
                        stringsAsFactors = F)
 
 #reformat for plotting
-toplot <- lambda_dat %>%
+lam_dat <- lambda_dat %>%
   select(contains("geomean"), sim_rep, surv_scenario, dem_scenario, model_type, Quantile) %>%
   pivot_longer(cols = starts_with("geomean"), names_to = "Year") %>%
   filter(!is.na(value)) %>%
@@ -351,65 +344,57 @@ toplot <- lambda_dat %>%
   inner_join(dem_scenarios, by = 'dem_scenario') %>% 
   rename(phi1.true = phi1, 
                       phiad.true = phiad, 
-                      fec.true = fec) #%>% 
-##pick up here somewhere
-  # mutate(scenario = as.factor(scenario),
-  #        sims = as.factor(sims), 
-  #        simscenarios = as.factor(simscenarios))
+                      fec.true = fec) %>% 
   mutate(
     det.MR = na_if(as.character(det.MR), "NA"), 
     det.prod = na_if(as.character(det.prod), "NA"),
-    det.abund = na_if(as.character(det.abund), "NA"),
-    lambda = factor(lambda)
-  ) %>% 
+    det.abund = na_if(as.character(det.abund), "NA")) %>% 
   transform(dataset = ifelse(is.na(det.MR)&!is.na(det.prod), 'Abundance & Productivity', 
                              ifelse(!is.na(det.MR)&is.na(det.prod), 'Abundance & Survival',
                                     ifelse(is.na(det.MR)&is.na(det.prod), 'Abundance Only', 'Full IPM')))) %>%
-  group_by(Quantile, Year, det.abund, lambda, lambda.scenario, life_hist, dataset, det.MR, det.prod) %>% 
+  group_by(Quantile, Year, det.abund, det.MR, det.prod, trend, lambda, life_hist, dataset) %>% 
   dplyr::summarize(value = mean(value), .groups = "drop") %>% 
   ungroup() %>% 
   mutate(Quantile = str_remove(Quantile, "\\%")) %>% 
   mutate(Quantile = paste("X", Quantile, sep = "")) %>% 
-  reshape2::dcast(dataset + Year +  det.MR + det.prod + det.abund + lambda + lambda.scenario + life_hist ~ Quantile, value.var = "value") %>% 
+  reshape2::dcast(dataset + Year + det.MR + det.prod + det.abund + lambda + trend + life_hist ~ Quantile, value.var = "value") %>% 
   mutate(Year = Year + 1) %>% 
   filter(Year %in% c(15)) %>% 
   mutate(Year = factor(Year)) %>% 
   mutate(det.abund = factor(det.abund, levels = c("L", "M", "H"), labels = c("Low", "Medium", "High"))) %>% 
   mutate(det.prod = factor(det.prod, levels = c("L", "M", "H"), labels = c("Low", "Medium", "High"))) %>% 
   mutate(det.MR = factor(det.MR, levels = c("L", "M", "H"), labels = c("Low", "Medium", "High"))) %>% 
-  transform(lambda.scenario = factor(lambda.scenario,
-                                     levels = c("Decreasing", "Stable", "Increasing"),
+  transform(trend = factor(trend, levels = c("decline", "stable", "increase"),
                                      labels = c("Decreasing", "Stable", "Increasing"))) %>%
   transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'),
                              labels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'))) 
 
 # average over two layers of detection (det.MR and det.prod) and life history type
-toplot.few <- toplot %>%
-  group_by(dataset, Year, det.abund, lambda, lambda.scenario) %>%
+plot_dat_lam_few <- lam_dat %>%
+  group_by(dataset, Year, det.abund, trend, lambda) %>%
   dplyr::summarize(
     `X2.5` = mean(`X2.5`), 
     `X50` = mean(`X50`),
     `X97.5` = mean(`X97.5`),
-    .groups = 'drop') %>%
-  transform(lambda.scenario = factor(lambda.scenario,
-                                     levels = c("Decreasing", "Stable", "Increasing"))) %>%
-  transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'),
-                             labels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only')))
+    .groups = 'drop') #%>%
+  # transform(trend = factor(trend, levels = c("Decreasing", "Stable", "Increasing"))) %>%
+  # transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'),
+  #                            labels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only')))
 
 # average over all layers of detection and NOT life history type
-toplot.lh <- toplot %>%
-  group_by(dataset, Year, life_hist, lambda, lambda.scenario) %>%
+plot_dat_lam_dem <- lam_dat %>%
+  group_by(dataset, Year, life_hist, trend, lambda) %>%
   dplyr::summarize(
     `X2.5` = mean(`X2.5`), 
     `X50` = mean(`X50`),
     `X97.5` = mean(`X97.5`),
     .groups = 'drop') %>%
-  transform(lambda.scenario = factor(lambda.scenario,
-                                     levels = c("Decreasing", "Stable", "Increasing"))) %>%
+  # transform(lambda.scenario = factor(lambda.scenario,
+  #                                    levels = c("Decreasing", "Stable", "Increasing"))) %>%
   transform(life_hist = factor(life_hist, levels = c("slow", "mod", "fast"), 
-                               labels = c("Slow", "Moderate", "Fast"))) %>%
-  transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'),
-                             labels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only')))
+                               labels = c("Slow", "Moderate", "Fast"))) #%>%
+  # transform(dataset = factor(dataset, levels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only'),
+  #                            labels = c('Full IPM', 'Abundance & Survival', 'Abundance & Productivity', 'Abundance Only')))
 
 ################### FIGURES ##########################
 
@@ -545,7 +530,7 @@ a3
 
 plot_grid(a1, a2, a3, nrow = 2, labels = "AUTO",
           align = "hv", label_size = 12)
-ggsave(width = 8, height = 12, here("figures", 'final', "fig3.png"))
+# ggsave(width = 8, height = 12, here("figures", 'final', "fig3.png"))
 
 
 #### Figure 4: RMSE and bias ecological parameters x true fecundity ####
@@ -667,13 +652,13 @@ b3
 # ggsave(width = 6.5, height = 18, here("figures", "fig4_NEW.png"))
 
 plot_grid(b1, b2, b3, nrow = 2, labels = "AUTO", align = "hv", label_size = 12)
-ggsave(width = 11, height = 15, here("figures", 'final', "fig4.png"))
+# ggsave(width = 11, height = 15, here("figures", 'final', "fig4.png"))
 
 
 #### Figure 5: Lambda trends ####
 
 ##### WRT count survey detection ####
-c1 <- ggplot(toplot.few) +
+c1 <- ggplot(plot_dat_lam_few) +
   geom_point(aes(x = Year, y = X50, col = det.abund, group = det.abund, shape = det.abund), position = position_dodge(width = 0.5)) +
   geom_linerange(aes(x = Year, ymin = X2.5, ymax = X97.5, col = det.abund, group = det.abund,
                      shape = det.abund), position = position_dodge(width = 0.5)) +
@@ -683,7 +668,7 @@ c1 <- ggplot(toplot.few) +
   # oh right, yes, because we should have stopped the model after each year 
   # (to 'hide' the full time series from being used to estimate trend)
   ylab(expression(lambda)) + 
-  facet_grid(dataset ~ lambda.scenario, scales = 'free', labeller = label_wrap_gen()) +
+  facet_grid(dataset ~ trend, scales = 'free', labeller = label_wrap_gen()) +
   theme_bw() +
   theme(legend.position = 'top',
         plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
@@ -699,7 +684,7 @@ c1 <- ggplot(toplot.few) +
 c1
 
 ##### WRT life history type ####
-c2 <- ggplot(toplot.lh) +
+c2 <- ggplot(plot_dat_lam_dem) +
   geom_point(aes(x = Year, y = X50, col = life_hist, group = life_hist, shape = life_hist), position = position_dodge(width = 0.5)) +
   geom_linerange(aes(x = Year, ymin = X2.5, ymax = X97.5, col = life_hist, group = life_hist,
                      shape = life_hist), position = position_dodge(width = 0.5)) +
@@ -709,7 +694,7 @@ c2 <- ggplot(toplot.lh) +
   # oh right, yes, because we should have stopped the model after each year 
   # (to 'hide' the full time series from being used to estimate trend)
   ylab(expression(lambda)) + 
-  facet_grid(dataset ~ lambda.scenario, scales = 'free', labeller = label_wrap_gen()) +
+  facet_grid(dataset ~ trend, scales = 'free', labeller = label_wrap_gen()) +
   theme_bw() +
   theme(legend.position = 'top',
         plot.subtitle = element_text(size = 10, hjust = 0.5, vjust = 1),
@@ -726,7 +711,7 @@ c2
 
 ##### Combine ####
 plot_grid(c1, c2, ncol = 2, labels = "AUTO", align = "hv", label_size = 12)
-ggsave(width = 10, height = 7.5, here("figures", 'final', "fig5.png"))
+# ggsave(width = 10, height = 7.5, here("figures", 'final', "fig5.png"))
 
 ################### Appendix #########################
 
@@ -798,7 +783,7 @@ d3 <- ggplot(cv.few  %>% filter(variable %in% obs.pars),
 
 ##### Combine ####
 plot_grid(d1, d2, d3, nrow = 2, labels = "AUTO", align = "hv", label_size = 12)
-ggsave(width = 12, height = 15, here("figures", 'final', "fig6.png"))
+# ggsave(width = 12, height = 15, here("figures", 'final', "fig6.png"))
 
 #### Amanda is trying things ####
 ## curious about emphasizing model structure/datasets included
@@ -813,17 +798,17 @@ names(lambda.labs) <- c("Decreasing", "Stable", "Increasing")
 test.bias <- rel.bias.sc  %>% 
   group_by(trend, life_hist, variable, det.MR, det.abund, det.prod, dataset) %>%
   dplyr::summarize(value = mean(bias)) %>%
-  filter(trend == 'Stable') %>%
-  filter(variable %nin% obs.pars) %>%
-  filter(dataset == 'Full IPM')
+  filter(trend == 'Stable') #%>%
+  # filter(variable %nin% obs.pars) #%>%
+  # filter(dataset == 'Full IPM')
   #phi1 has the most/only bias in full IPM - exploring
   # filter(dataset == 'Full IPM' & det.prod == 'High') #%>%
   #check this
   # transform(scenario = factor(scenario, levels = c(1,3,2),
   #                             labels = c('fast', 'mod', 'slow')))
 
-#doesn't seem to vary over det.prod               
-ggplot(test.bias, 
+#doesn't seem to vary over det.prod, so didn't visualize             
+ggplot(test.bias %>% filter(dataset == 'Full IPM'), 
        aes(x = det.MR, y = value, col = variable, 
            group = variable)) +
   geom_point() + 
@@ -834,6 +819,51 @@ ggplot(test.bias,
   xlab('MR detection') + 
   ylab('Relative bias') +
   facet_nested(det.prod~det.abund + life_hist, scales = 'free_x')
+  # facet_nested(scenario~det.abund, scales = 'free_x') +
+  theme_bw()
+  
+  #no nests
+  ggplot(test.bias %>% filter(dataset == 'Abundance & Survival'), 
+         aes(x = det.MR, y = value, col = variable, 
+             group = variable)) +
+    geom_point() + 
+    geom_line() +
+    geom_hline(aes(yintercept = 0), linetype = 'dotted') +
+    #ylim(c(-1.75, 1.75)) +
+    scale_x_discrete(labels = c("L", "M", "H")) +
+    xlab('MR detection') + 
+    ylab('Relative bias') +
+    facet_nested(det.abund~life_hist, scales = 'free_x')
+  # facet_nested(scenario~det.abund, scales = 'free_x') +
+  theme_bw()
+  
+  #no MR
+  ggplot(test.bias %>% filter(dataset == 'Abundance & Productivity'), 
+         aes(x = det.prod, y = value, col = variable, 
+             group = variable)) +
+    geom_point() + 
+    geom_line() +
+    geom_hline(aes(yintercept = 0), linetype = 'dotted') +
+    #ylim(c(-1.75, 1.75)) +
+    scale_x_discrete(labels = c("L", "M", "H")) +
+    xlab('Nest detection') + 
+    ylab('Relative bias') +
+    facet_nested(det.abund~life_hist, scales = 'free_x')
+  # facet_nested(scenario~det.abund, scales = 'free_x') +
+  theme_bw()
+  
+  #abund only
+  ggplot(test.bias %>% filter(dataset == 'Abundance Only'), 
+         aes(x = det.abund, y = value, col = variable, 
+             group = variable)) +
+    geom_point() + 
+    geom_line() +
+    geom_hline(aes(yintercept = 0), linetype = 'dotted') +
+    #ylim(c(-1.75, 1.75)) +
+    scale_x_discrete(labels = c("L", "M", "H")) +
+    xlab('Count detection') + 
+    ylab('Relative bias') +
+    facet_nested(. ~ life_hist, scales = 'free_x')
   # facet_nested(scenario~det.abund, scales = 'free_x') +
   theme_bw()
 
