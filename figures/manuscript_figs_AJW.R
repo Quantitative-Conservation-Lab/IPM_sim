@@ -335,86 +335,27 @@ cv.plot.vals <- cv.dem %>%
 # row.high <- read_csv(file = here('results', 'row_high_geo.csv')) %>% 
 #   transform(lambda.scenario = 'Increasing')
 
-# Reformat for plotting
-toplot1 <- row.low %>%
-  select(contains("geomean"), scenario, sims, simscenarios, Quantile, lambda.scenario) %>%
+lambda_dat <- read.csv(file = here('results', 'processed', 'lambda_geo.csv'), header = T, 
+                       stringsAsFactors = F)
+
+#reformat for plotting
+toplot <- lambda_dat %>%
+  select(contains("geomean"), sim_rep, surv_scenario, dem_scenario, model_type, Quantile) %>%
   pivot_longer(cols = starts_with("geomean"), names_to = "Year") %>%
   filter(!is.na(value)) %>%
   mutate(Year = str_remove(Year, "geomean\\.")) %>%
   mutate(Year = as.numeric(Year)) %>%
-  group_by(scenario, sims, simscenarios, Year, Quantile) %>% 
+  group_by(sim_rep, surv_scenario, dem_scenario, model_type, Year, Quantile) %>% 
   ungroup() %>%
-  inner_join(data_scenarios %>% mutate(simscenarios = row_number()),
-             by = "simscenarios") %>%
-  inner_join(scenarios %>% 
-               arrange(trend) %>% 
-               mutate(scenario = c(1:3, 1:3, 1:3), 
-                      lambda.scenario = case_when(
-                        trend == "increase" ~ "Increasing",
-                        trend == "decline" ~ "Decreasing",
-                        TRUE ~ "Stable"
-                      )) %>% 
-               rename(phi1.true = phi1, 
+  inner_join(surv_scenarios_char, by = "surv_scenario") %>%
+  inner_join(dem_scenarios, by = 'dem_scenario') %>% 
+  rename(phi1.true = phi1, 
                       phiad.true = phiad, 
-                      fec.true = fec), 
-             by = c("lambda.scenario", "scenario")) %>% 
-  mutate(scenario = as.factor(scenario),
-         sims = as.factor(sims), 
-         simscenarios = as.factor(simscenarios))
-
-toplot2 <- row.med %>%
-  select(contains("geomean"), scenario, sims, simscenarios, Quantile, lambda.scenario) %>%
-  pivot_longer(cols = starts_with("geomean"), names_to = "Year") %>%
-  filter(!is.na(value)) %>%
-  mutate(Year = str_remove(Year, "geomean\\.")) %>%
-  mutate(Year = as.numeric(Year)) %>%
-  group_by(scenario, sims, simscenarios, Year, Quantile) %>% 
-  ungroup() %>%
-  inner_join(data_scenarios %>% mutate(simscenarios = row_number()),
-             by = "simscenarios") %>%
-  inner_join(scenarios %>% 
-               arrange(trend) %>% 
-               mutate(scenario = c(1:3, 1:3, 1:3),
-                      lambda.scenario = case_when(
-                        trend == "increase" ~ "Increasing",
-                        trend == "decline" ~ "Decreasing",
-                        TRUE ~ "Stable"
-                      )) %>% 
-               rename(phi1.true = phi1, 
-                      phiad.true = phiad, 
-                      fec.true = fec), 
-             by = c("lambda.scenario", "scenario")) %>% 
-  mutate(scenario = as.factor(scenario),
-         sims = as.factor(sims), 
-         simscenarios = as.factor(simscenarios))
-
-toplot3 <- row.high %>%
-  select(contains("geomean"), scenario, sims, simscenarios, Quantile, lambda.scenario) %>%
-  pivot_longer(cols = starts_with("geomean"), names_to = "Year") %>%
-  filter(!is.na(value)) %>%
-  mutate(Year = str_remove(Year, "geomean\\.")) %>%
-  mutate(Year = as.numeric(Year)) %>%
-  group_by(scenario, sims, simscenarios, Year, Quantile) %>% 
-  ungroup() %>%
-  inner_join(data_scenarios %>% mutate(simscenarios = row_number()),
-             by = "simscenarios") %>%
-  inner_join(scenarios %>% 
-               arrange(trend) %>% 
-               mutate(scenario = c(1:3, 1:3, 1:3), 
-                      lambda.scenario = case_when(
-                        trend == "increase" ~ "Increasing",
-                        trend == "decline" ~ "Decreasing",
-                        TRUE ~ "Stable"
-                      )) %>% 
-               rename(phi1.true = phi1, 
-                      phiad.true = phiad, 
-                      fec.true = fec), 
-             by = c("lambda.scenario", "scenario")) %>% 
-  mutate(scenario = as.factor(scenario),
-         sims = as.factor(sims), 
-         simscenarios = as.factor(simscenarios))
-
-toplot <- bind_rows(toplot1, toplot2, toplot3) %>% 
+                      fec.true = fec) #%>% 
+##pick up here somewhere
+  # mutate(scenario = as.factor(scenario),
+  #        sims = as.factor(sims), 
+  #        simscenarios = as.factor(simscenarios))
   mutate(
     det.MR = na_if(as.character(det.MR), "NA"), 
     det.prod = na_if(as.character(det.prod), "NA"),
