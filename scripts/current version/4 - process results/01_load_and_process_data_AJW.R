@@ -95,6 +95,16 @@ results_all <- bind_rows(results_list)
 
 saveRDS(results_all, file = here('results', 'processed', "results_all.RDS"))
 
+convergence_summary <- results_all %>%
+  distinct(model_type, dem_scenario, surv_scenario, sim_rep) %>%
+  group_by(model_type) %>%
+  dplyr::summarize(
+    successful_sims = n(), 
+    # Optional: Calculate percentage based on your 'sims.per' variable
+    # percent_converged = (n() / sims.per) * 100,
+    .groups = "drop"
+  )
+
 library(ggplot2)
 
 # parameters that are failing to converge
@@ -125,20 +135,20 @@ ggplot(not_converged, aes(x = max_param, y = gelman, color = type)) +
   ) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggplot(not_converged %>% filter(gelman < 20), aes(x = max_param, y = gelman, color = type)) +
-  geom_boxplot(outlier.shape = NA, alpha = 0.5) +
-  geom_jitter(width = 0.2, alpha = 0.7) +
-  geom_hline(yintercept = 1.1, linetype = "dashed", color = "red") +
-  facet_wrap(.~type) +
-  theme_minimal() +
-  labs(
-    x = "Parameter",
-    y = "Gelman-Rubin Diagnostic (R-hat)",
-    color = "Model Type"
-  ) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# ggplot(not_converged %>% filter(gelman < 20), aes(x = max_param, y = gelman, color = type)) +
+#   geom_boxplot(outlier.shape = NA, alpha = 0.5) +
+#   geom_jitter(width = 0.2, alpha = 0.7) +
+#   geom_hline(yintercept = 1.1, linetype = "dashed", color = "red") +
+#   facet_wrap(.~type) +
+#   theme_minimal() +
+#   labs(
+#     x = "Parameter",
+#     y = "Gelman-Rubin Diagnostic (R-hat)",
+#     color = "Model Type"
+#   ) +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggplot(not_converged %>% filter(gelman < 20), aes(x = max_param, y = gelman, color = type)) +
+ggplot(not_converged, aes(x = max_param, y = gelman, color = type)) +
   geom_boxplot(outlier.shape = NA, alpha = 0.5) +
   geom_jitter(width = 0.2, alpha = 0.7) +
   geom_hline(yintercept = 1.1, linetype = "dashed", color = "red") +
@@ -151,7 +161,7 @@ ggplot(not_converged %>% filter(gelman < 20), aes(x = max_param, y = gelman, col
   ) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggplot(not_converged %>% filter(gelman < 20), aes(x = max_param, y = gelman, color = type)) +
+ggplot(not_converged, aes(x = max_param, y = gelman, color = type)) +
   geom_boxplot(outlier.shape = NA, alpha = 0.5) +
   geom_jitter(width = 0.2, alpha = 0.7) +
   geom_hline(yintercept = 1.1, linetype = "dashed", color = "red") +

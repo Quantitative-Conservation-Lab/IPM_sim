@@ -41,12 +41,12 @@ nb <- 200000 #burn-in
 ni <- 350000 #total iterations
 nt <- 10  #thin
 nc <- 3  #chains
-# nb <- 2000 #burn-in 
+#testing
+# nb <- 2000 #burn-in
 # ni <- 8000 #total iterations
 # nc <- 2
 
 sims.per <- 40
-n.sam <- 3 #number of annual surveys for n-mixture abundance model
 
 cores = detectCores()
 cl <- makeCluster(nrow(dem_scenarios), setup_strategy = "sequential") #not to overload your computer
@@ -56,19 +56,21 @@ registerDoParallel(cl)
 #simulation replicates
 foreach(i = 21:sims.per) %dopar% { # loop over replicate sims  #####
     
-  library(here)
-  library(nimble)
+  # library(here)
+  # library(nimble)
   library(IPMbook)
   
   #make true population trajectory data across demographic scenarios
   for (d in 1:nrow(dem_scenarios)) { #
     
     phi <- as.numeric(c(dem_scenarios[d,'phi1'], dem_scenarios[d,'phiad']))
-    fec <- as.numeric(dem_scenarios[d,'fec'])*2 #function assumes both sexes
+    fec <- as.numeric(dem_scenarios[d,'fec'])*2 #check; function assumes both sexes
     
     pop1 <- simPop(Ni = Ni, phi = phi, f = fec, nYears = nyears)
     pop2 <- simPop(Ni = Ni, phi = phi, f = fec, nYears = nyears)
     pop3 <- simPop(Ni = Ni, phi = phi, f = fec, nYears = nyears)
+    
+    n.sam <- 3 #number of annual surveys for n-mixture abundance model
     
     #survey the real populations across survey scenarios and run models
     for (s in 1:nrow(surv_scenarios)) {
@@ -114,7 +116,7 @@ foreach(i = 21:sims.per) %dopar% { # loop over replicate sims  #####
       #abundance data only
       if (is.na(det.prod) & is.na(det.MR)) { 
         
-        out_abundOnly <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, 
+        out_abundOnly <- runabundonly(nb = nb*2, ni = ni*2, nt = nt, nc = nc, 
                                comb, detect = det.abund)
         saveRDS(out_abundOnly, here("results", paste("out_abundOnly-",d,"-",s,"-",i,".RDS", sep = "")))
         rm(out_abundOnly) 
@@ -132,7 +134,7 @@ foreach(i = 21:sims.per) %dopar% { # loop over replicate sims  #####
       
       #missing MR data
         else if (is.na(det.MR)) { 
-          out_noMR <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, 
+          out_noMR <- runnomr(nb = nb*2, ni = ni*2, nt = nt, nc = nc, 
                               comb, detect = det.abund)
           saveRDS(out_noMR, here("results", paste("out_noMR-",d,"-",s,"-",i,".RDS", sep = "")))
           rm(out_noMR)

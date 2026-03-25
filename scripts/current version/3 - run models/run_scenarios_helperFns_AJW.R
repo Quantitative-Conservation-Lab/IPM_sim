@@ -126,7 +126,7 @@ runnomr <- function(nb, ni, nt, nc,
 
   inits1 <- list(
     mean.phi = c(comb$phi1, comb$phiad),
-    mean.p = det.MR,
+    # mean.p = det.MR,
     p.surv = det.abund,
     fec = comb$fec,
     n1.start = pop1$N[1,1]+pop1$N[1,1]*0.25,
