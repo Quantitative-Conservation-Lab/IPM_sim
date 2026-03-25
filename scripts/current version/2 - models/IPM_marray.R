@@ -14,10 +14,13 @@ IPMmod<-nimbleCode({
   # COUNTS #####
 
   # System process
-  n1.start ~ dunif(0, 500)
-  nad.start ~ dunif(0, 500)
+  n1.start ~ dunif(150, 500)
+  nad.start ~ dunif(150, 500)
   N1[1] <- round(n1.start)
   Nad[1] <- round(nad.start)
+  
+  # N1[1] ~ dpois(300)
+  # Nad[1] ~ dpois(300)
 
   for (t in 2:nyears){
     N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
@@ -114,10 +117,13 @@ nonests <- nimbleCode({
   # System process
 
   # Initial population sizes
-  n1.start ~ dunif(0, 500)
-  nad.start ~ dunif(0, 500)
+  n1.start ~ dunif(150, 500)
+  nad.start ~ dunif(150, 500)
   N1[1] <- round(n1.start)
   Nad[1] <- round(nad.start)
+  
+  # N1[1] ~ dpois(300)
+  # Nad[1] ~ dpois(300)
 
   for (t in 2:nyears){
     N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
@@ -205,10 +211,13 @@ nomr<-nimbleCode({
   # System process
 
   # Initial population sizes
-  n1.start ~ dunif(0, 500)
-  nad.start ~ dunif(0, 500)
+  n1.start ~ dunif(150, 500)
+  nad.start ~ dunif(150, 500)
   N1[1] <- round(n1.start)
   Nad[1] <- round(nad.start)
+  
+  # N1[1] ~ dpois(300)
+  # Nad[1] ~ dpois(300)
 
   for (t in 2:nyears){
     N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
@@ -268,10 +277,13 @@ abundonly<-nimbleCode({
   # System process
 
   # Initial population sizes
-  n1.start ~ dunif(0, 500)
-  nad.start ~ dunif(0, 500)
+  n1.start ~ dunif(150, 500)
+  nad.start ~ dunif(150, 500)
   N1[1] <- round(n1.start)
   Nad[1] <- round(nad.start)
+  
+  # N1[1] ~ dpois(300)
+  # Nad[1] ~ dpois(300)
 
   for (t in 2:nyears){
     N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])

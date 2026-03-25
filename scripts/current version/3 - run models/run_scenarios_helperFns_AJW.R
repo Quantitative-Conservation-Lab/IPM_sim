@@ -1,29 +1,5 @@
 # this file contains a function for running each model type
 
-# TODO - any updates needed here? HAS tested already
-# Function to create a m-array based on capture-histories (CH)
-marray <- function(CH){
-  nind <- dim(CH)[1]
-  n.occasions <- dim(CH)[2]
-  m.array <- matrix(data = 0, ncol = n.occasions+1, nrow = n.occasions)
-  # Calculate the number of released individuals at each time period
-  for (t in 1:n.occasions){
-    m.array[t,1] <- sum(CH[,t])
-  }
-  for (i in 1:nind){
-    pos <- which(CH[i,]!=0)
-    g <- length(pos)
-    for (z in 1:(g-1)){
-      m.array[pos[z],pos[z+1]] <- m.array[pos[z],pos[z+1]] + 1
-    } #z
-  } #i
-  # Calculate the number of individuals that is never recaptured
-  for (t in 1:n.occasions){
-    m.array[t,(n.occasions+1)] <- m.array[t,1] - sum(m.array[t,2:n.occasions])
-  }
-  out <- m.array[1:(n.occasions-1),2:(n.occasions+1)]
-  return(out)
-}
 
 #### IPM ####
 
@@ -51,8 +27,10 @@ runIPMmod <- function(nb, ni, nt, nc,
     mean.p = det.MR,
     p.surv = det.abund,
     fec = comb$fec,
-    n1.start = pop1$N[1,1],
-    nad.start = pop1$N[2,1]
+    n1.start = pop1$N[1,1]+pop1$N[1,1]*0.25,
+    nad.start = pop1$N[2,1]+pop1$N[2,1]*0.25,
+    N1 = as.numeric(round(pop1$N[1,]+pop1$N[1,]*0.25)),
+    Nad = as.numeric(round(pop1$N[2,]+pop1$N[2,]*0.25))
   )
 
   #### PARAMETERS TO MONITOR ####
@@ -100,8 +78,10 @@ runnonests <- function(nb, ni, nt, nc,
     mean.p = det.MR,
     p.surv = det.abund,
     fec = comb$fec,
-    n1.start = pop1$N[1,1],
-    nad.start = pop1$N[2,1]
+    n1.start = pop1$N[1,1]+pop1$N[1,1]*0.25,
+    nad.start = pop1$N[2,1]+pop1$N[2,1]*0.25,
+    N1 = as.numeric(round(pop1$N[1,]+pop1$N[1,]*0.25)),
+    Nad = as.numeric(round(pop1$N[2,]+pop1$N[2,]*0.25))
   )
 
   #### PARAMETERS TO MONITOR ####
@@ -149,8 +129,10 @@ runnomr <- function(nb, ni, nt, nc,
     mean.p = det.MR,
     p.surv = det.abund,
     fec = comb$fec,
-    n1.start = pop1$N[1,1],
-    nad.start = pop1$N[2,1]
+    n1.start = pop1$N[1,1]+pop1$N[1,1]*0.25,
+    nad.start = pop1$N[2,1]+pop1$N[2,1]*0.25,
+    N1 = as.numeric(round(pop1$N[1,]+pop1$N[1,]*0.25)),
+    Nad = as.numeric(round(pop1$N[2,]+pop1$N[2,]*0.25))
   )
 
   #### PARAMETERS TO MONITOR ####
@@ -197,8 +179,10 @@ runabundonly <- function(nb, ni, nt, nc,
     mean.p = det.MR,
     p.surv = det.abund,
     fec = comb$fec,
-    n1.start = pop1$N[1,1],
-    nad.start = pop1$N[2,1]
+    n1.start = pop1$N[1,1]+pop1$N[1,1]*0.25,
+    nad.start = pop1$N[2,1]+pop1$N[2,1]*0.25,
+    N1 = as.numeric(round(pop1$N[1,]+pop1$N[1,]*0.25)),
+    Nad = as.numeric(round(pop1$N[2,]+pop1$N[2,]*0.25))
   )
 
   #### PARAMETERS TO MONITOR ####

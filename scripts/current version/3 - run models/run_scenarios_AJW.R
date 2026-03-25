@@ -37,16 +37,15 @@ source(here("scripts", "current version",
 
 
 # MCMC settings #######
-nb <- 120000 #burn-in 
-# nb <- 50000 #burn-in 
-ni <- nb + nb #total iterations
+nb <- 200000 #burn-in 
+ni <- 350000 #total iterations
 nt <- 10  #thin
 nc <- 3  #chains
+# nb <- 2000 #burn-in 
+# ni <- 8000 #total iterations
+# nc <- 2
 
-sims.per <- 30
-#for testing
-# dem_scenarios <- dem_scenarios[1:2,]
-# surv_scenarios <- surv_scenarios[1:4,]
+sims.per <- 40
 n.sam <- 3 #number of annual surveys for n-mixture abundance model
 
 cores = detectCores()
@@ -79,8 +78,7 @@ foreach(i = 21:sims.per) %dopar% { # loop over replicate sims  #####
       det.MR <- surv_scenarios_num[s,'det.MR']
       
       comb <- dem_scenarios[d,]
-      # detect <- surv_scenarios_num[]
-      
+
       # population survey data 
       Nad_count <- simCountBin(N=pop1$N[2,], pDetect = det.abund)
       N1_count <- simCountBin(N=pop1$N[1,], pDetect = det.abund)
@@ -117,9 +115,8 @@ foreach(i = 21:sims.per) %dopar% { # loop over replicate sims  #####
       if (is.na(det.prod) & is.na(det.MR)) { 
         
         out_abundOnly <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, 
-                               # popDat, popTraj, 
                                comb, detect = det.abund)
-        saveRDS(out_abundOnly, here("results",paste("out_abundOnly-",d,"-",s,"-",i,".RDS", sep = "")))
+        saveRDS(out_abundOnly, here("results", paste("out_abundOnly-",d,"-",s,"-",i,".RDS", sep = "")))
         rm(out_abundOnly) 
         
       } #abund only
@@ -127,7 +124,6 @@ foreach(i = 21:sims.per) %dopar% { # loop over replicate sims  #####
       #missing productivity data
         else if (is.na(det.prod)) { 
           out_noProd <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, 
-                                   # popDat, popTraj, 
                                    comb, detect = det.abund)
           saveRDS(out_noProd, here("results", paste("out_noProd-",d,"-",s,"-",i,".RDS", sep = "")))
           rm(out_noProd)
@@ -137,7 +133,6 @@ foreach(i = 21:sims.per) %dopar% { # loop over replicate sims  #####
       #missing MR data
         else if (is.na(det.MR)) { 
           out_noMR <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, 
-                              # popDat, popTraj, 
                               comb, detect = det.abund)
           saveRDS(out_noMR, here("results", paste("out_noMR-",d,"-",s,"-",i,".RDS", sep = "")))
           rm(out_noMR)
@@ -147,7 +142,6 @@ foreach(i = 21:sims.per) %dopar% { # loop over replicate sims  #####
       #full IPM
           else { 
             out_IPM <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, 
-                                 # popDat, popTraj, 
                                  comb, detect = det.abund)
             saveRDS(out_IPM, here("results", paste("out_IPM-",d,"-",s,"-",i,".RDS", sep = "")))
             rm(out_IPM)
