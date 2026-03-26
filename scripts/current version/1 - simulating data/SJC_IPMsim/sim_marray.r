@@ -5,7 +5,7 @@ library(nimble)
 library(MCMCvis)
 library(coda)
 
-rm(list=ls())
+# rm(list=ls())
 
 source(here("scripts/current version/1 - simulating data/SJC_IPMsim","create.pop.r"))
 source(here("scripts/current version/1 - simulating data/SJC_IPMsim","create.eh.r"))
@@ -70,7 +70,8 @@ for(s in 1:sims){
       
   # Create the capture histories and the corresponding m-arrays
     
-  ch <- create.capturehistory(ind$IND, c = matrix(c(rep(cjuv, yrs), rep(cad, yrs)), nrow = 2, byrow = TRUE), p = matrix(c(rep(prec, yrs-1), rep(prec, yrs-1)), nrow = 2, byrow = TRUE))
+  ch <- create.capturehistory(ind$IND, c = matrix(c(rep(cjuv, yrs), rep(cad, yrs)), nrow = 2, byrow = TRUE), 
+                              p = matrix(c(rep(prec, yrs-1), rep(prec, yrs-1)), nrow = 2, byrow = TRUE))
   
   EH <- ch$ch[,1:yrs]
   incl <- which(rowSums(EH)>=1)

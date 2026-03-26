@@ -24,6 +24,9 @@ IPMmod<-nimbleCode({
 
   for (t in 2:nyears){
     N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
+    #divide Ntot so it is just females? this caused positive bias in phi/fec, 
+    #neg in meanp but did fix p.surv
+    # N1[t] ~ dpois(((Ntot[t-1] / 2) * f[t-1]) * mean.phi[1])
     Nad[t] ~ dbin(mean.phi[2],(Ntot[t-1]))
   }
 

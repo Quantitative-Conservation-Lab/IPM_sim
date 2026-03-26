@@ -46,7 +46,7 @@ nc <- 3  #chains
 # ni <- 8000 #total iterations
 # nc <- 2
 
-sims.per <- 40
+sims.per <- 20
 
 cores = detectCores()
 cl <- makeCluster(nrow(dem_scenarios), setup_strategy = "sequential") #not to overload your computer
@@ -54,10 +54,10 @@ registerDoParallel(cl)
 
 
 #simulation replicates
-foreach(i = 21:sims.per) %dopar% { # loop over replicate sims  #####
+foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
     
-  # library(here)
-  # library(nimble)
+  library(here)
+  library(nimble)
   library(IPMbook)
   
   #make true population trajectory data across demographic scenarios
@@ -96,7 +96,7 @@ foreach(i = 21:sims.per) %dopar% { # loop over replicate sims  #####
       # capture histories
       #check; not sure what to put for cap
       if (!is.na(det.MR)) {
-      ch <- simCapHist(state=pop2$state, cap=1, recap=det.MR, maxAge=2, verbose = F)
+      ch <- simCapHist(state=pop2$state, cap=det.MR, recap=det.MR, maxAge=2, verbose = F)
       
       # m-arrays
       marr <- marrayAge(ch$ch, ch$age)
