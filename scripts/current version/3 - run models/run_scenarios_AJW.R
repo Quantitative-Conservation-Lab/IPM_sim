@@ -39,6 +39,8 @@ source(here("scripts", "current version",
 # MCMC settings #######
 nb <- 200000 #burn-in 
 ni <- 350000 #total iterations
+nb <- 35000
+ni <- 80000
 nt <- 10  #thin
 nc <- 3  #chains
 #testing

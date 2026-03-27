@@ -93,7 +93,7 @@ for (i in 1:sims.per) { # sims per
 # combine and save
 results_all <- bind_rows(results_list)
 
-saveRDS(results_all, file = here('results', 'processed', "results_all.RDS"))
+# saveRDS(results_all, file = here('results', 'processed', "results_all.RDS"))
 
 convergence_summary <- results_all %>%
   distinct(model_type, dem_scenario, surv_scenario, sim_rep) %>%
