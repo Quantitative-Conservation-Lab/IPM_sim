@@ -28,7 +28,8 @@ IPMmod<-nimbleCode({
     }
   }
   
-  p.count ~ dbeta(1,1)
+  # p.count ~ dbeta(1,1)
+  p.count ~ dunif(0,1)
   p.surv <- p.count #just rename to align with processing
   
   #REPRO MODEL  

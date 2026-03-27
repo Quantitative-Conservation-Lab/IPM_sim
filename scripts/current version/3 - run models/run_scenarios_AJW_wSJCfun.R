@@ -43,8 +43,8 @@ source(here("scripts", "current version",
 
 
 # MCMC settings #######
-nb <- 200000 #burn-in 
-ni <- 350000 #total iterations
+# nb <- 200000 #burn-in 
+# ni <- 350000 #total iterations
 nt <- 10  #thin
 nc <- 3  #chains
 #testing
@@ -65,6 +65,7 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
   library(here)
   library(nimble)
   # library(IPMbook)
+  library(popbio)
   
   #make true population trajectory data across demographic scenarios
   for (d in 1:nrow(dem_scenarios)) { #
