@@ -19,6 +19,11 @@ runIPMmod <- function(nb, ni, nt, nc,
   #### CONSTANTS ####
 
   const1 <- list(nyears = nyears,
+                 #use this to avoid hard-coding N1.start prior
+                 # n1.start.upper = Ni[1]*1.5,
+                 # n1.start.lower = Ni[1]*0.25,
+                 # na.start.upper = Ni[2]*1.5,
+                 # na.start.lower = Ni[2]*0.25,
                  n.sam = n.sam)
 
   #### INITIAL VALUES ####
@@ -169,6 +174,10 @@ runabundonly <- function(nb, ni, nt, nc,
   #### CONSTANTS ####
 
   const1 <- list(nyears = nyears,
+                 mean.phi.1.low = phi[1]*0.3,
+                   mean.phi.1.hi = phi[1]*1.7,
+                   mean.phi.2.low = phi[2]*0.3,
+                   mean.phi.2.hi = phi[2]*1.7,
                  n.sam = n.sam)
 
   #### INITIAL VALUES ####

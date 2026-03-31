@@ -14,8 +14,8 @@ IPMmod<-nimbleCode({
   # COUNTS #####
 
   # System process
-  n1.start ~ dunif(50, 500)
-  nad.start ~ dunif(50, 500)
+  n1.start ~ dunif(50, 700)
+  nad.start ~ dunif(50, 700)
   N1[1] <- round(n1.start)
   Nad[1] <- round(nad.start)
   
@@ -24,9 +24,6 @@ IPMmod<-nimbleCode({
 
   for (t in 2:nyears){
     N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
-    #divide Ntot so it is just females? this caused positive bias in phi/fec, 
-    #neg in meanp but did fix p.surv
-    # N1[t] ~ dpois(((Ntot[t-1] / 2) * f[t-1]) * mean.phi[1])
     Nad[t] ~ dbin(mean.phi[2],(Ntot[t-1]))
   }
 
@@ -120,8 +117,8 @@ nonests <- nimbleCode({
   # System process
 
   # Initial population sizes
-  n1.start ~ dunif(50, 500)
-  nad.start ~ dunif(50, 500)
+  n1.start ~ dunif(50, 700)
+  nad.start ~ dunif(50, 700)
   N1[1] <- round(n1.start)
   Nad[1] <- round(nad.start)
   
@@ -214,8 +211,8 @@ nomr<-nimbleCode({
   # System process
 
   # Initial population sizes
-  n1.start ~ dunif(50, 500)
-  nad.start ~ dunif(50, 500)
+  n1.start ~ dunif(50, 700)
+  nad.start ~ dunif(50, 700)
   N1[1] <- round(n1.start)
   Nad[1] <- round(nad.start)
   
@@ -280,8 +277,8 @@ abundonly<-nimbleCode({
   # System process
 
   # Initial population sizes
-  n1.start ~ dunif(50, 500)
-  nad.start ~ dunif(50, 500)
+  n1.start ~ dunif(50, 700)
+  nad.start ~ dunif(50, 700)
   N1[1] <- round(n1.start)
   Nad[1] <- round(nad.start)
   
@@ -311,8 +308,11 @@ abundonly<-nimbleCode({
   # CAPTURE RECAPTURE #####
 
   #priors for resight and adult or yoy survival
-  mean.phi[1]~dunif(0,1) #surv 1 year olds
-  mean.phi[2]~dunif(0,1) #surv adults
+  # mean.phi[1]~dunif(0,1) #surv 1 year olds
+  # mean.phi[2]~dunif(0,1) #surv adults
+  
+  mean.phi[1]~dunif(mean.phi.1.low, mean.phi.1.hi) #surv 1 year olds
+  mean.phi[2]~dunif(mean.phi.2.low, mean.phi.2.hi) #surv adults
 
   # PRODUCTIVITY #####
 

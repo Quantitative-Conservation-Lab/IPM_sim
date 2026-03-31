@@ -5,7 +5,7 @@ library(foreach)
 library(doParallel)
 library(coda)
 library(nlist)
-library(beepr)
+# library(beepr)
 
 # load scenarios
 dem_scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>% 
@@ -16,7 +16,7 @@ dem_scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>%
     "fec" = "f")
 
 surv_scenarios <- readRDS(here("data", "data_scenarios.RDS"))
-sims.per <- 10 
+sims.per <- 20 
 
 ### new option
 library(dplyr)
@@ -30,7 +30,8 @@ not_converged <- data.frame(type=character(), d=integer(), s=integer(),
 
 # processing function (returns the data frame or NULL)
 process_model <- function(prefix, d, s, i) {
-  file_name <- here('results', paste0(prefix, "-", d, "-", s, "-", i, ".RDS"))
+  # file_name <- here('results', 'ind300', paste0(prefix, "-", d, "-", s, "-", i, ".RDS"))
+  file_name <- here('results', 'ind400', paste0(prefix, "-", d, "-", s, "-", i, ".RDS"))
   
   if (!file.exists(file_name)) {
     # <<- updates tracking items outside the function
@@ -94,6 +95,9 @@ for (i in 1:sims.per) { # sims per
 results_all <- bind_rows(results_list)
 
 # saveRDS(results_all, file = here('results', 'processed', "results_all.RDS"))
+# saveRDS(results_all, file = here('results', 'processed', "results_all_ind300.RDS"))
+# results_all <- readRDS(file = here('results', 'processed', "results_all_ind300.RDS"))
+# results_all <- readRDS(file = here('results', 'processed', "results_all_ind400.RDS"))
 
 convergence_summary <- results_all %>%
   distinct(model_type, dem_scenario, surv_scenario, sim_rep) %>%
@@ -102,10 +106,16 @@ convergence_summary <- results_all %>%
     successful_sims = n(), 
     # Optional: Calculate percentage based on your 'sims.per' variable
     # percent_converged = (n() / sims.per) * 100,
-    .groups = "drop"
-  )
+    .groups = "drop")
+
+abund_conv <- results_all %>%
+  filter(model_type == 'out_abundOnly') %>%
+  distinct(surv_scenario, dem_scenario, sim_rep)
 
 library(ggplot2)
+
+#total scenarios finished or proportion per model type
+conv <- sum(convergence_summary$successful_sims)
 
 # parameters that are failing to converge
 ggplot(not_converged, aes(x = reorder(max_param, max_param, function(x) -length(x)))) +
@@ -174,6 +184,57 @@ ggplot(not_converged, aes(x = max_param, y = gelman, color = type)) +
   ) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
+
+
+#looking at individual runs
+#struggle params for IPM are psurv and Ntot's
+testIPM.w <- readRDS(file = here('results', 'ind300', 'out_IPM-3-29-2.RDS')) #worst 
+testIPM.b <- readRDS(file = here('results', 'ind300', 'out_IPM-4-28-6.RDS')) #best
+
+plot(testIPM.b[,'mean.phi[1]'])
+plot(testIPM.b[,'p.surv'])
+plot(testIPM.b[,'Ntot[15]'])
+plot(testIPM.w[,'mean.phi[1]'])
+plot(testIPM.w[,'p.surv'])
+plot(testIPM.w[,'mean.p'])
+plot(testIPM.w[,'Ntot[10]'])
+
+#struggle params - Ntots and psurv (zero vital rates)
+testNoprod.w <- readRDS(file = here('results', 'ind300', 'out_noProd-1-41-5.RDS')) #3-44-2 best
+testNoprod.b <- readRDS(file = here('results', 'ind300', 'out_noProd-3-44-2.RDS'))
+
+plot(testNoprod.b[,'mean.phi[1]'])
+plot(testNoprod.b[,'fec'])
+plot(testNoprod.b[,'p.surv'])
+plot(testNoprod.b[,'Ntot[10]'])
+plot(testNoprod.w[,'mean.phi[1]'])
+plot(testNoprod.w[,'p.surv'])
+plot(testNoprod.w[,'Ntot[10]'])
+
+#struggle params - phi's only, very little issues with Ntot and psurv
+#also look at 3-23-9; 1-24-4 (worst); and 3-36-7 (best, 1.1005)
+testNoMR.w <- readRDS(file = here('results', 'ind300', 'out_noMR-3-23-6.RDS'))
+testNoMR.b <- readRDS(file = here('results', 'ind300', 'out_noMR-3-36-7.RDS'))
+
+plot(testNoMR.w[,'mean.phi[1]'])
+plot(testNoMR.w[,'mean.phi[2]'])
+plot(testNoMR.b[,'mean.phi[1]'])
+plot(testNoMR.b[,'mean.phi[2]'])
+plot(testNoMR.b[,'p.surv'])
+
+#struggle params - all vitals, nothing else; 1-47-1 best
+testabund.w  <- readRDS(file = here('results', 'ind300', 'out_abundOnly-4-46-9.RDS'))
+testabund.b  <- readRDS(file = here('results', 'ind300', 'out_abundOnly-1-47-1.RDS'))
+
+testabund  <- readRDS(file = here('results', 'ind300', 'out_abundOnly-4-46-4.RDS'))
+
+plot(testabund[,'fec'])
+plot(testabund[,'mean.phi[2]'])
+plot(testabund[,'p.surv'])
+plot(testabund[,'Ntot[3]'])
+plot(testabund.w[,'mean.phi[1]'])
+plot(testabund.w[,'mean.phi[2]'])
+plot(testabund.w[,'p.surv'])
 
 #### archive - older version ####
 # # takes times
