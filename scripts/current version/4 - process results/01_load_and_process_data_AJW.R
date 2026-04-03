@@ -96,6 +96,7 @@ results_all <- bind_rows(results_list)
 
 # saveRDS(results_all, file = here('results', 'processed', "results_all.RDS"))
 # saveRDS(results_all, file = here('results', 'processed', "results_all_ind300.RDS"))
+saveRDS(results_all, file = here('results', 'processed', "results_all_ind400.RDS"))
 # results_all <- readRDS(file = here('results', 'processed', "results_all_ind300.RDS"))
 # results_all <- readRDS(file = here('results', 'processed', "results_all_ind400.RDS"))
 
@@ -108,6 +109,10 @@ convergence_summary <- results_all %>%
     # percent_converged = (n() / sims.per) * 100,
     .groups = "drop")
 
+# not_conv_summary <- not_converged %>%
+#   group_by(type) %>%
+#   dplyr::summarize(n = nrow(gelman))
+
 abund_conv <- results_all %>%
   filter(model_type == 'out_abundOnly') %>%
   distinct(surv_scenario, dem_scenario, sim_rep)
@@ -116,6 +121,8 @@ library(ggplot2)
 
 #total scenarios finished or proportion per model type
 conv <- sum(convergence_summary$successful_sims)
+
+prop_conv <- dim(not_converged)[1]/conv
 
 # parameters that are failing to converge
 ggplot(not_converged, aes(x = reorder(max_param, max_param, function(x) -length(x)))) +
@@ -188,20 +195,20 @@ ggplot(not_converged, aes(x = max_param, y = gelman, color = type)) +
 
 #looking at individual runs
 #struggle params for IPM are psurv and Ntot's
-testIPM.w <- readRDS(file = here('results', 'ind300', 'out_IPM-3-29-2.RDS')) #worst 
-testIPM.b <- readRDS(file = here('results', 'ind300', 'out_IPM-4-28-6.RDS')) #best
+testIPM.b <- readRDS(file = here('results', 'ind400', 'out_IPM-4-8-3.RDS')) #worst 
+testIPM.w <- readRDS(file = here('results', 'ind400', 'out_IPM-3-19-9.RDS')) #best
 
 plot(testIPM.b[,'mean.phi[1]'])
 plot(testIPM.b[,'p.surv'])
-plot(testIPM.b[,'Ntot[15]'])
+plot(testIPM.b[,'Ntot[6]'])
 plot(testIPM.w[,'mean.phi[1]'])
 plot(testIPM.w[,'p.surv'])
 plot(testIPM.w[,'mean.p'])
 plot(testIPM.w[,'Ntot[10]'])
 
 #struggle params - Ntots and psurv (zero vital rates)
-testNoprod.w <- readRDS(file = here('results', 'ind300', 'out_noProd-1-41-5.RDS')) #3-44-2 best
-testNoprod.b <- readRDS(file = here('results', 'ind300', 'out_noProd-3-44-2.RDS'))
+testNoprod.b <- readRDS(file = here('results', 'ind400', 'out_noProd-4-37-8.RDS')) #3-44-2 best
+testNoprod.w <- readRDS(file = here('results', 'ind400', 'out_noProd-1-40-7.RDS'))
 
 plot(testNoprod.b[,'mean.phi[1]'])
 plot(testNoprod.b[,'fec'])
@@ -213,25 +220,26 @@ plot(testNoprod.w[,'Ntot[10]'])
 
 #struggle params - phi's only, very little issues with Ntot and psurv
 #also look at 3-23-9; 1-24-4 (worst); and 3-36-7 (best, 1.1005)
-testNoMR.w <- readRDS(file = here('results', 'ind300', 'out_noMR-3-23-6.RDS'))
-testNoMR.b <- readRDS(file = here('results', 'ind300', 'out_noMR-3-36-7.RDS'))
+testNoMR.w <- readRDS(file = here('results', 'ind400', 'out_noMR-3-24-3.RDS'))
+testNoMR.w <- readRDS(file = here('results', 'ind400', 'out_noMR-3-11-4.RDS'))
+testNoMR.b <- readRDS(file = here('results', 'ind400', 'out_noMR-5-10-5.RDS'))
+testNoMR.b <- readRDS(file = here('results', 'ind400', 'out_noMR-2-11-7.RDS'))
 
 plot(testNoMR.w[,'mean.phi[1]'])
 plot(testNoMR.w[,'mean.phi[2]'])
+plot(testNoMR.w[,'fec'])
 plot(testNoMR.b[,'mean.phi[1]'])
 plot(testNoMR.b[,'mean.phi[2]'])
 plot(testNoMR.b[,'p.surv'])
 
 #struggle params - all vitals, nothing else; 1-47-1 best
-testabund.w  <- readRDS(file = here('results', 'ind300', 'out_abundOnly-4-46-9.RDS'))
-testabund.b  <- readRDS(file = here('results', 'ind300', 'out_abundOnly-1-47-1.RDS'))
+testabund.w  <- readRDS(file = here('results', 'ind400', 'out_abundOnly-4-46-1.RDS'))
+testabund.b  <- readRDS(file = here('results', 'ind400', 'out_abundOnly-2-48-5.RDS'))
 
-testabund  <- readRDS(file = here('results', 'ind300', 'out_abundOnly-4-46-4.RDS'))
-
-plot(testabund[,'fec'])
-plot(testabund[,'mean.phi[2]'])
-plot(testabund[,'p.surv'])
-plot(testabund[,'Ntot[3]'])
+plot(testabund.b[,'fec'])
+plot(testabund.b[,'mean.phi[2]'])
+plot(testabund.b[,'p.surv'])
+plot(testabund.b[,'Ntot[3]'])
 plot(testabund.w[,'mean.phi[1]'])
 plot(testabund.w[,'mean.phi[2]'])
 plot(testabund.w[,'p.surv'])

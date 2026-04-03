@@ -18,9 +18,6 @@ IPMmod<-nimbleCode({
   nad.start ~ dunif(50, 700)
   N1[1] <- round(n1.start)
   Nad[1] <- round(nad.start)
-  
-  # N1[1] ~ dpois(300)
-  # Nad[1] ~ dpois(300)
 
   for (t in 2:nyears){
     N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
@@ -32,11 +29,12 @@ IPMmod<-nimbleCode({
   }
 
   # Observation process
-  p.surv~dunif(0,1)
+  # p.surv~dunif(0,1)
+  p.surv ~ dgamma(0.01, 0.01)
   for(n in 1:n.sam){
     for (t in 1:nyears){
-      #y[n,t]~dnorm(Ntot[t],sd=p.surv)
-      y[n,t] ~ dbin(p.surv,Ntot[t])
+      # y[n,t] ~ dbin(p.surv,Ntot[t])
+      y[n,t] ~ dnorm(Ntot[t], sd = p.surv)
     }
   }
 
@@ -121,9 +119,6 @@ nonests <- nimbleCode({
   nad.start ~ dunif(50, 700)
   N1[1] <- round(n1.start)
   Nad[1] <- round(nad.start)
-  
-  # N1[1] ~ dpois(300)
-  # Nad[1] ~ dpois(300)
 
   for (t in 2:nyears){
     N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
@@ -137,11 +132,12 @@ nonests <- nimbleCode({
   # Observation process
 
   #prior for survey detection probability
-  #p.surv ~ T(dnorm(0.5, sd = 0.3), 0, Inf)
-  p.surv~dunif(0,1)
+  # p.surv~dunif(0,1)
+  p.surv ~ dgamma(0.01, 0.01)
   for(n in 1:n.sam){
     for (t in 1:nyears){
-      y[n,t] ~ dbin(p.surv,Ntot[t])
+      # y[n,t] ~ dbin(p.surv,Ntot[t])
+      y[n,t] ~ dnorm(Ntot[t], sd = p.surv)
     }
   }
 
@@ -215,9 +211,6 @@ nomr<-nimbleCode({
   nad.start ~ dunif(50, 700)
   N1[1] <- round(n1.start)
   Nad[1] <- round(nad.start)
-  
-  # N1[1] ~ dpois(300)
-  # Nad[1] ~ dpois(300)
 
   for (t in 2:nyears){
     N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
@@ -231,11 +224,12 @@ nomr<-nimbleCode({
   # Observation process
 
   #prior for survey detection probability
-  #p.surv ~ T(dnorm(0.5, sd = 0.3), 0, Inf)
-  p.surv~dunif(0,1)
+  # p.surv~dunif(0,1)
+  p.surv ~ dgamma(0.01, 0.01)
   for(n in 1:n.sam){
     for (t in 1:nyears){
-      y[n,t] ~ dbin(p.surv,Ntot[t])
+      # y[n,t] ~ dbin(p.surv,Ntot[t])
+      y[n,t] ~ dnorm(Ntot[t], sd = p.surv)
     }
   }
 
@@ -268,67 +262,98 @@ nomr<-nimbleCode({
 
 })
 
+# ##### ABUND ONLY #####
+# 
+# abundonly<-nimbleCode({
+# 
+#   # COUNTS #####
+# 
+#   # System process
+# 
+#   # Initial population sizes
+#   n1.start ~ dunif(50, 700)
+#   nad.start ~ dunif(50, 700)
+#   N1[1] <- round(n1.start)
+#   Nad[1] <- round(nad.start)
+# 
+#   for (t in 2:nyears){
+#     N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
+#     Nad[t] ~ dbin(mean.phi[2],(Ntot[t-1]))
+#   }
+# 
+#   for (t in 1:nyears){
+#     Ntot[t] <- round(Nad[t] + N1[t])
+#   }
+# 
+#   # Observation process
+# 
+#   #prior for survey detection probability
+#   #p.surv ~ T(dnorm(0.5, sd = 0.3), 0, Inf)
+#   p.surv~dunif(0,1)
+#   for(n in 1:n.sam){
+#     for (t in 1:nyears){
+#       y[n,t] ~ dbin(p.surv,Ntot[t])
+#     }
+#   }
+# 
+#   # CAPTURE RECAPTURE #####
+# 
+#   #priors for resight and adult or yoy survival
+#   # mean.phi[1]~dunif(0,1) #surv 1 year olds
+#   # mean.phi[2]~dunif(0,1) #surv adults
+#   
+#   mean.phi[1]~dunif(mean.phi.1.low, mean.phi.1.hi) #surv 1 year olds
+#   mean.phi[2]~dunif(mean.phi.2.low, mean.phi.2.hi) #surv adults
+# 
+#   # PRODUCTIVITY #####
+# 
+#   # priors
+#   for (t in 1:(nyears-1)){
+#     f[t] <- fec
+#   }
+#   fec ~ dunif(0, 5)
+# 
+#   # DERIVED QUANTITIES #####
+# 
+#   # Population growth rate
+#   for (t in 1:(nyears-1)){
+#     lambda[t] <- (Ntot[t+1] + 1e-8) / (Ntot[t] + 1e-8)
+#   }
+#   # END derived quantities
+# 
+# })
+
+### trend-only abundance
+
 ##### ABUND ONLY #####
 
 abundonly<-nimbleCode({
-
-  # COUNTS #####
-
-  # System process
-
-  # Initial population sizes
-  n1.start ~ dunif(50, 700)
-  nad.start ~ dunif(50, 700)
-  N1[1] <- round(n1.start)
-  Nad[1] <- round(nad.start)
   
-  # N1[1] ~ dpois(300)
-  # Nad[1] ~ dpois(300)
-
+  Ntot[1] ~ dpois(rho)
+  
+  rho ~ dunif(10,700)
+  
+  # System process
   for (t in 2:nyears){
-    N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
-    Nad[t] ~ dbin(mean.phi[2],(Ntot[t-1]))
+    Ntot[t] ~ dpois(Ntot[t-1]*alpha)
   }
-
-  for (t in 1:nyears){
-    Ntot[t] <- round(Nad[t] + N1[t])
-  }
+  
+  alpha ~ dunif(0, 2)
 
   # Observation process
-
-  #prior for survey detection probability
-  #p.surv ~ T(dnorm(0.5, sd = 0.3), 0, Inf)
-  p.surv~dunif(0,1)
+  
+  p.surv ~ dgamma(0.01, 0.01) #abundance survey variance
+  
   for(n in 1:n.sam){
     for (t in 1:nyears){
-      y[n,t] ~ dbin(p.surv,Ntot[t])
+      y[n,t] ~ dnorm(Ntot[t], sd = p.surv)
     }
   }
-
-  # CAPTURE RECAPTURE #####
-
-  #priors for resight and adult or yoy survival
-  # mean.phi[1]~dunif(0,1) #surv 1 year olds
-  # mean.phi[2]~dunif(0,1) #surv adults
-  
-  mean.phi[1]~dunif(mean.phi.1.low, mean.phi.1.hi) #surv 1 year olds
-  mean.phi[2]~dunif(mean.phi.2.low, mean.phi.2.hi) #surv adults
-
-  # PRODUCTIVITY #####
-
-  # priors
-  for (t in 1:(nyears-1)){
-    f[t] <- fec
-  }
-  fec ~ dunif(0, 5)
-
-  # DERIVED QUANTITIES #####
 
   # Population growth rate
   for (t in 1:(nyears-1)){
     lambda[t] <- (Ntot[t+1] + 1e-8) / (Ntot[t] + 1e-8)
   }
-  # END derived quantities
 
 })
 

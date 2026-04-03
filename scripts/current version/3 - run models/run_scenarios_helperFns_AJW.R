@@ -195,7 +195,9 @@ runabundonly <- function(nb, ni, nt, nc,
   )
 
   #### PARAMETERS TO MONITOR ####
-  params1 <- c("p.surv", "mean.phi", "fec", "lambda","Ntot")#,"N1","Nad","f","rho")#0.3764911
+  params1 <- c("p.surv", 
+               # "mean.phi", "fec", 
+               "lambda","Ntot")#,"N1","Nad","f","rho")#0.3764911
 
   #### COMPILE CONFIGURE AND BUILD ####
   Rmodel1 <- nimbleModel(code = abundonly, constants = const1, data = dat1,

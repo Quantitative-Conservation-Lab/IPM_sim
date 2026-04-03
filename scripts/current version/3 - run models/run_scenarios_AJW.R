@@ -8,7 +8,8 @@ library(doParallel)
 # load data and dem/survey scenarios
 surv_scenarios <- readRDS(here("data", "data_scenarios.RDS"))
 
-surv_scenarios_num <- surv_scenarios %>%
+#use for binomial n-mixture model
+surv_scenarios_num_bin <- surv_scenarios %>%
    transform(det.MR = ifelse(det.MR == 'L', 0.3,
                           ifelse(det.MR == 'M', 0.5, 
                                  ifelse(det.MR == 'H', 0.8, NA)))) %>%
@@ -17,6 +18,22 @@ surv_scenarios_num <- surv_scenarios %>%
                                      ifelse(det.prod == 'H', 0.8, NA)))) %>%
   transform(det.abund = ifelse(det.abund == 'L', 0.3,
                                 ifelse(det.abund == 'M', 0.5, 0.8)))
+
+#use for normal distribution count model 
+#sd_high == better certainty in the counts/data quality
+sd_low <- 20
+sd_med <- 15
+sd_high <- 10
+  
+surv_scenarios_num <- surv_scenarios %>%
+  transform(det.MR = ifelse(det.MR == 'L', 0.3,
+                            ifelse(det.MR == 'M', 0.5, 
+                                   ifelse(det.MR == 'H', 0.8, NA)))) %>%
+  transform(det.prod = ifelse(det.prod == 'L', 0.3,
+                              ifelse(det.prod == 'M', 0.5, 
+                                     ifelse(det.prod == 'H', 0.8, NA)))) %>%
+  transform(det.abund = ifelse(det.abund == 'L', sd_low,
+                               ifelse(det.abund == 'M', sd_med, sd_high)))
 
 
 dem_scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>% 
@@ -27,7 +44,7 @@ dem_scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>%
          "fec" = "f")
  
 # Ni <- c(150, 150)
-Ni <- c(400, 400)
+Ni <- c(300, 300)
 
 nyears <- 15
 
@@ -36,7 +53,6 @@ source(here("scripts", "current version",
             "2 - models", "IPM_marray.R"))
 source(here("scripts", "current version",
             "3 - run models", "run_scenarios_helperFns_AJW.R"))
-
 
 # MCMC settings #######
 nb <- 200000 #burn-in
@@ -48,12 +64,7 @@ nc <- 4
 
 nt <- 10  #thin
 
-#testing
-# nb <- 2000 #burn-in
-# ni <- 8000 #total iterations
-# nc <- 2
-
-sims.per <- 20
+sims.per <- 10
 
 cores = detectCores()
 cl <- makeCluster(nrow(dem_scenarios), setup_strategy = "sequential") #not to overload your computer
@@ -81,20 +92,27 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
     for (s in 1:nrow(surv_scenarios)) {
       
       det.abund <- surv_scenarios_num[s,'det.abund']
+      det.abund <- surv_scenarios_num[s,'det.abund']
       det.prod <- surv_scenarios_num[s,'det.prod']
       det.MR <- surv_scenarios_num[s,'det.MR']
       
       comb <- dem_scenarios[d,]
 
       # population survey data 
-      Nad_count <- simCountBin(N=pop1$N[2,], pDetect = det.abund)
-      N1_count <- simCountBin(N=pop1$N[1,], pDetect = det.abund)
+      # Nad_count <- simCountBin(N=pop1$N[2,], pDetect = det.abund)
+      # N1_count <- simCountBin(N=pop1$N[1,], pDetect = det.abund)
       
-      tot_count1 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
-      tot_count2 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
-      tot_count3 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
-      tot_count4 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
-      tot_count5 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
+      # tot_count1 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
+      # tot_count2 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
+      # tot_count3 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
+      # tot_count4 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
+      # tot_count5 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
+      
+      tot_count1 <- simCountNorm(N = pop1$totAdults, sigma = det.abund)
+      tot_count2 <- simCountNorm(N = pop1$totAdults, sigma = det.abund)
+      tot_count3 <- simCountNorm(N = pop1$totAdults, sigma = det.abund)
+      tot_count4 <- simCountNorm(N = pop1$totAdults, sigma = det.abund)
+      tot_count5 <- simCountNorm(N = pop1$totAdults, sigma = det.abund)
       
       surv_cnts <- rbind(tot_count1$count,
                         tot_count2$count,
@@ -129,7 +147,7 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
         
         out_abundOnly <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, 
                                comb, detect = det.abund)
-        saveRDS(out_abundOnly, here("results", 'ind400', paste("out_abundOnly-",d,"-",s,"-",i,".RDS", sep = "")))
+        saveRDS(out_abundOnly, here("results", 'normObs', paste("out_abundOnly-",d,"-",s,"-",i,".RDS", sep = "")))
         rm(out_abundOnly) 
         
       } #abund only
@@ -138,7 +156,7 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
         else if (is.na(det.prod)) { 
           out_noProd <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, 
                                    comb, detect = det.abund)
-          saveRDS(out_noProd, here("results", 'ind400', paste("out_noProd-",d,"-",s,"-",i,".RDS", sep = "")))
+          saveRDS(out_noProd, here("results", 'normObs', paste("out_noProd-",d,"-",s,"-",i,".RDS", sep = "")))
           rm(out_noProd)
           
         } #missing prod
@@ -147,7 +165,7 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
         else if (is.na(det.MR)) { 
           out_noMR <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, 
                               comb, detect = det.abund)
-          saveRDS(out_noMR, here("results", 'ind400', paste("out_noMR-",d,"-",s,"-",i,".RDS", sep = "")))
+          saveRDS(out_noMR, here("results", 'normObs', paste("out_noMR-",d,"-",s,"-",i,".RDS", sep = "")))
           rm(out_noMR)
           
         } #missing MR
@@ -156,7 +174,7 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
           else { 
             out_IPM <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, 
                                  comb, detect = det.abund)
-            saveRDS(out_IPM, here("results", 'ind400', paste("out_IPM-",d,"-",s,"-",i,".RDS", sep = "")))
+            saveRDS(out_IPM, here("results", 'normObs', paste("out_IPM-",d,"-",s,"-",i,".RDS", sep = "")))
             rm(out_IPM)
           }
     } #s
