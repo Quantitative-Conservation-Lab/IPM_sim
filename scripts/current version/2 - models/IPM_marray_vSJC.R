@@ -90,7 +90,7 @@ IPMmod<-nimbleCode({
   # DERIVED QUANTITIES #####
 
   # Population growth rate
-  for (t in 1:(nyears-1)){
+  for (t in 1:(n.occasions-1)){
     lambda[t] <- (Ntot[t+1] + 1e-8) / (Ntot[t] + 1e-8) # adding tiny number to avoid Nan
   }
   # END derived quantities
@@ -182,7 +182,7 @@ nonests <- nimbleCode({
   # DERIVED QUANTITIES #####
   
   # Population growth rate
-  for (t in 1:(nyears-1)){
+  for (t in 1:(n.occasions-1)){
     lambda[t] <- (Ntot[t+1] + 1e-8) / (Ntot[t] + 1e-8) # adding tiny number to avoid Nan
   }
   # END derived quantities
@@ -234,7 +234,7 @@ nomr<-nimbleCode({
   # DERIVED QUANTITIES #####
   
   # Population growth rate
-  for (t in 1:(nyears-1)){
+  for (t in 1:(n.occasions-1)){
     lambda[t] <- (Ntot[t+1] + 1e-8) / (Ntot[t] + 1e-8) # adding tiny number to avoid Nan
   }
   # END derived quantities
@@ -284,7 +284,7 @@ abundonly<-nimbleCode({
   # DERIVED QUANTITIES #####
   
   # Population growth rate
-  for (t in 1:(nyears-1)){
+  for (t in 1:(n.occasions-1)){
     lambda[t] <- (Ntot[t+1] + 1e-8) / (Ntot[t] + 1e-8) # adding tiny number to avoid Nan
   }
   # END derived quantities

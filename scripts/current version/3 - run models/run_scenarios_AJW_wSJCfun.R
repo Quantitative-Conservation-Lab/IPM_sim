@@ -63,7 +63,7 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
     
   library(here)
   library(nimble)
-  # library(IPMbook)
+  library(IPMbook)
   library(popbio)
   
   #make true population trajectory data across demographic scenarios

@@ -17,6 +17,7 @@ pNinit <- dUnif(maxcount1,maxcount1*5)
 lpNinit <- length(pNinit)
   
   const1 <- list(n.occasions = nyears, rel.j = rowSums(marray[,,1]), 
+                 nyears = nyears,
                  rel.a = rowSums(marray[,,2]), nsurvs = dim(count)[2], 
                  pNinit = pNinit, stable = stable, pNinit = pNinit,
                  lpNinit = lpNinit)
@@ -68,6 +69,7 @@ runnonests <- function(nb, ni, nt, nc,
   lpNinit <- length(pNinit)
   
   const1 <- list(n.occasions = nyears, rel.j = rowSums(marray[,,1]), 
+                 nyears = nyears,
                  rel.a = rowSums(marray[,,2]), nsurvs = dim(count)[2], 
                  pNinit = pNinit, stable = stable, pNinit = pNinit,
                  lpNinit = lpNinit)
@@ -119,6 +121,7 @@ runnomr <- function(nb, ni, nt, nc,
   lpNinit <- length(pNinit)
   
   const1 <- list(n.occasions = nyears, rel.j = rowSums(marray[,,1]), 
+                 nyears = nyears,
                  rel.a = rowSums(marray[,,2]), nsurvs = dim(count)[2], 
                  pNinit = pNinit, stable = stable, pNinit = pNinit,
                  lpNinit = lpNinit)
@@ -170,6 +173,7 @@ runabundonly <- function(nb, ni, nt, nc,
   lpNinit <- length(pNinit)
   
   const1 <- list(n.occasions = nyears, rel.j = rowSums(marray[,,1]), 
+                 nyears = nyears,
                  rel.a = rowSums(marray[,,2]), nsurvs = dim(count)[2], 
                  pNinit = pNinit, stable = stable, pNinit = pNinit,
                  lpNinit = lpNinit)
