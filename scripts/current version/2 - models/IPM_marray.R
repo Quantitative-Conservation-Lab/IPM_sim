@@ -30,7 +30,7 @@ IPMmod<-nimbleCode({
 
   # Observation process
   p.surv~dunif(0,1)
-  p.surv ~ dgamma(0.01, 0.01)
+  # p.surv ~ dgamma(0.01, 0.01)
   for(n in 1:n.sam){
     for (t in 1:nyears){
       y[n,t] ~ dbin(p.surv,Ntot[t])

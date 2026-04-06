@@ -155,40 +155,40 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
     
       ##run models
       #abundance data only
-      if (is.na(det.prod) & is.na(det.MR)) { 
-        
-        out_abundOnly <- runabundonly(nb = nb*2, ni = ni*2, nt = nt, nc = nc, 
-                               comb, detect = det.abund)
-        saveRDS(out_abundOnly, here("results", 'vSJC', paste("out_abundOnly-",d,"-",s,"-",i,".RDS", sep = "")))
-        rm(out_abundOnly) 
-        
-      } #abund only
-        
-      #missing productivity data
-        else if (is.na(det.prod)) { 
-          out_noProd <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, 
-                                   comb, detect = det.abund)
-          saveRDS(out_noProd, here("results", 'vSJC', paste("out_noProd-",d,"-",s,"-",i,".RDS", sep = "")))
-          rm(out_noProd)
-          
-        } #missing prod
-      
-      #missing MR data
-        else if (is.na(det.MR)) { 
-          out_noMR <- runnomr(nb = nb*2, ni = ni*2, nt = nt, nc = nc, 
-                              comb, detect = det.abund)
-          saveRDS(out_noMR, here("results", 'vSJC', paste("out_noMR-",d,"-",s,"-",i,".RDS", sep = "")))
-          rm(out_noMR)
-          
-        } #missing MR
-        
-      #full IPM
-          else { 
+      # if (is.na(det.prod) & is.na(det.MR)) { 
+      #   
+      #   out_abundOnly <- runabundonly(nb = nb*2, ni = ni*2, nt = nt, nc = nc, 
+      #                          comb, detect = det.abund)
+      #   saveRDS(out_abundOnly, here("results", 'vSJC', paste("out_abundOnly-",d,"-",s,"-",i,".RDS", sep = "")))
+      #   rm(out_abundOnly) 
+      #   
+      # } #abund only
+      #   
+      # #missing productivity data
+      #   else if (is.na(det.prod)) { 
+      #     out_noProd <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, 
+      #                              comb, detect = det.abund)
+      #     saveRDS(out_noProd, here("results", 'vSJC', paste("out_noProd-",d,"-",s,"-",i,".RDS", sep = "")))
+      #     rm(out_noProd)
+      #     
+      #   } #missing prod
+      # 
+      # #missing MR data
+      #   else if (is.na(det.MR)) { 
+      #     out_noMR <- runnomr(nb = nb*2, ni = ni*2, nt = nt, nc = nc, 
+      #                         comb, detect = det.abund)
+      #     saveRDS(out_noMR, here("results", 'vSJC', paste("out_noMR-",d,"-",s,"-",i,".RDS", sep = "")))
+      #     rm(out_noMR)
+      #     
+      #   } #missing MR
+      #   
+      # #full IPM
+      #     else { 
             out_IPM <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, 
                                  comb, detect = det.abund)
             saveRDS(out_IPM, here("results", 'vSJC', paste("out_IPM-",d,"-",s,"-",i,".RDS", sep = "")))
             rm(out_IPM)
-          }
+          # }
     } #s
   } #d
 } #i

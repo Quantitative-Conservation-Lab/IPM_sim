@@ -32,8 +32,8 @@ surv_scenarios_num <- surv_scenarios %>%
   transform(det.prod = ifelse(det.prod == 'L', 0.3,
                               ifelse(det.prod == 'M', 0.5, 
                                      ifelse(det.prod == 'H', 0.8, NA)))) %>%
-  transform(det.abund = ifelse(det.abund == 'L', sd_low,
-                               ifelse(det.abund == 'M', sd_med, sd_high)))
+  transform(det.abund = ifelse(det.abund == 'L', 0.3,
+                               ifelse(det.abund == 'M', 0.5, 0.8)))
 
 
 dem_scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>% 
@@ -78,6 +78,7 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
   library(here)
   library(nimble)
   library(IPMbook)
+  library(popbio)
   
   #make true population trajectory data across demographic scenarios
   for (d in 1:nrow(dem_scenarios)) { #
@@ -156,40 +157,40 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
       
       ##run models
       #abundance data only
-      if (is.na(det.prod) & is.na(det.MR)) { 
-        
-        out_abundOnly <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, 
-                               comb, detect = det.abund)
-        saveRDS(out_abundOnly, here("results", 'normObs', paste("out_abundOnly-",d,"-",s,"-",i,".RDS", sep = "")))
-        rm(out_abundOnly) 
-        
-      } #abund only
-        
-      #missing productivity data
-        else if (is.na(det.prod)) { 
-          out_noProd <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, 
-                                   comb, detect = det.abund)
-          saveRDS(out_noProd, here("results", 'normObs', paste("out_noProd-",d,"-",s,"-",i,".RDS", sep = "")))
-          rm(out_noProd)
-          
-        } #missing prod
-      
-      #missing MR data
-        else if (is.na(det.MR)) { 
-          out_noMR <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, 
-                              comb, detect = det.abund)
-          saveRDS(out_noMR, here("results", 'normObs', paste("out_noMR-",d,"-",s,"-",i,".RDS", sep = "")))
-          rm(out_noMR)
-          
-        } #missing MR
-        
-      #full IPM
-          else { 
+      # if (is.na(det.prod) & is.na(det.MR)) { 
+      #   
+      #   out_abundOnly <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, 
+      #                          comb, detect = det.abund)
+      #   saveRDS(out_abundOnly, here("results", 'nmix', 'ind300_nsam5', paste("out_abundOnly-",d,"-",s,"-",i,".RDS", sep = "")))
+      #   rm(out_abundOnly) 
+      #   
+      # } #abund only
+      #   
+      # #missing productivity data
+      #   else if (is.na(det.prod)) { 
+      #     out_noProd <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, 
+      #                              comb, detect = det.abund)
+      #     saveRDS(out_noProd, here("results", 'nmix', 'ind300_nsam5', paste("out_noProd-",d,"-",s,"-",i,".RDS", sep = "")))
+      #     rm(out_noProd)
+      #     
+      #   } #missing prod
+      # 
+      # #missing MR data
+      #   else if (is.na(det.MR)) { 
+      #     out_noMR <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, 
+      #                         comb, detect = det.abund)
+      #     saveRDS(out_noMR, here("results", 'nmix', ind300_nsam5', paste("out_noMR-",d,"-",s,"-",i,".RDS", sep = "")))
+      #     rm(out_noMR)
+      #     
+      #   } #missing MR
+      #   
+      # #full IPM
+      #     else { 
             out_IPM <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, 
                                  comb, detect = det.abund)
-            saveRDS(out_IPM, here("results", 'normObs', paste("out_IPM-",d,"-",s,"-",i,".RDS", sep = "")))
+            saveRDS(out_IPM, here("results", 'nmix', 'ind300_nsam5', paste("out_IPM-",d,"-",s,"-",i,".RDS", sep = "")))
             rm(out_IPM)
-          }
+          # }
     } #s
   } #d
 } #i
