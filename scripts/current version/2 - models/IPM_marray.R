@@ -14,8 +14,8 @@ IPMmod<-nimbleCode({
   # COUNTS #####
 
   # System process
-  n1.start ~ dunif(50, 700)
-  nad.start ~ dunif(50, 700)
+  n1.start ~ dunif(50, 1000)
+  nad.start ~ dunif(50, 1000)
   N1[1] <- round(n1.start)
   Nad[1] <- round(nad.start)
 
@@ -115,8 +115,8 @@ nonests <- nimbleCode({
   # System process
 
   # Initial population sizes
-  n1.start ~ dunif(50, 700)
-  nad.start ~ dunif(50, 700)
+  n1.start ~ dunif(50, 1000)
+  nad.start ~ dunif(50, 1000)
   N1[1] <- round(n1.start)
   Nad[1] <- round(nad.start)
 
@@ -207,8 +207,8 @@ nomr<-nimbleCode({
   # System process
 
   # Initial population sizes
-  n1.start ~ dunif(50, 700)
-  nad.start ~ dunif(50, 700)
+  n1.start ~ dunif(50, 1000)
+  nad.start ~ dunif(50, 1000)
   N1[1] <- round(n1.start)
   Nad[1] <- round(nad.start)
 
@@ -271,8 +271,8 @@ nomr<-nimbleCode({
 #   # System process
 # 
 #   # Initial population sizes
-#   n1.start ~ dunif(50, 700)
-#   nad.start ~ dunif(50, 700)
+#   n1.start ~ dunif(50, 1000)
+#   nad.start ~ dunif(50, 1000)
 #   N1[1] <- round(n1.start)
 #   Nad[1] <- round(nad.start)
 # 
@@ -331,7 +331,7 @@ abundonly<-nimbleCode({
   
   Ntot[1] ~ dpois(rho)
   
-  rho ~ dunif(10,700)
+  rho ~ dunif(10,1000)
   
   # System process
   for (t in 2:nyears){

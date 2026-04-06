@@ -21,8 +21,8 @@ surv_scenarios_num_bin <- surv_scenarios %>%
 
 #use for normal distribution count model 
 #sd_high == better certainty in the counts/data quality
-sd_low <- 20
-sd_med <- 15
+sd_low <- 30
+sd_med <- 20
 sd_high <- 10
   
 surv_scenarios_num <- surv_scenarios %>%
@@ -55,8 +55,8 @@ source(here("scripts", "current version",
             "3 - run models", "run_scenarios_helperFns_AJW.R"))
 
 # MCMC settings #######
-nb <- 200000 #burn-in
-ni <- 400000 #total iterations
+nb <- 250000 #burn-in
+ni <- 450000 #total iterations
 nc <- 4
 # nb <- 125000
 # ni <- 250000
@@ -64,7 +64,8 @@ nc <- 4
 
 nt <- 10  #thin
 
-sims.per <- 10
+sims.per <- 100 #goal
+sims.per <- 2
 
 cores = detectCores()
 cl <- makeCluster(nrow(dem_scenarios), setup_strategy = "sequential") #not to overload your computer

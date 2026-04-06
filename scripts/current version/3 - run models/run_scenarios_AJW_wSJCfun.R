@@ -32,7 +32,6 @@ dem_scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>%
          "phiad" = "S.A",
          "fec" = "f")
  
-Ni <- c(150, 150)
 nyears <- 15
 
 # source functions
@@ -52,7 +51,7 @@ nb <- 40000 #burn-in
 ni <- 80000 #total iterations
 # nc <- 2
 
-sims.per <- 20
+sims.per <- 10#0
 
 cores = detectCores()
 cl <- makeCluster(nrow(dem_scenarios), setup_strategy = "sequential") #not to overload your computer
@@ -84,6 +83,10 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
     pop.mat[2,] <- c(sa,sa)
     
     stable <- eigen.analysis(pop.mat)$stable
+    
+    Nst.tot <- 300 
+    
+    Ni <- round(c(Nst.tot*stable))
     
     # Survival and fecundity   
     surv.mat <- matrix(NA,nrow=2,ncol=nyears)
@@ -144,7 +147,7 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
     # Proportion of breeding population in sample
     pcount <- det.abund
     psurv <- rep(pcount,nyears)
-    n.sam <- 3
+    n.sam <- 5 #3
     secondaries <- n.sam
     
     # Create productivity data

@@ -10,9 +10,12 @@ runIPMmod <- function(nb, ni, nt, nc,
   dat1 <- list(marr.j = marray[,,1], marr.a = marray[,,2], 
                fledge = obs_nestlings, broods = obs_broods, count = count)
 
-  #### CONSTANTS ####
-  pNinit <- dUnif(10,800)
-  lpNinit <- length(pNinit)
+#### CONSTANTS ####
+maxcount1 <- max(count[1,]) + 1
+pNinit <- dUnif(maxcount1,maxcount1*5)
+# lpNinit <- maxcount1*5
+lpNinit <- length(pNinit)
+  
   const1 <- list(n.occasions = nyears, rel.j = rowSums(marray[,,1]), 
                  rel.a = rowSums(marray[,,2]), nsurvs = dim(count)[2], 
                  pNinit = pNinit, stable = stable, pNinit = pNinit,
@@ -59,8 +62,11 @@ runnonests <- function(nb, ni, nt, nc,
                fledge = obs_nestlings, broods = obs_broods, count = count)
   
   #### CONSTANTS ####
-  pNinit <- dUnif(10,800)
+  maxcount1 <- max(count[1,]) + 1
+  pNinit <- dUnif(maxcount1,maxcount1*5)
+  # lpNinit <- maxcount1*5
   lpNinit <- length(pNinit)
+  
   const1 <- list(n.occasions = nyears, rel.j = rowSums(marray[,,1]), 
                  rel.a = rowSums(marray[,,2]), nsurvs = dim(count)[2], 
                  pNinit = pNinit, stable = stable, pNinit = pNinit,
@@ -107,8 +113,11 @@ runnomr <- function(nb, ni, nt, nc,
                fledge = obs_nestlings, broods = obs_broods, count = count)
   
   #### CONSTANTS ####
-  pNinit <- dUnif(10,800)
+  maxcount1 <- max(count[1,]) + 1
+  pNinit <- dUnif(maxcount1,maxcount1*5)
+  # lpNinit <- maxcount1*5
   lpNinit <- length(pNinit)
+  
   const1 <- list(n.occasions = nyears, rel.j = rowSums(marray[,,1]), 
                  rel.a = rowSums(marray[,,2]), nsurvs = dim(count)[2], 
                  pNinit = pNinit, stable = stable, pNinit = pNinit,
@@ -155,8 +164,11 @@ runabundonly <- function(nb, ni, nt, nc,
                fledge = obs_nestlings, broods = obs_broods, count = count)
   
   #### CONSTANTS ####
-  pNinit <- dUnif(10,800)
+  maxcount1 <- max(count[1,]) + 1
+  pNinit <- dUnif(maxcount1,maxcount1*5)
+  # lpNinit <- maxcount1*5
   lpNinit <- length(pNinit)
+  
   const1 <- list(n.occasions = nyears, rel.j = rowSums(marray[,,1]), 
                  rel.a = rowSums(marray[,,2]), nsurvs = dim(count)[2], 
                  pNinit = pNinit, stable = stable, pNinit = pNinit,

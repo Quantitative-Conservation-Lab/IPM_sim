@@ -220,11 +220,17 @@ for(s in 1:sims){
   
   pNinit <- dUnif(850,1200)
   lpNinit <- length(pNinit)
+  
+  maxcount1 <- max(count[1,]) + 1
+  pNinit <- dUnif(maxcount1,maxcount1*5)
+  l.pNinit <- maxcount1*5
+  
 
   # Bundle data                         
   constants <- list(n.occasions = yrs, rel.j = rowSums(marray[,,1]), 
                     rel.a = rowSums(marray[,,2]),nsurvs=dim(count)[2], 
                     pNinit=pNinit, stable = stable) 
+  
   data <- list(marr.j = marray[,,1], marr.a = marray[,,2], 
                fledge = fledge, broods = broods, count = count)
   

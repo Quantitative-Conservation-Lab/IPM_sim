@@ -31,7 +31,8 @@ not_converged <- data.frame(type=character(), d=integer(), s=integer(),
 # processing function (returns the data frame or NULL)
 process_model <- function(prefix, d, s, i) {
   # file_name <- here('results', 'ind300', paste0(prefix, "-", d, "-", s, "-", i, ".RDS"))
-  file_name <- here('results', 'ind400', paste0(prefix, "-", d, "-", s, "-", i, ".RDS"))
+  # file_name <- here('results', 'ind400', paste0(prefix, "-", d, "-", s, "-", i, ".RDS"))
+  file_name <- here('results', 'normObs', paste0(prefix, "-", d, "-", s, "-", i, ".RDS"))
   
   if (!file.exists(file_name)) {
     # <<- updates tracking items outside the function
@@ -96,7 +97,8 @@ results_all <- bind_rows(results_list)
 
 # saveRDS(results_all, file = here('results', 'processed', "results_all.RDS"))
 # saveRDS(results_all, file = here('results', 'processed', "results_all_ind300.RDS"))
-saveRDS(results_all, file = here('results', 'processed', "results_all_ind400.RDS"))
+# saveRDS(results_all, file = here('results', 'processed', "results_all_ind400.RDS"))
+saveRDS(results_all, file = here('results', 'processed', "results_all_normObs.RDS"))
 # results_all <- readRDS(file = here('results', 'processed', "results_all_ind300.RDS"))
 # results_all <- readRDS(file = here('results', 'processed', "results_all_ind400.RDS"))
 
@@ -113,16 +115,16 @@ convergence_summary <- results_all %>%
 #   group_by(type) %>%
 #   dplyr::summarize(n = nrow(gelman))
 
-abund_conv <- results_all %>%
-  filter(model_type == 'out_abundOnly') %>%
-  distinct(surv_scenario, dem_scenario, sim_rep)
+# abund_conv <- results_all %>%
+#   filter(model_type == 'out_abundOnly') %>%
+#   distinct(surv_scenario, dem_scenario, sim_rep)
 
 library(ggplot2)
 
 #total scenarios finished or proportion per model type
 conv <- sum(convergence_summary$successful_sims)
 
-prop_conv <- dim(not_converged)[1]/conv
+prop_not_conv <- dim(not_converged)[1]/conv
 
 # parameters that are failing to converge
 ggplot(not_converged, aes(x = reorder(max_param, max_param, function(x) -length(x)))) +
@@ -195,7 +197,9 @@ ggplot(not_converged, aes(x = max_param, y = gelman, color = type)) +
 
 #looking at individual runs
 #struggle params for IPM are psurv and Ntot's
-testIPM.b <- readRDS(file = here('results', 'ind400', 'out_IPM-4-8-3.RDS')) #worst 
+testIPM.b <- readRDS(file = here('results', 'normObs',
+                                 # 'ind400',
+                                 'out_IPM-1-12-7.RDS'))
 testIPM.w <- readRDS(file = here('results', 'ind400', 'out_IPM-3-19-9.RDS')) #best
 
 plot(testIPM.b[,'mean.phi[1]'])
@@ -220,7 +224,7 @@ plot(testNoprod.w[,'Ntot[10]'])
 
 #struggle params - phi's only, very little issues with Ntot and psurv
 #also look at 3-23-9; 1-24-4 (worst); and 3-36-7 (best, 1.1005)
-testNoMR.w <- readRDS(file = here('results', 'ind400', 'out_noMR-3-24-3.RDS'))
+testNoMR.w <- readRDS(file = here('results', 'normObs', 'out_noMR-1-23-8.RDS'))
 testNoMR.w <- readRDS(file = here('results', 'ind400', 'out_noMR-3-11-4.RDS'))
 testNoMR.b <- readRDS(file = here('results', 'ind400', 'out_noMR-5-10-5.RDS'))
 testNoMR.b <- readRDS(file = here('results', 'ind400', 'out_noMR-2-11-7.RDS'))
