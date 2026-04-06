@@ -9,21 +9,21 @@ library(doParallel)
 surv_scenarios <- readRDS(here("data", "data_scenarios.RDS"))
 
 #use for binomial n-mixture model
-surv_scenarios_num_bin <- surv_scenarios %>%
-   transform(det.MR = ifelse(det.MR == 'L', 0.3,
-                          ifelse(det.MR == 'M', 0.5, 
-                                 ifelse(det.MR == 'H', 0.8, NA)))) %>%
-  transform(det.prod = ifelse(det.prod == 'L', 0.3,
-                              ifelse(det.prod == 'M', 0.5, 
-                                     ifelse(det.prod == 'H', 0.8, NA)))) %>%
-  transform(det.abund = ifelse(det.abund == 'L', 0.3,
-                                ifelse(det.abund == 'M', 0.5, 0.8)))
+# surv_scenarios_num_bin <- surv_scenarios %>%
+#    transform(det.MR = ifelse(det.MR == 'L', 0.3,
+#                           ifelse(det.MR == 'M', 0.5, 
+#                                  ifelse(det.MR == 'H', 0.8, NA)))) %>%
+#   transform(det.prod = ifelse(det.prod == 'L', 0.3,
+#                               ifelse(det.prod == 'M', 0.5, 
+#                                      ifelse(det.prod == 'H', 0.8, NA)))) %>%
+#   transform(det.abund = ifelse(det.abund == 'L', 0.3,
+#                                 ifelse(det.abund == 'M', 0.5, 0.8)))
 
 #use for normal distribution count model 
 #sd_high == better certainty in the counts/data quality
-sd_low <- 30
-sd_med <- 20
-sd_high <- 10
+# sd_low <- 30
+# sd_med <- 20
+# sd_high <- 10
   
 surv_scenarios_num <- surv_scenarios %>%
   transform(det.MR = ifelse(det.MR == 'L', 0.3,
@@ -44,7 +44,7 @@ dem_scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>%
          "fec" = "f")
  
 # Ni <- c(150, 150)
-Ni <- c(300, 300)
+# Ni <- c(300, 300)
 
 nyears <- 15
 
@@ -85,6 +85,18 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
     phi <- as.numeric(c(dem_scenarios[d,'phi1'], dem_scenarios[d,'phiad']))
     fec <- as.numeric(dem_scenarios[d,'fec'])*2 #check; function assumes both sexes
     
+    sj <- phi[1]
+    sa <- phi[2]
+    
+    pop.mat <- matrix(NA,nrow=2,ncol=2)
+    pop.mat[1,] <- c(sj*fec/2,sj*fec/2)
+    pop.mat[2,] <- c(sa,sa)
+    
+    stable <- eigen.analysis(pop.mat)$stable
+    
+    Nst.tot <- 300 
+    Ni <- round(c(Nst.tot*stable))
+    
     pop1 <- simPop(Ni = Ni, phi = phi, f = fec, nYears = nyears)
     pop2 <- simPop(Ni = Ni, phi = phi, f = fec, nYears = nyears)
     pop3 <- simPop(Ni = Ni, phi = phi, f = fec, nYears = nyears)
@@ -103,17 +115,17 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
       # Nad_count <- simCountBin(N=pop1$N[2,], pDetect = det.abund)
       # N1_count <- simCountBin(N=pop1$N[1,], pDetect = det.abund)
       
-      # tot_count1 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
-      # tot_count2 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
-      # tot_count3 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
-      # tot_count4 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
-      # tot_count5 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
+      tot_count1 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
+      tot_count2 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
+      tot_count3 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
+      tot_count4 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
+      tot_count5 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
       
-      tot_count1 <- simCountNorm(N = pop1$totAdults, sigma = det.abund)
-      tot_count2 <- simCountNorm(N = pop1$totAdults, sigma = det.abund)
-      tot_count3 <- simCountNorm(N = pop1$totAdults, sigma = det.abund)
-      tot_count4 <- simCountNorm(N = pop1$totAdults, sigma = det.abund)
-      tot_count5 <- simCountNorm(N = pop1$totAdults, sigma = det.abund)
+      # tot_count1 <- simCountNorm(N = pop1$totAdults, sigma = det.abund)
+      # tot_count2 <- simCountNorm(N = pop1$totAdults, sigma = det.abund)
+      # tot_count3 <- simCountNorm(N = pop1$totAdults, sigma = det.abund)
+      # tot_count4 <- simCountNorm(N = pop1$totAdults, sigma = det.abund)
+      # tot_count5 <- simCountNorm(N = pop1$totAdults, sigma = det.abund)
       
       surv_cnts <- rbind(tot_count1$count,
                         tot_count2$count,
