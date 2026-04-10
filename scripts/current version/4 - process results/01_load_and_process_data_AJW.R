@@ -32,7 +32,9 @@ not_converged <- data.frame(type=character(), d=integer(), s=integer(),
 process_model <- function(prefix, d, s, i) {
   # file_name <- here('results', 'ind300', paste0(prefix, "-", d, "-", s, "-", i, ".RDS"))
   # file_name <- here('results', 'ind400', paste0(prefix, "-", d, "-", s, "-", i, ".RDS"))
-  file_name <- here('results', 'normObs', paste0(prefix, "-", d, "-", s, "-", i, ".RDS"))
+  # file_name <- here('results', 'nmix', 'ind300_nsam5',
+  file_name <- here('results', 'vSJC', #'ind300_nsam5',
+                    paste0(prefix, "-", d, "-", s, "-", i, ".RDS"))
   
   if (!file.exists(file_name)) {
     # <<- updates tracking items outside the function
@@ -73,7 +75,8 @@ process_model <- function(prefix, d, s, i) {
 }
 
 # process
-model_types <- c("out_IPM", "out_noMR", "out_noProd", "out_abundOnly")
+# model_types <- c("out_IPM", "out_noMR", "out_noProd", "out_abundOnly")
+model_types <- c("out_IPM")
 
 for (i in 1:sims.per) { # sims per
   for (s in 1:nrow(surv_scenarios)) { #scenarios picked
@@ -98,7 +101,9 @@ results_all <- bind_rows(results_list)
 # saveRDS(results_all, file = here('results', 'processed', "results_all.RDS"))
 # saveRDS(results_all, file = here('results', 'processed', "results_all_ind300.RDS"))
 # saveRDS(results_all, file = here('results', 'processed', "results_all_ind400.RDS"))
-saveRDS(results_all, file = here('results', 'processed', "results_all_normObs.RDS"))
+# saveRDS(results_all, file = here('results', 'processed', "results_all_normObs.RDS"))
+# saveRDS(results_all, file = here('results', 'processed', "results_all_ind300_nsam5.RDS"))
+saveRDS(results_all, file = here('results', 'processed', "results_all_vSJC.RDS"))
 # results_all <- readRDS(file = here('results', 'processed', "results_all_ind300.RDS"))
 # results_all <- readRDS(file = here('results', 'processed', "results_all_ind400.RDS"))
 
@@ -200,7 +205,9 @@ ggplot(not_converged, aes(x = max_param, y = gelman, color = type)) +
 testIPM.b <- readRDS(file = here('results', 'normObs',
                                  # 'ind400',
                                  'out_IPM-1-12-7.RDS'))
-testIPM.w <- readRDS(file = here('results', 'ind400', 'out_IPM-3-19-9.RDS')) #best
+testIPM.w <- readRDS(file = here('results', 'nmix', 'ind300_nsam5', 'out_IPM-1-13-2.RDS')) #best
+testIPM.w <- readRDS(file = here('results', 'vSJC', 'out_IPM-1-13-3.RDS')) #best
+
 
 plot(testIPM.b[,'mean.phi[1]'])
 plot(testIPM.b[,'p.surv'])

@@ -22,7 +22,8 @@ dem_scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>%
   mutate(dem_scenario = row_number())
 
 #load all processed mcmc results
-results_lam <- readRDS(file = here('results', 'processed', 'results_all.RDS')) %>%
+# results_lam <- readRDS(file = here('results', 'processed', 'results_all_vSJC.RDS')) %>%
+  results_lam <- readRDS(file = here('results', 'processed', 'results_all_ind300_nsam5.RDS')) %>%
   mutate(iter = row_number()) %>%
   select(contains("lambda") | contains("sim_rep") | contains("scenario") | contains('type')) 
 
@@ -62,5 +63,7 @@ for(i in 1:dim(lambda_dat)[1]) {
 }
 
 # save objects  #######
-write_csv(lambda_dat, here('results', 'processed', "lambda_geo.csv"))
+# write_csv(lambda_dat, here('results', 'processed', "lambda_geo_vSJC.csv"))
+# write_csv(lambda_dat, here('results', 'processed', "lambda_geo_ind300_nsam5.csv"))
+
 

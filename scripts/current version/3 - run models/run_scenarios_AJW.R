@@ -55,8 +55,8 @@ source(here("scripts", "current version",
             "3 - run models", "run_scenarios_helperFns_AJW.R"))
 
 # MCMC settings #######
-nb <- 250000 #burn-in
-ni <- 450000 #total iterations
+nb <- 50000 #burn-in
+ni <- 100000 #total iterations
 nc <- 4
 # nb <- 125000
 # ni <- 250000
@@ -64,8 +64,7 @@ nc <- 4
 
 nt <- 10  #thin
 
-sims.per <- 100 #goal
-sims.per <- 2
+sims.per <- 100 
 
 cores = detectCores()
 cl <- makeCluster(nrow(dem_scenarios), setup_strategy = "sequential") #not to overload your computer
@@ -113,9 +112,6 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
       comb <- dem_scenarios[d,]
 
       # population survey data 
-      # Nad_count <- simCountBin(N=pop1$N[2,], pDetect = det.abund)
-      # N1_count <- simCountBin(N=pop1$N[1,], pDetect = det.abund)
-      
       tot_count1 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
       tot_count2 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
       tot_count3 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
@@ -157,40 +153,41 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
       
       ##run models
       #abundance data only
-      # if (is.na(det.prod) & is.na(det.MR)) { 
-      #   
-      #   out_abundOnly <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc, 
-      #                          comb, detect = det.abund)
-      #   saveRDS(out_abundOnly, here("results", 'nmix', 'ind300_nsam5', paste("out_abundOnly-",d,"-",s,"-",i,".RDS", sep = "")))
-      #   rm(out_abundOnly) 
-      #   
-      # } #abund only
+      if (is.na(det.prod) & is.na(det.MR)) {
+
+        out_abundOnly <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc,
+                               comb, detect = det.abund)
+        saveRDS(out_abundOnly, here("results", 'nmix', 'ind300_nsam5', paste("out_abundOnly-",d,"-",s,"-",i,".RDS", sep = "")))
+        rm(out_abundOnly)
+
+      } #abund only
       #   
       # #missing productivity data
-      #   else if (is.na(det.prod)) { 
-      #     out_noProd <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc, 
-      #                              comb, detect = det.abund)
-      #     saveRDS(out_noProd, here("results", 'nmix', 'ind300_nsam5', paste("out_noProd-",d,"-",s,"-",i,".RDS", sep = "")))
-      #     rm(out_noProd)
-      #     
-      #   } #missing prod
+        else if (is.na(det.prod)) {
+          out_noProd <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc,
+                                   comb, detect = det.abund)
+          saveRDS(out_noProd, here("results", 'nmix', 'ind300_nsam5', paste("out_noProd-",d,"-",s,"-",i,".RDS", sep = "")))
+          rm(out_noProd)
+
+        } #missing prod
       # 
       # #missing MR data
-      #   else if (is.na(det.MR)) { 
-      #     out_noMR <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc, 
-      #                         comb, detect = det.abund)
-      #     saveRDS(out_noMR, here("results", 'nmix', ind300_nsam5', paste("out_noMR-",d,"-",s,"-",i,".RDS", sep = "")))
-      #     rm(out_noMR)
-      #     
-      #   } #missing MR
+        else if (is.na(det.MR)) {
+          out_noMR <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc,
+                              comb, detect = det.abund)
+          saveRDS(out_noMR, here("results", 'nmix', 'ind300_nsam5', 
+          paste("out_noMR-",d,"-",s,"-",i,".RDS", sep = "")))
+          rm(out_noMR)
+
+        } #missing MR
       #   
       # #full IPM
-      #     else { 
+          else {
             out_IPM <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, 
                                  comb, detect = det.abund)
             saveRDS(out_IPM, here("results", 'nmix', 'ind300_nsam5', paste("out_IPM-",d,"-",s,"-",i,".RDS", sep = "")))
             rm(out_IPM)
-          # }
+          }
     } #s
   } #d
 } #i
