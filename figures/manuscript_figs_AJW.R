@@ -60,7 +60,10 @@ surv_scenarios_char <- readRDS(here("data", "data_scenarios.RDS")) %>%
 
 ##################### Data Prep ###########################
 
-results <- readRDS(file = here('results', 'processed', 'results_all.RDS')) %>%
+# results <- readRDS(file = here('results', 'processed', 'results_all_ind400.RDS')) %>%
+  # results <- readRDS(file = here('results', 'processed', 'results_all_normObs.RDS')) %>%
+# results <- readRDS(file = here('results', 'processed', 'results_all_ind300_nsam5.RDS')) %>%
+results <- readRDS(file = here('results', 'processed', 'results_all_vSJC.RDS')) %>%
   dplyr::rename(phi1 = `mean.phi[1]`, phiad = `mean.phi[2]`) %>%
   inner_join(dem_scenarios, by = 'dem_scenario', suffix = c('.obs', '.true')) %>%
   inner_join(surv_scenarios, by = 'surv_scenario', suffix = c('.obs', '.true')) 
@@ -328,7 +331,9 @@ cv.plot.vals <- cv.dem %>%
 
 ##################### LAMBDA #########################
 
-lambda_dat <- read.csv(file = here('results', 'processed', 'lambda_geo.csv'), header = T, 
+# lambda_dat <- read.csv(file = here('results', 'processed', 'lambda_geo_vSJC.csv'), header = T, 
+#                        stringsAsFactors = F)
+lambda_dat <- read.csv(file = here('results', 'processed', 'lambda_geo_ind300_nsam5.csv'), header = T, 
                        stringsAsFactors = F)
 
 #reformat for plotting
@@ -808,7 +813,7 @@ test.bias <- rel.bias.sc  %>%
   #                             labels = c('fast', 'mod', 'slow')))
 
 #doesn't seem to vary over det.prod, so didn't visualize             
-ggplot(test.bias %>% filter(dataset == 'Full IPM'), 
+ggplot(test.bias %>% filter(dataset == 'Full IPM' & !is.na(det.prod) & !is.na(det.MR)), 
        aes(x = det.MR, y = value, col = variable, 
            group = variable)) +
   geom_point() + 
@@ -819,6 +824,21 @@ ggplot(test.bias %>% filter(dataset == 'Full IPM'),
   xlab('MR detection') + 
   ylab('Relative bias') +
   facet_nested(det.prod~det.abund + life_hist, scales = 'free_x')
+  # facet_nested(scenario~det.abund, scales = 'free_x') +
+  theme_bw()
+  
+  ggplot(test.bias %>% filter(dataset == 'Full IPM'  & !is.na(det.prod) & !is.na(det.MR)
+                              & variable %nin% obs.pars), 
+         aes(x = det.MR, y = value, col = variable, 
+             group = variable)) +
+    geom_point() + 
+    geom_line() +
+    geom_hline(aes(yintercept = 0), linetype = 'dotted') +
+    #ylim(c(-1.75, 1.75)) +
+    scale_x_discrete(labels = c("L", "M", "H")) +
+    xlab('MR detection') + 
+    ylab('Relative bias') +
+    facet_nested(det.prod~det.abund + life_hist, scales = 'free_x')
   # facet_nested(scenario~det.abund, scales = 'free_x') +
   theme_bw()
   
