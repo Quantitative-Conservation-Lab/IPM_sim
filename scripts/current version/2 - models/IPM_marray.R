@@ -14,11 +14,16 @@ IPMmod<-nimbleCode({
   # COUNTS #####
 
   # System process
-  n1.start ~ dunif(10, 700)
-  nad.start ~ dunif(10, 700)
-  N1[1] <- round(n1.start)
-  Nad[1] <- round(nad.start)
-
+  # n1.start ~ dunif(10, 700)
+  # nad.start ~ dunif(10, 700)
+  # N1[1] <- round(n1.start)
+  # Nad[1] <- round(nad.start)
+  
+  N1.start ~ dpois(lambda.1)
+  Nad.start ~ dpois(lambda.2)
+  lambda.1 ~ dgamma(maxcount*stable[1]*0.001,0.001)
+  lambda.2 ~ dgamma(maxcount*stable[2]*0.001,0.001)
+  
   for (t in 2:nyears){
     N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
     Nad[t] ~ dbin(mean.phi[2],(Ntot[t-1]))
@@ -115,11 +120,11 @@ nonests <- nimbleCode({
   # System process
 
   # Initial population sizes
-  n1.start ~ dunif(10, 700)
-  nad.start ~ dunif(10, 700)
-  N1[1] <- round(n1.start)
-  Nad[1] <- round(nad.start)
-
+  N1.start ~ dpois(lambda.1)
+  Nad.start ~ dpois(lambda.2)
+  lambda.1 ~ dgamma(maxcount*stable[1]*0.001,0.001)
+  lambda.2 ~ dgamma(maxcount*stable[2]*0.001,0.001)
+  
   for (t in 2:nyears){
     N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
     Nad[t] ~ dbin(mean.phi[2],(Ntot[t-1]))
@@ -207,11 +212,11 @@ nomr<-nimbleCode({
   # System process
 
   # Initial population sizes
-  n1.start ~ dunif(10, 700)
-  nad.start ~ dunif(10, 700)
-  N1[1] <- round(n1.start)
-  Nad[1] <- round(nad.start)
-
+  N1.start ~ dpois(lambda.1)
+  Nad.start ~ dpois(lambda.2)
+  lambda.1 ~ dgamma(maxcount*stable[1]*0.001,0.001)
+  lambda.2 ~ dgamma(maxcount*stable[2]*0.001,0.001)
+  
   for (t in 2:nyears){
     N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
     Nad[t] ~ dbin(mean.phi[2],(Ntot[t-1]))
@@ -271,11 +276,11 @@ abundonly<-nimbleCode({
   # System process
 
   # Initial population sizes
-  n1.start ~ dunif(10, 700)
-  nad.start ~ dunif(10, 700)
-  N1[1] <- round(n1.start)
-  Nad[1] <- round(nad.start)
-
+  N1.start ~ dpois(lambda.1)
+  Nad.start ~ dpois(lambda.2)
+  lambda.1 ~ dgamma(maxcount*stable[1]*0.001,0.001)
+  lambda.2 ~ dgamma(maxcount*stable[2]*0.001,0.001)
+  
   for (t in 2:nyears){
     N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
     Nad[t] ~ dbin(mean.phi[2],(Ntot[t-1]))
@@ -299,11 +304,11 @@ abundonly<-nimbleCode({
   # CAPTURE RECAPTURE #####
 
   #priors for resight and adult or yoy survival
-  mean.phi[1]~dunif(0,1) #surv 1 year olds
-  mean.phi[2]~dunif(0,1) #surv adults
+  # mean.phi[1]~dunif(0,1) #surv 1 year olds
+  # mean.phi[2]~dunif(0,1) #surv adults
 
-  # mean.phi[1]~dunif(mean.phi.1.low, mean.phi.1.hi) #surv 1 year olds
-  # mean.phi[2]~dunif(mean.phi.2.low, mean.phi.2.hi) #surv adults
+  mean.phi[1]~dunif(mean.phi.1.low, mean.phi.1.hi) #surv 1 year olds
+  mean.phi[2]~dunif(mean.phi.2.low, mean.phi.2.hi) #surv adults
 
   # PRODUCTIVITY #####
 

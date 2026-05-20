@@ -16,11 +16,8 @@ dem_scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>%
     "fec" = "f")
 
 surv_scenarios <- readRDS(here("data", "data_scenarios.RDS"))
-sims.per <- 20 
+sims.per <- 33 
 
-### new option
-library(dplyr)
-library(coda)
 
 # storage
 results_list <- list()
@@ -33,7 +30,7 @@ process_model <- function(prefix, d, s, i) {
   # file_name <- here('results', 'ind300', paste0(prefix, "-", d, "-", s, "-", i, ".RDS"))
   # file_name <- here('results', 'ind400', paste0(prefix, "-", d, "-", s, "-", i, ".RDS"))
   # file_name <- here('results', 'nmix', 'ind300_nsam5',
-  file_name <- here('results', 'vSJC', #'ind300_nsam5',
+  file_name <- here('results', 'nmix', 'final', #'ind300_nsam5',
                     paste0(prefix, "-", d, "-", s, "-", i, ".RDS"))
   
   if (!file.exists(file_name)) {
@@ -50,13 +47,13 @@ process_model <- function(prefix, d, s, i) {
   max_param <- rownames(diag_result)[max_idx]
   
   # compile convergence info
-  if (is.na(max_val) || max_val > 1.1) {
+  if (is.na(max_val) || max_val > 1.12) {
     not_converged <<- bind_rows(not_converged, 
                                      data.frame(
                                        type=prefix, d=d, s=s, i=i, 
                                        gelman=max_val, 
                                        max_param=max_param
-                                     ))
+                                     )) %>% distinct()
     return(NULL)
   }
   
@@ -75,8 +72,8 @@ process_model <- function(prefix, d, s, i) {
 }
 
 # process
-# model_types <- c("out_IPM", "out_noMR", "out_noProd", "out_abundOnly")
-model_types <- c("out_IPM")
+model_types <- c("out_IPM", "out_noMR", "out_noProd", "out_abundOnly")
+# model_types <- c("out_IPM")
 
 for (i in 1:sims.per) { # sims per
   for (s in 1:nrow(surv_scenarios)) { #scenarios picked
@@ -102,8 +99,8 @@ results_all <- bind_rows(results_list)
 # saveRDS(results_all, file = here('results', 'processed', "results_all_ind300.RDS"))
 # saveRDS(results_all, file = here('results', 'processed', "results_all_ind400.RDS"))
 # saveRDS(results_all, file = here('results', 'processed', "results_all_normObs.RDS"))
-# saveRDS(results_all, file = here('results', 'processed', "results_all_ind300_nsam5.RDS"))
-saveRDS(results_all, file = here('results', 'processed', "results_all_vSJC.RDS"))
+saveRDS(results_all, file = here('results', 'processed', "results_all_final.RDS"))
+# saveRDS(results_all, file = here('results', 'processed', "results_all_vSJC.RDS"))
 # results_all <- readRDS(file = here('results', 'processed', "results_all_ind300.RDS"))
 # results_all <- readRDS(file = here('results', 'processed', "results_all_ind400.RDS"))
 
@@ -202,16 +199,16 @@ ggplot(not_converged, aes(x = max_param, y = gelman, color = type)) +
 
 #looking at individual runs
 #struggle params for IPM are psurv and Ntot's
-testIPM.b <- readRDS(file = here('results', 'normObs',
+testIPM.b <- readRDS(file = here('results', 'nmix', 'final',
                                  # 'ind400',
-                                 'out_IPM-1-12-7.RDS'))
-testIPM.w <- readRDS(file = here('results', 'nmix', 'ind300_nsam5', 'out_IPM-1-13-2.RDS')) #best
-testIPM.w <- readRDS(file = here('results', 'vSJC', 'out_IPM-1-13-3.RDS')) #best
+                                 'out_IPM-6-25-7.RDS'))
+testIPM.w <- readRDS(file = here('results', 'nmix', 'final', 'out_IPM-4-17-4.RDS')) #best
+testIPM.w <- readRDS(file = here('results', 'vSJC', 'out_IPM-1-13-6.RDS')) #best
 
 
 plot(testIPM.b[,'mean.phi[1]'])
 plot(testIPM.b[,'p.surv'])
-plot(testIPM.b[,'Ntot[6]'])
+plot(testIPM.b[,'Ntot[4]'])
 plot(testIPM.w[,'mean.phi[1]'])
 plot(testIPM.w[,'p.surv'])
 plot(testIPM.w[,'mean.p'])
@@ -231,7 +228,7 @@ plot(testNoprod.w[,'Ntot[10]'])
 
 #struggle params - phi's only, very little issues with Ntot and psurv
 #also look at 3-23-9; 1-24-4 (worst); and 3-36-7 (best, 1.1005)
-testNoMR.w <- readRDS(file = here('results', 'normObs', 'out_noMR-1-23-8.RDS'))
+testNoMR.w <- readRDS(file = here('results', 'nmix', 'final', 'out_noMR-1-35-1.RDS'))
 testNoMR.w <- readRDS(file = here('results', 'ind400', 'out_noMR-3-11-4.RDS'))
 testNoMR.b <- readRDS(file = here('results', 'ind400', 'out_noMR-5-10-5.RDS'))
 testNoMR.b <- readRDS(file = here('results', 'ind400', 'out_noMR-2-11-7.RDS'))
@@ -244,7 +241,7 @@ plot(testNoMR.b[,'mean.phi[2]'])
 plot(testNoMR.b[,'p.surv'])
 
 #struggle params - all vitals, nothing else; 1-47-1 best
-testabund.w  <- readRDS(file = here('results', 'ind400', 'out_abundOnly-4-46-1.RDS'))
+testabund.w  <- readRDS(file = here('results', 'nmix', 'final', 'out_abundOnly-6-46-1.RDS'))
 testabund.b  <- readRDS(file = here('results', 'ind400', 'out_abundOnly-2-48-5.RDS'))
 
 plot(testabund.b[,'fec'])

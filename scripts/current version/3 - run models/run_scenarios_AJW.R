@@ -6,24 +6,8 @@ library(foreach)
 library(doParallel)
 
 # load data and dem/survey scenarios
-surv_scenarios <- readRDS(here("data", "data_scenarios.RDS"))
-
-#use for binomial n-mixture model
-# surv_scenarios_num_bin <- surv_scenarios %>%
-#    transform(det.MR = ifelse(det.MR == 'L', 0.3,
-#                           ifelse(det.MR == 'M', 0.5, 
-#                                  ifelse(det.MR == 'H', 0.8, NA)))) %>%
-#   transform(det.prod = ifelse(det.prod == 'L', 0.3,
-#                               ifelse(det.prod == 'M', 0.5, 
-#                                      ifelse(det.prod == 'H', 0.8, NA)))) %>%
-#   transform(det.abund = ifelse(det.abund == 'L', 0.3,
-#                                 ifelse(det.abund == 'M', 0.5, 0.8)))
-
-#use for normal distribution count model 
-#sd_high == better certainty in the counts/data quality
-# sd_low <- 30
-# sd_med <- 20
-# sd_high <- 10
+surv_scenarios <- readRDS(here("data", "data_scenarios.RDS")) %>%
+  dplyr::filter(det.abund != 'L')
   
 surv_scenarios_num <- surv_scenarios %>%
   transform(det.MR = ifelse(det.MR == 'L', 0.3,
@@ -46,7 +30,8 @@ dem_scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>%
 # Ni <- c(150, 150)
 # Ni <- c(300, 300)
 
-nyears <- 15
+nyears <- 20
+Nst.tot <- 300
 
 # source functions
 source(here("scripts", "current version",
@@ -55,16 +40,15 @@ source(here("scripts", "current version",
             "3 - run models", "run_scenarios_helperFns_AJW.R"))
 
 # MCMC settings #######
-nb <- 50000 #burn-in
-ni <- 100000 #total iterations
+nb <- 100000 #burn-in
+ni <- 250000 #total iterations
 nc <- 4
 # nb <- 125000
 # ni <- 250000
 # nc <- 3  #chains
-
 nt <- 10  #thin
 
-sims.per <- 100 
+sims.per <- 10#0 
 
 cores = detectCores()
 cl <- makeCluster(nrow(dem_scenarios), setup_strategy = "sequential") #not to overload your computer
@@ -73,7 +57,6 @@ registerDoParallel(cl)
 
 #simulation replicates
 foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
-    
   library(here)
   library(nimble)
   library(IPMbook)
@@ -94,7 +77,6 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
     
     stable <- eigen.analysis(pop.mat)$stable
     
-    Nst.tot <- 300 
     Ni <- round(c(Nst.tot*stable))
     
     pop1 <- simPop(Ni = Ni, phi = phi, f = fec, nYears = nyears)
@@ -118,12 +100,6 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
       tot_count4 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
       tot_count5 <- simCountBin(N = pop1$totAdults, pDetect = det.abund)
       
-      # tot_count1 <- simCountNorm(N = pop1$totAdults, sigma = det.abund)
-      # tot_count2 <- simCountNorm(N = pop1$totAdults, sigma = det.abund)
-      # tot_count3 <- simCountNorm(N = pop1$totAdults, sigma = det.abund)
-      # tot_count4 <- simCountNorm(N = pop1$totAdults, sigma = det.abund)
-      # tot_count5 <- simCountNorm(N = pop1$totAdults, sigma = det.abund)
-      
       surv_cnts <- rbind(tot_count1$count,
                         tot_count2$count,
                         tot_count4$count,
@@ -132,8 +108,9 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
       
       n.sam <- dim(surv_cnts)[1]
       
+      maxcount <- max(surv_cnts[,1])
+      
       # capture histories
-      #check; not sure what to put for cap
       if (!is.na(det.MR)) {
       ch <- simCapHist(state=pop2$state, cap=det.MR, recap=det.MR, maxAge=2, verbose = F)
       
@@ -157,7 +134,7 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
 
         out_abundOnly <- runabundonly(nb = nb, ni = ni, nt = nt, nc = nc,
                                comb, detect = det.abund)
-        saveRDS(out_abundOnly, here("results", 'nmix', 'ind300_nsam5', paste("out_abundOnly-",d,"-",s,"-",i,".RDS", sep = "")))
+        saveRDS(out_abundOnly, here("results", 'nmix', 'final', paste("out_abundOnly-",d,"-",s,"-",i,".RDS", sep = "")))
         rm(out_abundOnly)
 
       } #abund only
@@ -166,7 +143,7 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
         else if (is.na(det.prod)) {
           out_noProd <- runnonests(nb = nb, ni = ni, nt = nt, nc = nc,
                                    comb, detect = det.abund)
-          saveRDS(out_noProd, here("results", 'nmix', 'ind300_nsam5', paste("out_noProd-",d,"-",s,"-",i,".RDS", sep = "")))
+          saveRDS(out_noProd, here("results", 'nmix', 'final', paste("out_noProd-",d,"-",s,"-",i,".RDS", sep = "")))
           rm(out_noProd)
 
         } #missing prod
@@ -175,7 +152,7 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
         else if (is.na(det.MR)) {
           out_noMR <- runnomr(nb = nb, ni = ni, nt = nt, nc = nc,
                               comb, detect = det.abund)
-          saveRDS(out_noMR, here("results", 'nmix', 'ind300_nsam5', 
+          saveRDS(out_noMR, here("results", 'nmix', 'final', 
           paste("out_noMR-",d,"-",s,"-",i,".RDS", sep = "")))
           rm(out_noMR)
 
@@ -185,7 +162,7 @@ foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
           else {
             out_IPM <- runIPMmod(nb = nb, ni = ni, nt = nt, nc = nc, 
                                  comb, detect = det.abund)
-            saveRDS(out_IPM, here("results", 'nmix', 'ind300_nsam5', paste("out_IPM-",d,"-",s,"-",i,".RDS", sep = "")))
+            saveRDS(out_IPM, here("results", 'nmix', 'final', paste("out_IPM-",d,"-",s,"-",i,".RDS", sep = "")))
             rm(out_IPM)
           }
     } #s

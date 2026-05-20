@@ -19,6 +19,7 @@ runIPMmod <- function(nb, ni, nt, nc,
   #### CONSTANTS ####
 
   const1 <- list(nyears = nyears,
+                 maxcount = maxcount,
                  #use this to avoid hard-coding N1.start prior
                  # n1.start.upper = Ni[1]*1.5,
                  # n1.start.lower = Ni[1]*0.25,
@@ -73,6 +74,7 @@ runnonests <- function(nb, ni, nt, nc,
   #### CONSTANTS ####
 
   const1 <- list(nyears = nyears,
+                 maxcount = maxcount,
                  n.sam = n.sam)
 
   #### INITIAL VALUES ####
@@ -124,6 +126,7 @@ runnomr <- function(nb, ni, nt, nc,
   #### CONSTANTS ####
 
   const1 <- list(nyears = nyears,
+                 maxcount = maxcount,
                  n.sam = n.sam)
 
   #### INITIAL VALUES ####
@@ -174,6 +177,7 @@ runabundonly <- function(nb, ni, nt, nc,
   #### CONSTANTS ####
 
   const1 <- list(nyears = nyears,
+                 maxcount = maxcount,
                  mean.phi.1.low = phi[1]*0.3,
                    mean.phi.1.hi = phi[1]*1.7,
                    mean.phi.2.low = phi[2]*0.3,
@@ -196,7 +200,7 @@ runabundonly <- function(nb, ni, nt, nc,
 
   #### PARAMETERS TO MONITOR ####
   params1 <- c("p.surv", 
-               # "mean.phi", "fec", 
+               "mean.phi", "fec", 
                "lambda","Ntot")#,"N1","Nad","f","rho")#0.3764911
 
   #### COMPILE CONFIGURE AND BUILD ####
