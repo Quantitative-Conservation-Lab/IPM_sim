@@ -48,7 +48,7 @@ nc <- 4
 # nc <- 3  #chains
 nt <- 10  #thin
 
-sims.per <- 10#0 
+sims.per <- 120 #10#0 
 
 cores = detectCores()
 cl <- makeCluster(nrow(dem_scenarios), setup_strategy = "sequential") #not to overload your computer
@@ -56,7 +56,7 @@ registerDoParallel(cl)
 
 
 #simulation replicates
-foreach(i = 1:sims.per) %dopar% { # loop over replicate sims  #####
+foreach(i = 101:120) %dopar% { # loop over replicate sims  #####
   library(here)
   library(nimble)
   library(IPMbook)

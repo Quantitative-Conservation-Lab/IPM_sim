@@ -16,7 +16,7 @@ dem_scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>%
     "fec" = "f")
 
 surv_scenarios <- readRDS(here("data", "data_scenarios.RDS"))
-sims.per <- 33 
+sims.per <- 100
 
 
 # storage
@@ -95,22 +95,19 @@ for (i in 1:sims.per) { # sims per
 # combine and save
 results_all <- bind_rows(results_list)
 
-# saveRDS(results_all, file = here('results', 'processed', "results_all.RDS"))
-# saveRDS(results_all, file = here('results', 'processed', "results_all_ind300.RDS"))
-# saveRDS(results_all, file = here('results', 'processed', "results_all_ind400.RDS"))
-# saveRDS(results_all, file = here('results', 'processed', "results_all_normObs.RDS"))
-saveRDS(results_all, file = here('results', 'processed', "results_all_final.RDS"))
+saveRDS(results_all, file = here('results', 'processed', "results_all_final_delphine_batch1.RDS"))
 # saveRDS(results_all, file = here('results', 'processed', "results_all_vSJC.RDS"))
-# results_all <- readRDS(file = here('results', 'processed', "results_all_ind300.RDS"))
-# results_all <- readRDS(file = here('results', 'processed', "results_all_ind400.RDS"))
+
+#this still isn't quite right.... something like this but accounting for everything in missing_files
+var_reps <- n_distinct(results_all$sim_rep)*n_distinct(results_all$dem_scenario)*n_distinct(results_all$surv_scenario)
 
 convergence_summary <- results_all %>%
   distinct(model_type, dem_scenario, surv_scenario, sim_rep) %>%
   group_by(model_type) %>%
   dplyr::summarize(
     successful_sims = n(), 
-    # Optional: Calculate percentage based on your 'sims.per' variable
-    # percent_converged = (n() / sims.per) * 100,
+    # calculate percentage based on 'sims.per' variable
+    percent_converged = (n()/var_reps)*100,
     .groups = "drop")
 
 # not_conv_summary <- not_converged %>%
@@ -228,17 +225,14 @@ plot(testNoprod.w[,'Ntot[10]'])
 
 #struggle params - phi's only, very little issues with Ntot and psurv
 #also look at 3-23-9; 1-24-4 (worst); and 3-36-7 (best, 1.1005)
-testNoMR.w <- readRDS(file = here('results', 'nmix', 'final', 'out_noMR-1-35-1.RDS'))
-testNoMR.w <- readRDS(file = here('results', 'ind400', 'out_noMR-3-11-4.RDS'))
-testNoMR.b <- readRDS(file = here('results', 'ind400', 'out_noMR-5-10-5.RDS'))
-testNoMR.b <- readRDS(file = here('results', 'ind400', 'out_noMR-2-11-7.RDS'))
+testNoMR.w <- readRDS(file = here('results', 'nmix', 'final', 'out_noMR-6-15-5.RDS'))
+
 
 plot(testNoMR.w[,'mean.phi[1]'])
 plot(testNoMR.w[,'mean.phi[2]'])
 plot(testNoMR.w[,'fec'])
-plot(testNoMR.b[,'mean.phi[1]'])
-plot(testNoMR.b[,'mean.phi[2]'])
-plot(testNoMR.b[,'p.surv'])
+plot(testNoMR.w[,'p.surv'])
+plot(testNoMR.w[,'Ntot[10]'])
 
 #struggle params - all vitals, nothing else; 1-47-1 best
 testabund.w  <- readRDS(file = here('results', 'nmix', 'final', 'out_abundOnly-6-46-1.RDS'))
