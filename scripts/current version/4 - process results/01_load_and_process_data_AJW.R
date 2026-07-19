@@ -5,7 +5,11 @@ library(foreach)
 library(doParallel)
 library(coda)
 library(nlist)
+library(ggplot2)
 # library(beepr)
+
+rainbow2 <- c("violetred4", "dodgerblue3", 'deepskyblue1', "#4aaaa5", "#a3d39c", "#f6b61c", "chocolate2", "red3")
+
 
 # load scenarios
 dem_scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>% 
@@ -15,9 +19,14 @@ dem_scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>%
     "phiad" = "S.A",
     "fec" = "f")
 
-surv_scenarios <- readRDS(here("data", "data_scenarios.RDS"))
-sims.per <- 100
+surv_scenarios <- readRDS(here("data", "data_scenarios.RDS")) %>%
+  dplyr::filter(det.abund != 'L')
 
+sims.per <- 3000 
+
+### new option
+library(dplyr)
+library(coda)
 
 # storage
 results_list <- list()
@@ -27,19 +36,29 @@ not_converged <- data.frame(type=character(), d=integer(), s=integer(),
 
 # processing function (returns the data frame or NULL)
 process_model <- function(prefix, d, s, i) {
-  # file_name <- here('results', 'ind300', paste0(prefix, "-", d, "-", s, "-", i, ".RDS"))
-  # file_name <- here('results', 'ind400', paste0(prefix, "-", d, "-", s, "-", i, ".RDS"))
-  # file_name <- here('results', 'nmix', 'ind300_nsam5',
-  file_name <- here('results', 'nmix', 'final', #'ind300_nsam5',
-                    paste0(prefix, "-", d, "-", s, "-", i, ".RDS"))
   
+  file_name <- file.path("D:/IPM sim results", 
+                         paste0(prefix, "-", d, "-", s, "-", i, ".RDS"))
+  
+  # 1. Check if file physically exists
   if (!file.exists(file_name)) {
-    # <<- updates tracking items outside the function
     missing_files <<- bind_rows(missing_files, data.frame(type=prefix, d=d, s=s, i=i))
     return(NULL)
   }
   
-  out_temp <- readRDS(file_name)
+  # 2. Try to read the file safely (handles corrupted/incomplete files)
+  out_temp <- tryCatch({
+    readRDS(file_name)
+  }, error = function(e) {
+    message(paste("Skipping corrupted file at i =", i, "s =", s, "d =", d))
+    missing_files <<- bind_rows(missing_files, data.frame(type=prefix, d=d, s=s, i=i))
+    return(NULL)
+  })
+  
+  # If tryCatch caught an error and returned NULL, exit the function early
+  if (is.null(out_temp)) return(NULL)
+  
+  # 3. Convergence checks
   diag_result <- gelman.diag(out_temp, multivariate = FALSE)[[1]]
   # Find the value and the name of the worst offender
   max_idx   <- which.max(diag_result[, 1])
@@ -47,17 +66,17 @@ process_model <- function(prefix, d, s, i) {
   max_param <- rownames(diag_result)[max_idx]
   
   # compile convergence info
-  if (is.na(max_val) || max_val > 1.12) {
+  if (is.na(max_val) || max_val > 1.1) {
     not_converged <<- bind_rows(not_converged, 
-                                     data.frame(
-                                       type=prefix, d=d, s=s, i=i, 
-                                       gelman=max_val, 
-                                       max_param=max_param
-                                     )) %>% distinct()
+                                data.frame(
+                                  type=prefix, d=d, s=s, i=i, 
+                                  gelman=max_val, 
+                                  max_param=max_param
+                                ))
     return(NULL)
   }
   
-  # process
+  # 4. Process and add indices (only runs if file is good AND converged)
   out <- out_temp %>% 
     collapse_chains() %>% 
     as.matrix() %>% 
@@ -95,41 +114,172 @@ for (i in 1:sims.per) { # sims per
 # combine and save
 results_all <- bind_rows(results_list)
 
-saveRDS(results_all, file = here('results', 'processed', "results_all_final_delphine_batch1.RDS"))
-# saveRDS(results_all, file = here('results', 'processed', "results_all_vSJC.RDS"))
+#just take 100 of each type x d x s since some combo's have accumulated 100+
+results_all_100 <- results_all %>%
+  group_by(model_type, dem_scenario, surv_scenario) %>%
+  slice_sample(n = 100, replace = F) 
 
-#this still isn't quite right.... something like this but accounting for everything in missing_files
-var_reps <- n_distinct(results_all$sim_rep)*n_distinct(results_all$dem_scenario)*n_distinct(results_all$surv_scenario)
+saveRDS(results_all_100, file = here('results', 'processed', "results_all_final_ursus.RDS"))
 
-convergence_summary <- results_all %>%
+# convergence_summary <- results_all %>%
+#   distinct(model_type, dem_scenario, surv_scenario, sim_rep) %>%
+#   group_by(model_type) %>%
+#   dplyr::summarize(
+#     successful_sims = n(), 
+#     # Optional: Calculate percentage based on your 'sims.per' variable
+#     # percent_converged = (n() / sims.per) * 100,
+#     .groups = "drop")
+# 
+# library(dplyr)
+
+# count successful runs per scenario 
+success_counts <- results_all %>%
   distinct(model_type, dem_scenario, surv_scenario, sim_rep) %>%
-  group_by(model_type) %>%
-  dplyr::summarize(
-    successful_sims = n(), 
-    # calculate percentage based on 'sims.per' variable
-    percent_converged = (n()/var_reps)*100,
-    .groups = "drop")
+  group_by(model_type, dem_scenario, surv_scenario) %>%
+  summarize(converged_reps = n(), .groups = "drop") %>%
+  # Rename columns to match the trackers
+  rename(type = model_type, d = dem_scenario, s = surv_scenario)
 
-# not_conv_summary <- not_converged %>%
-#   group_by(type) %>%
-#   dplyr::summarize(n = nrow(gelman))
+# count runs that failed convergence per scenario 
+fail_counts <- not_converged %>%
+  group_by(type, d, s) %>%
+  summarize(failed_reps = n(), .groups = "drop")
 
-# abund_conv <- results_all %>%
-#   filter(model_type == 'out_abundOnly') %>%
-#   distinct(surv_scenario, dem_scenario, sim_rep)
+# combine to get the real denominator (total files found)
+convergence_summary <- full_join(success_counts, fail_counts, by = c("type", "d", "s")) %>%
+  mutate(
+    # Replace NAs with 0 if a scenario had 100% success or 100% failure
+    converged_reps = coalesce(converged_reps, 0L),
+    failed_reps    = coalesce(failed_reps, 0L),
+    
+    # Total files actually found for this scenario
+    total_found    = converged_reps + failed_reps,
+    
+    # Calculate percentage based ONLY on existing files
+    percent_converged = (converged_reps / total_found) * 100
+  ) %>%
+  arrange(type, d, s)
 
-library(ggplot2)
+needs_more <- convergence_summary %>%
+  filter(converged_reps < 90)
 
-#total scenarios finished or proportion per model type
-conv <- sum(convergence_summary$successful_sims)
+#total "successful sims" expected
+#100 replicate simulations
+#9 dem scenarios
+#32 surv scenarios
 
-prop_not_conv <- dim(not_converged)[1]/conv
+#IPM: 18 surv scenarios * 9 dem scenarios = 162, need 16,200 success 
+#no_MR and no_nest: 6 surv scenarios * 9 dem scenarios = 54, need 5400 success
+#abund_only: 2 surv scenarios * 9 dem scenarios = 18, need 1800 success
+# 162+108+18 = 288 total * 100 = 28800 files total expected
+
+
+ggplot(convergence_summary, aes(x = factor(s), y = percent_converged, 
+                                col = factor(d), group = s)) +
+  geom_boxplot(position = position_dodge(0.5)) +
+  facet_wrap(~type, scales = 'free') +
+  theme_bw()
+
+ggplot(convergence_summary, aes(x = factor(s), y = percent_converged, 
+                                col = factor(d), group = s)) +
+  geom_point(position = position_dodge(0.5)) +
+  facet_wrap(~type, scales = 'free') +
+  theme_bw()
+
+ggplot(convergence_summary, aes(x = factor(s), y = converged_reps,
+                                col = factor(d), group = s)) +
+  geom_point(position = position_dodge(0.5)) +
+  facet_wrap(~type, scales = 'free') +
+  theme_bw()
+
+#needs more
+ggplot(needs_more %>% filter(type == 'out_noMR'), aes(x = factor(s), y = converged_reps,
+                                col = factor(d), group = s)) +
+  geom_point(position = position_dodge(0.5)) +
+  facet_wrap(~type, scales = 'free') +
+  theme_bw()
+
+ggplot(convergence_summary, aes(x = factor(s), y = total_found,
+                                col = factor(d), group = s)) +
+  geom_point(position = position_dodge(0.5)) +
+  facet_wrap(~type, scales = 'free') +
+  theme_bw()
+
+#add back survey and demographic features
+conv_scenarios <- convergence_summary %>%
+  merge(surv_scenarios %>%
+          mutate(s = row_number()), by = 's') %>%
+  merge(dem_scenarios %>%
+          mutate(d = row_number()), by = 'd') %>%
+  dplyr::select(type, percent_converged, det.abund, det.MR, det.prod, life_hist, trend) %>%
+  transform(trend = factor(trend, levels = c('decline', 'stable', 'increase'),
+                           labels = c("Decreasing", "Stable", "Increasing"))) %>%
+  transform(det.MR = factor(det.MR, levels = c('L', 'M', 'H'))) %>%
+  transform(det.abund = factor(det.abund, levels = c('M', 'H'),
+                               labels = c('L', 'H'))) %>%
+  transform(det.prod = factor(det.prod, levels = c('L', 'M', 'H'))) %>%
+  transform(type = factor(type, levels = c('out_IPM', 'out_noProd', 'out_noMR', 'out_abundOnly'),
+                             labels = c('Full IPM', 'Abundance & Survival', 
+                                        'Abundance & Productivity', 'Abundance Only'))) %>%
+  transform(life_hist = factor(life_hist, levels = c('slow', 'mod', 'fast'),
+                               labels = c('Slow', 'Moderate', 'Fast')))
+
+
+#by count survey detection and lambda
+conv_plot1 <- ggplot(conv_scenarios, aes(x = det.abund, y = percent_converged, 
+                                col = factor(det.abund), group = det.abund)) +
+  geom_boxplot(position = position_dodge(0.5)) +
+  xlab('Count survey detection') + ylab('Percent converged') +
+  facet_grid(type~trend) +
+  theme_bw() +
+  theme(legend.position = 'none') +
+  scale_color_manual(values = rainbow2[c(2,5)])
+
+#by life history and lambda
+conv_plot2 <- ggplot(conv_scenarios, aes(x = life_hist, y = percent_converged, 
+                           col = factor(life_hist), group = life_hist)) +
+  geom_boxplot(position = position_dodge(0.5)) +
+  xlab('Life history') + ylab('Percent converged') +
+  facet_grid(type~trend) +
+  theme_bw() +
+  theme(legend.position = 'none') +
+  scale_color_manual(values = rainbow2[c(2,5,6)])
+
+plot_grid(conv_plot1, conv_plot2, nrow = 1, labels = "AUTO", align = "hv", label_size = 12)
+# ggsave(width = 12, height = 10, here("figures", 'final', "fig7.png"))
+
+##which params are failing most? 
+conv_dat <- not_converged %>%
+  merge(convergence_summary %>% dplyr::select(d,s,type,total_found, failed_reps), 
+        by = c('d', 's', 'type')) %>%
+  group_by(d, s, type, max_param, total_found) %>%
+  dplyr::summarize(n_fail = n_distinct(gelman)) %>%
+  filter(n_fail > 10) %>%
+  transform(prop_fail = n_fail/total_found) %>%
+  transform(max_param = ifelse(max_param == 'mean.phi[2]', 'Adult survival',
+                               ifelse(max_param == 'mean.phi[1]', 'Juvenile survival',
+                                      ifelse(max_param == 'fec', 'Fecundity',
+                                             ifelse(max_param == 'p.surv', 'Count surv detection', max_param))))) %>%
+  transform(max_param = factor(max_param, levels = c('Adult survival', 'Juvenile survival',
+                                                     'Fecundity', 'Count surv detection'))) %>%
+  transform(type = factor(type, levels = c('out_IPM', 'out_noProd', 'out_noMR', 'out_abundOnly'),
+                          labels = c('Full IPM', 'Abundance & Survival', 
+                                     'Abundance & Productivity', 'Abundance Only')))
+  
+
+ggplot(conv_dat, aes(x = max_param, y = prop_fail)) +
+  geom_boxplot() +
+  xlab('') + ylab('Proportion not converged') +
+  facet_wrap(~type) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
 
 # parameters that are failing to converge
 ggplot(not_converged, aes(x = reorder(max_param, max_param, function(x) -length(x)))) +
   geom_bar(fill = "steelblue") +
   theme_minimal() +
-  facet_grid(.~type) +
+  facet_wrap(.~type) +
   labs(
     title = "Which parameters fail to converge most often?",
     subtitle = "Counts of highest R-hat (> 1.1) per model run",
@@ -196,16 +346,16 @@ ggplot(not_converged, aes(x = max_param, y = gelman, color = type)) +
 
 #looking at individual runs
 #struggle params for IPM are psurv and Ntot's
-testIPM.b <- readRDS(file = here('results', 'nmix', 'final',
+testIPM.b <- readRDS(file = here('results', 'normObs',
                                  # 'ind400',
-                                 'out_IPM-6-25-7.RDS'))
-testIPM.w <- readRDS(file = here('results', 'nmix', 'final', 'out_IPM-4-17-4.RDS')) #best
-testIPM.w <- readRDS(file = here('results', 'vSJC', 'out_IPM-1-13-6.RDS')) #best
+                                 'out_IPM-1-12-7.RDS'))
+testIPM.w <- readRDS(file = here('results', 'nmix', 'ind300_nsam5', 'out_IPM-1-13-2.RDS')) #best
+testIPM.w <- readRDS(file = here('results', 'vSJC', 'out_IPM-1-13-3.RDS')) #best
 
 
 plot(testIPM.b[,'mean.phi[1]'])
 plot(testIPM.b[,'p.surv'])
-plot(testIPM.b[,'Ntot[4]'])
+plot(testIPM.b[,'Ntot[6]'])
 plot(testIPM.w[,'mean.phi[1]'])
 plot(testIPM.w[,'p.surv'])
 plot(testIPM.w[,'mean.p'])
@@ -225,17 +375,20 @@ plot(testNoprod.w[,'Ntot[10]'])
 
 #struggle params - phi's only, very little issues with Ntot and psurv
 #also look at 3-23-9; 1-24-4 (worst); and 3-36-7 (best, 1.1005)
-testNoMR.w <- readRDS(file = here('results', 'nmix', 'final', 'out_noMR-6-15-5.RDS'))
-
+testNoMR.w <- readRDS(file = here('results', 'normObs', 'out_noMR-1-23-8.RDS'))
+testNoMR.w <- readRDS(file = here('results', 'ind400', 'out_noMR-3-11-4.RDS'))
+testNoMR.b <- readRDS(file = here('results', 'ind400', 'out_noMR-5-10-5.RDS'))
+testNoMR.b <- readRDS(file = here('results', 'ind400', 'out_noMR-2-11-7.RDS'))
 
 plot(testNoMR.w[,'mean.phi[1]'])
 plot(testNoMR.w[,'mean.phi[2]'])
 plot(testNoMR.w[,'fec'])
-plot(testNoMR.w[,'p.surv'])
-plot(testNoMR.w[,'Ntot[10]'])
+plot(testNoMR.b[,'mean.phi[1]'])
+plot(testNoMR.b[,'mean.phi[2]'])
+plot(testNoMR.b[,'p.surv'])
 
 #struggle params - all vitals, nothing else; 1-47-1 best
-testabund.w  <- readRDS(file = here('results', 'nmix', 'final', 'out_abundOnly-6-46-1.RDS'))
+testabund.w  <- readRDS(file = here('results', 'ind400', 'out_abundOnly-4-46-1.RDS'))
 testabund.b  <- readRDS(file = here('results', 'ind400', 'out_abundOnly-2-48-5.RDS'))
 
 plot(testabund.b[,'fec'])

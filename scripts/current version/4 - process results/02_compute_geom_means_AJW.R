@@ -22,48 +22,79 @@ dem_scenarios <- readRDS(here("data", "demographic_scenarios.RDS")) %>%
   mutate(dem_scenario = row_number())
 
 #load all processed mcmc results
-# results_lam <- readRDS(file = here('results', 'processed', 'results_all_vSJC.RDS')) %>%
-  results_lam <- readRDS(file = here('results', 'processed', 'results_all_ind300_nsam5.RDS')) %>%
+results_lam <- readRDS(file = here('results', 'processed', 'results_all_final_ursus.RDS')) %>%
   mutate(iter = row_number()) %>%
   select(contains("lambda") | contains("sim_rep") | contains("scenario") | contains('type')) 
 
+
 lambda_dat <- results_lam %>%
+  pivot_longer(
+    cols = !c(sim_rep, model_type, surv_scenario, dem_scenario),
+    names_to = "Year",
+    values_to = "lambda"
+  ) %>%
+  mutate(Year = as.numeric(str_extract(Year, "\\d+"))) %>%
+    arrange(sim_rep, model_type, surv_scenario, dem_scenario, Year) %>%
+  # calculate the cumulative geometric mean for EACH individual simulation run
   group_by(sim_rep, model_type, surv_scenario, dem_scenario) %>%
-  summarise(across(everything(), p_funs)) %>% # deprecated dplyr code above
-  pivot_longer( # begin reshaping
-    cols = contains("%"), 
-    names_to = "quantile",
-    values_to = "lambda",
-  ) %>% 
-  mutate(Year = str_extract(quantile, "\\[\\d+\\]")) %>% 
-  mutate(Year = str_extract(quantile, "\\d+")) %>% 
-  mutate(Quantile = str_extract(quantile, "\\d+\\.?\\d?%")) %>% 
-  select(-quantile) %>% 
-  # select(c(1:3, 6, 5, 4)) %>% #AJW not sure what this did
-  arrange(sim_rep, surv_scenario, dem_scenario, model_type, Quantile, Year) %>% 
-  pivot_wider(names_from = Year, values_from = lambda, names_prefix = "Year_") %>% 
-  select(c(sim_rep, surv_scenario, dem_scenario, model_type, Quantile, "Year_1", "Year_2", "Year_3", "Year_4", "Year_5", "Year_6", 
-                "Year_7", "Year_8", "Year_9", "Year_10", "Year_11", "Year_12", 
-                "Year_13", "Year_14")) # end reshaping
+  mutate(cum_geomean = exp(cummean(log(lambda)))) %>%
+  ungroup() %>%
+  
+  # calculate quantiles across the different sim_reps
+  group_by(model_type, surv_scenario, dem_scenario, Year) %>%
+  summarise(
+    `2.5%`  = quantile(cum_geomean, 0.025, na.rm = TRUE),
+    `50%`   = quantile(cum_geomean, 0.500, na.rm = TRUE),
+    `97.5%` = quantile(cum_geomean, 0.975, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+    pivot_longer(cols = c(`2.5%`, `50%`, `97.5%`), names_to = "Quantile", values_to = "geomean") %>%
+  pivot_wider(names_from = Year, values_from = geomean, names_prefix = "Year_") %>%
+  arrange(surv_scenario, dem_scenario, model_type, Quantile)
 
 
-# create new variables for geometric mean by year
-for (i in 1:14) { # number of years
-  lambda_dat <- lambda_dat %>%
-    mutate("geomean.{i}" :=  NA_real_)
-}
 
-# compute geometric means #######
-num_id_cols <- 5
-for(i in 1:dim(lambda_dat)[1]) {
-  print(paste("row", i))
-  for(j in 1:((ncol(lambda_dat) - num_id_cols)/2)) {
-    lambda_dat[i,((ncol(lambda_dat)+num_id_cols)/2+j)] <- exp(mean(unlist(log(lambda_dat[i,num_id_cols+1:j]))))
-  }
-}
+##old - I don't understand why this was grouped by sim_rep
+
+# lambda_dat <- results_lam %>%
+#   group_by(sim_rep, model_type, surv_scenario, dem_scenario) %>%
+#   summarise(across(everything(), p_funs)) %>% # deprecated dplyr code above
+#   pivot_longer( # begin reshaping
+#     cols = contains("%"), 
+#     names_to = "quantile",
+#     values_to = "lambda",
+#   ) %>% 
+#   mutate(Year = str_extract(quantile, "\\[\\d+\\]")) %>% 
+#   mutate(Year = str_extract(quantile, "\\d+")) %>% 
+#   mutate(Quantile = str_extract(quantile, "\\d+\\.?\\d?%")) %>% 
+#   select(-quantile) %>% 
+#   # select(c(1:3, 6, 5, 4)) %>% #AJW not sure what this did
+#   arrange(sim_rep, surv_scenario, dem_scenario, model_type, Quantile, Year) %>% 
+#   pivot_wider(names_from = Year, values_from = lambda, names_prefix = "Year_") %>% 
+#   select(c(sim_rep, surv_scenario, dem_scenario, model_type, Quantile, "Year_1", "Year_2", "Year_3", "Year_4", "Year_5", "Year_6", 
+#                 "Year_7", "Year_8", "Year_9", "Year_10", "Year_11", "Year_12", 
+#                 "Year_13", "Year_14", "Year_15", "Year_16","Year_17","Year_17",
+#            "Year_19")) # end reshaping
+# 
+# 
+# # create new variables for geometric mean by year
+# for (i in 1:19) { # number of years
+#   lambda_dat <- lambda_dat %>%
+#     mutate("geomean.{i}" :=  NA_real_)
+# }
+# 
+# # compute geometric means #######
+# num_id_cols <- 5
+# for(i in 1:dim(lambda_dat)[1]) {
+#   print(paste("row", i))
+#   for(j in 1:((ncol(lambda_dat) - num_id_cols)/2)) {
+#     lambda_dat[i,(23+j)] <- exp(mean(unlist(log(lambda_dat[i,num_id_cols+1:j]))))
+#     #this became an odd number with 19 yrs
+#     # lambda_dat[i,((ncol(lambda_dat)+num_id_cols)/2+j)] <- exp(mean(unlist(log(lambda_dat[i,num_id_cols+1:j]))))
+#   }
+# }
 
 # save objects  #######
-# write_csv(lambda_dat, here('results', 'processed', "lambda_geo_vSJC.csv"))
-# write_csv(lambda_dat, here('results', 'processed', "lambda_geo_ind300_nsam5.csv"))
+write_csv(lambda_dat, here('results', 'processed', "lambda_geo_final.csv"))
 
 

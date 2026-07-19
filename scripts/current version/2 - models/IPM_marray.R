@@ -6,9 +6,9 @@ library(nimble)
 
 ###### FULL IPM ######
 IPMmod<-nimbleCode({
-  
+
   # COUNTS #####
-  
+
   # System process
   # n1.start ~ dunif(10, 700)
   # nad.start ~ dunif(10, 700)
@@ -26,11 +26,11 @@ IPMmod<-nimbleCode({
     Nad[t] ~ dbin(mean.phi[2],(Ntot[t-1]))
   }
   
-  
+
   for (t in 1:nyears){
     Ntot[t] <- round(Nad[t] + N1[t])
   }
-  
+
   # Observation process
   p.surv~dunif(0,1)
   for(n in 1:n.sam){
@@ -38,7 +38,7 @@ IPMmod<-nimbleCode({
       y[n,t] ~ dbin(p.surv,Ntot[t])
     }
   }
-  
+
   # CAPTURE RECAPTURE #####
   
   #m-array, multinomial likelihood
@@ -76,45 +76,45 @@ IPMmod<-nimbleCode({
     phi.a[t]<-mean.phi[2]
     p[t]<-mean.p
   }
-  
+
   #priors for resight and adult or 1yo survival
   mean.phi[1]~dunif(0,1) #surv 1 year olds
   mean.phi[2]~dunif(0,1) #surv adults
   mean.p~dunif(0,1) #resight prob
-  
+
   # PRODUCTIVITY #####
-  
+
   for (t in 1:(nyears-1)){
     OBS_nestlings[t] ~ dpois(rho[t])
     rho[t] <- R_obs[t]*f[t]
   }
-  
+
   # priors
   for (t in 1:(nyears-1)){
     f[t] <- fec
   }
-  
+
   fec ~ dunif(0, 5)
-  
+
   # DERIVED QUANTITIES #####
-  
+
   # Population growth rate
   for (t in 1:(nyears-1)){
     lambda[t] <- (Ntot[t+1] + 1e-8) / (Ntot[t] + 1e-8) # adding tiny number to avoid Nan
   }
   # END derived quantities
-  
+
 })
 
 
 
 ##### NO NESTS #####
 nonests <- nimbleCode({
-  
+
   # COUNTS #####
-  
+
   # System process
-  
+
   # Initial population sizes
   # n1.start ~ dunif(10, 700)
   # nad.start ~ dunif(10, 700)
@@ -125,18 +125,18 @@ nonests <- nimbleCode({
   nad.start ~ dpois(lambda.2)
   lambda.1 ~ dgamma(maxcount*stable[1]*0.001,0.001)
   lambda.2 ~ dgamma(maxcount*stable[2]*0.001,0.001)
-  
+
   for (t in 2:nyears){
     N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
     Nad[t] ~ dbin(mean.phi[2],(Ntot[t-1]))
   }
-  
+
   for (t in 1:nyears){
     Ntot[t] <- round(Nad[t] + N1[t])
   }
-  
+
   # Observation process
-  
+
   #prior for survey detection probability
   p.surv~dunif(0,1)
   for(n in 1:n.sam){
@@ -144,7 +144,7 @@ nonests <- nimbleCode({
       y[n,t] ~ dbin(p.surv,Ntot[t])
     }
   }
-  
+
   # CAPTURE RECAPTURE #####
   #m-array, multinomial likelihood
   for(t in 1:(nyears-1)){
@@ -177,39 +177,39 @@ nonests <- nimbleCode({
     phi.a[t]<-mean.phi[2]
     p[t]<-mean.p
   }
-  
+
   #priors for resight and adult or yoy survival
   mean.phi[1]~dunif(0,1) #surv 1 year olds
   mean.phi[2]~dunif(0,1) #surv adults
   mean.p~dunif(0,1) #resight prob
-  
-  
+
+
   # PRODUCTIVITY #####
-  
+
   # priors
   for (t in 1:(nyears-1)){
     f[t] <- fec
   }
   fec ~ dunif(0, 5)
-  
+
   # DERIVED QUANTITIES #####
-  
+
   # Population growth rate
   for (t in 1:(nyears-1)){
     lambda[t] <- (Ntot[t+1] + 1e-8) / (Ntot[t] + 1e-8)
   }
   # END derived quantities
-  
+
 })
 
 ##### NO MR #####
 
 nomr<-nimbleCode({
-  
+
   # COUNTS #####
-  
+
   # System process
-  
+
   # Initial population sizes
   # n1.start ~ dunif(10, 700)
   # nad.start ~ dunif(10, 700)
@@ -220,18 +220,18 @@ nomr<-nimbleCode({
   nad.start ~ dpois(lambda.2)
   lambda.1 ~ dgamma(maxcount*stable[1]*0.001,0.001)
   lambda.2 ~ dgamma(maxcount*stable[2]*0.001,0.001)
-  
+
   for (t in 2:nyears){
     N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
     Nad[t] ~ dbin(mean.phi[2],(Ntot[t-1]))
   }
-  
+
   for (t in 1:nyears){
     Ntot[t] <- round(Nad[t] + N1[t])
   }
-  
+
   # Observation process
-  
+
   #prior for survey detection probability
   p.surv~dunif(0,1)
   for(n in 1:n.sam){
@@ -239,44 +239,44 @@ nomr<-nimbleCode({
       y[n,t] ~ dbin(p.surv,Ntot[t])
     }
   }
-  
+
   # CAPTURE RECAPTURE #####
-  
+
   #priors for resight and adult or yoy survival
   mean.phi[1]~dunif(0,1) #surv 1 year olds
   mean.phi[2]~dunif(0,1) #surv adults
-  
+
   # PRODUCTIVITY #####
-  
+
   for (t in 1:(nyears-1)){
     OBS_nestlings[t] ~ dpois(rho[t])
     rho[t] <- R_obs[t]*f[t]
   }
-  
+
   # priors
   for (t in 1:(nyears-1)){
     f[t] <- fec
   }
   fec ~ dunif(0, 5)
-  
+
   # DERIVED QUANTITIES #####
-  
+
   # Population growth rate
   for (t in 1:(nyears-1)){
     lambda[t] <- (Ntot[t+1] + 1e-8) / (Ntot[t] + 1e-8)
   }
   # END derived quantities
-  
+
 })
 
 # ##### ABUND ONLY #####
 
 abundonly<-nimbleCode({
-  
+
   # COUNTS #####
-  
+
   # System process
-  
+
   # Initial population sizes
   # n1.start ~ dunif(10, 700)
   # nad.start ~ dunif(10, 700)
@@ -287,18 +287,18 @@ abundonly<-nimbleCode({
   nad.start ~ dpois(lambda.2)
   lambda.1 ~ dgamma(maxcount*stable[1]*0.001,0.001)
   lambda.2 ~ dgamma(maxcount*stable[2]*0.001,0.001)
-  
+
   for (t in 2:nyears){
     N1[t] ~ dpois(((f[t-1]*N1[t-1])+(f[t-1]*Nad[t-1]))*mean.phi[1])
     Nad[t] ~ dbin(mean.phi[2],(Ntot[t-1]))
   }
-  
+
   for (t in 1:nyears){
     Ntot[t] <- round(Nad[t] + N1[t])
   }
-  
+
   # Observation process
-  
+
   #prior for survey detection probability
   p.surv~dunif(0,1)
   for(n in 1:n.sam){
@@ -306,28 +306,62 @@ abundonly<-nimbleCode({
       y[n,t] ~ dbin(p.surv,Ntot[t])
     }
   }
-  
+
   # CAPTURE RECAPTURE #####
-  
+
   #priors for resight and adult or yoy survival
   mean.phi[1]~dunif(0,1) #surv 1 year olds
   mean.phi[2]~dunif(0,1) #surv adults
-  
+
   # PRODUCTIVITY #####
-  
+
   # priors
   for (t in 1:(nyears-1)){
     f[t] <- fec
   }
   fec ~ dunif(0, 5)
-  
+
   # DERIVED QUANTITIES #####
-  
+
   # Population growth rate
   for (t in 1:(nyears-1)){
     lambda[t] <- (Ntot[t+1] + 1e-8) / (Ntot[t] + 1e-8)
   }
   # END derived quantities
-  
+
 })
+
+### trend-only abundance
+
+##### ABUND ONLY #####
+
+# abundonly<-nimbleCode({
+#   
+#   Ntot[1] ~ dpois(rho)
+#   
+#   rho ~ dunif(10,1000)
+#   
+#   # System process
+#   for (t in 2:nyears){
+#     Ntot[t] ~ dpois(Ntot[t-1]*alpha)
+#   }
+#   
+#   alpha ~ dunif(0, 2)
+# 
+#   # Observation process
+#   
+#   p.surv ~ dgamma(0.01, 0.01) #abundance survey variance
+#   
+#   for(n in 1:n.sam){
+#     for (t in 1:nyears){
+#       y[n,t] ~ dnorm(Ntot[t], sd = p.surv)
+#     }
+#   }
+# 
+#   # Population growth rate
+#   for (t in 1:(nyears-1)){
+#     lambda[t] <- (Ntot[t+1] + 1e-8) / (Ntot[t] + 1e-8)
+#   }
+# 
+# })
 
